@@ -1,0 +1,5 @@
+-- Static seed data is generated from src/data/* via scripts/seed-supabase.ts.
+-- Run after applying migrations:
+--   npm run seed:supabase
+--
+-- Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local

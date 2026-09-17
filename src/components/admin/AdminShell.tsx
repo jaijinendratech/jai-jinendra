@@ -1,0 +1,157 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  LuLayoutDashboard,
+  LuPackage,
+  LuFolderTree,
+  LuBoxes,
+  LuWarehouse,
+  LuShoppingBag,
+  LuUsers,
+  LuFileText,
+  LuHeartHandshake,
+  LuImages,
+  LuImage,
+  LuMessageSquare,
+  LuStore,
+  LuSettings,
+  LuLogOut,
+  LuMenu,
+  LuX,
+} from "react-icons/lu";
+import type { IconType } from "react-icons";
+import { logoutAdminAction } from "@/lib/auth";
+import { adminNav } from "@/data/admin-mock";
+
+const groupLabels = {
+  overview: "Overview",
+  catalog: "Catalog",
+  commerce: "Commerce",
+  content: "Content",
+  ops: "Operations",
+} as const;
+
+const navIcons: Record<string, IconType> = {
+  "/admin": LuLayoutDashboard,
+  "/admin/products": LuPackage,
+  "/admin/categories": LuFolderTree,
+  "/admin/combos": LuBoxes,
+  "/admin/inventory": LuWarehouse,
+  "/admin/orders": LuShoppingBag,
+  "/admin/customers": LuUsers,
+  "/admin/content/home": LuFileText,
+  "/admin/content/promise": LuHeartHandshake,
+  "/admin/content/carousels": LuImages,
+  "/admin/media": LuImage,
+  "/admin/enquiries": LuMessageSquare,
+  "/admin/outlets": LuStore,
+  "/admin/settings": LuSettings,
+};
+
+export function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  const groups = (Object.keys(groupLabels) as (keyof typeof groupLabels)[]).map(
+    (group) => ({
+      group,
+      label: groupLabels[group],
+      items: adminNav.filter((item) => item.group === group),
+    }),
+  );
+
+  return (
+    <div className="min-h-dvh bg-[#f6f4f2] text-on-surface">
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex h-dvh w-64 flex-col border-r border-outline-variant/30 bg-white transition-transform ${
+          open ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
+      >
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-outline-variant/20 px-5">
+          <LuLayoutDashboard className="h-5 w-5 text-primary" aria-hidden />
+          <div>
+            <p className="text-sm font-bold text-primary">Jai Jinendra</p>
+            <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">
+              Admin
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-5 overflow-y-auto p-4" aria-label="Admin">
+          {groups.map(({ group, label, items }) => (
+            <div key={group}>
+              <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-outline">
+                {label}
+              </p>
+              <ul className="space-y-1">
+                {items.map((item) => {
+                  const active =
+                    item.href === "/admin"
+                      ? pathname === "/admin"
+                      : pathname === item.href ||
+                        pathname.startsWith(`${item.href}/`);
+                  const Icon = navIcons[item.href] ?? LuPackage;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                          active
+                            ? "bg-primary text-white"
+                            : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        <div className="shrink-0 border-t border-outline-variant/20 p-4">
+          <form action={logoutAdminAction}>
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2.5 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
+            >
+              <LuLogOut className="h-4 w-4" aria-hidden />
+              Sign out
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      {open ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
+
+      <div className="flex min-h-dvh min-w-0 flex-col lg:pl-64">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-outline-variant/30 bg-white/95 px-4 backdrop-blur md:px-6">
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-outline-variant/40 lg:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <LuX className="h-4 w-4" /> : <LuMenu className="h-4 w-4" />}
+          </button>
+          <p className="text-sm text-on-surface-variant">Store operations console</p>
+        </header>
+        <div className="flex-1 p-4 md:p-6">{children}</div>
+      </div>
+    </div>
+  );
+}

@@ -1,26 +1,217 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #640023;
+  --color-primary-container: #881337;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #ff93a6;
+  --color-primary-fixed: #ffd9dd;
+  --color-primary-fixed-dim: #ffb2bd;
+  --color-secondary: #006d30;
+  --color-secondary-container: #92f5a4;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #007233;
+  --color-tertiary: #512100;
+  --color-tertiary-container: #743200;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #ff9a5e;
+  --color-background: #fff8f5;
+  --color-on-background: #1e1b19;
+  --color-surface: #fff8f5;
+  --color-surface-bright: #fff8f5;
+  --color-surface-dim: #e0d8d5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #faf2ee;
+  --color-surface-container: #f4ece8;
+  --color-surface-container-high: #eee7e3;
+  --color-surface-container-highest: #e9e1dd;
+  --color-surface-variant: #e9e1dd;
+  --color-on-surface: #1e1b19;
+  --color-on-surface-variant: #574144;
+  --color-outline: #8a7174;
+  --color-outline-variant: #debfc2;
+  --color-inverse-surface: #33302d;
+  --color-inverse-on-surface: #f7efeb;
+  --color-inverse-primary: #ffb2bd;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-pure-veg: #15803d;
+  --color-surface-tint: #aa304f;
+  --color-amber-rating: #d97706;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-primary-container: var(--color-primary-container);
+  --color-on-primary: var(--color-on-primary);
+  --color-on-primary-container: var(--color-on-primary-container);
+  --color-primary-fixed: var(--color-primary-fixed);
+  --color-primary-fixed-dim: var(--color-primary-fixed-dim);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-container: var(--color-secondary-container);
+  --color-on-secondary: var(--color-on-secondary);
+  --color-on-secondary-container: var(--color-on-secondary-container);
+  --color-tertiary: var(--color-tertiary);
+  --color-tertiary-container: var(--color-tertiary-container);
+  --color-on-tertiary: var(--color-on-tertiary);
+  --color-on-tertiary-container: var(--color-on-tertiary-container);
+  --color-background: var(--color-background);
+  --color-on-background: var(--color-on-background);
+  --color-surface: var(--color-surface);
+  --color-surface-bright: var(--color-surface-bright);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
+  --color-inverse-surface: var(--color-inverse-surface);
+  --color-inverse-on-surface: var(--color-inverse-on-surface);
+  --color-inverse-primary: var(--color-inverse-primary);
+  --color-error: var(--color-error);
+  --color-on-error: var(--color-on-error);
+  --color-error-container: var(--color-error-container);
+  --color-on-error-container: var(--color-on-error-container);
+  --color-pure-veg: var(--color-pure-veg);
+  --color-surface-tint: var(--color-surface-tint);
+  --color-amber-rating: var(--color-amber-rating);
+
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-full: 9999px;
+
+  --spacing-margin: 3rem;
+  --spacing-margin-mobile: 1rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-xs: 0.25rem;
+
+  --shadow-culinary:
+    0 10px 24px -4px rgb(136 19 55 / 0.08), 0 4px 8px -2px rgb(28 25 23 / 0.04);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: var(--color-primary-fixed);
+    color: var(--color-primary);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .container-jj {
+    @apply mx-auto w-full max-w-[min(90vw,1720px)] px-4 md:px-8 lg:px-10;
+  }
+
+  .veg-mark {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--color-pure-veg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    background: #fff;
+    flex-shrink: 0;
+  }
+
+  .veg-mark-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-pure-veg);
+  }
+
+  .culinary-lift {
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .culinary-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-culinary);
+    }
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Readable sans for prices and numeric digits */
+  .price,
+  .numeric {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .label-sm {
+    font-size: 10px;
+    line-height: 14px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  .label-md {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+
+  .label-lg {
+    font-size: 14px;
+    line-height: 18px;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+  }
+
+  .combo-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .combo-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
