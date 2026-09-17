@@ -2,18 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/products/ProductCard";
-import { featuredProducts, productFilters } from "@/data/home";
+import { productFilters } from "@/data/home";
+import type { Product } from "@/types/catalog";
 
-export function FeaturedProducts() {
+type FeaturedProductsProps = {
+  products: Product[];
+};
+
+export function FeaturedProducts({ products: allProducts }: FeaturedProductsProps) {
   const [filter, setFilter] = useState<(typeof productFilters)[number]["id"]>("all");
 
   const products = useMemo(() => {
-    if (filter === "all") return featuredProducts;
+    if (filter === "all") return allProducts;
     if (filter === "gifts") {
-      return featuredProducts.filter((p) => p.category === "gifts" || p.badge?.includes("Royal"));
+      return allProducts.filter((p) => p.category === "gifts" || p.badge?.includes("Royal"));
     }
-    return featuredProducts.filter((p) => p.category === filter);
-  }, [filter]);
+    return allProducts.filter((p) => p.category === filter);
+  }, [allProducts, filter]);
 
   return (
     <section

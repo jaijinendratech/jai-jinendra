@@ -9,9 +9,9 @@ import { PuritySection } from "@/components/home/PuritySection";
 import { SignatureCollections } from "@/components/home/SignatureCollections";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
+import { getPublishedProducts } from "@/lib/catalog/queries";
 import {
   categories,
-  featuredProducts,
   instagramPosts,
   signatures,
   siteConfig,
@@ -19,7 +19,10 @@ import {
   trustItems,
 } from "@/data/home";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const allProducts = await getPublishedProducts();
+  const featuredProducts = allProducts.slice(0, 8);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -84,7 +87,7 @@ export default function HomePage() {
       <HeroCarousel />
       <TrustStrip items={trustItems} />
       <CategorySection categories={categories} />
-      <FeaturedProducts />
+      <FeaturedProducts products={featuredProducts} />
       <HeritageSection />
       <SignatureCollections items={signatures} />
       <CelebrationBanner />
