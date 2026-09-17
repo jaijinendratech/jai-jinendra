@@ -5,9 +5,20 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart/use-cart";
 import { formatINR } from "@/lib/format";
 
+type RazorpaySuccessResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayInstance = {
+  open: () => void;
+  on: (event: string, handler: (response: { error?: { description?: string } }) => void) => void;
+};
+
 declare global {
   interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => { open: () => void };
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayInstance;
   }
 }
 
@@ -87,25 +98,62 @@ export function CheckoutForm() {
       }
 
       if (data.razorpay && window.Razorpay) {
+        const orderNumber = data.order.orderNumber;
+
         const rzp = new window.Razorpay({
           key: data.razorpay.keyId,
           amount: data.razorpay.amount,
           currency: data.razorpay.currency,
           order_id: data.razorpay.orderId,
           name: "Jai Jinendra Namkeens",
-          handler: () => {
-            router.push(
-              `/account/orders?confirmed=${encodeURIComponent(data.order.orderNumber)}`,
-            );
+          handler: async (response: RazorpaySuccessResponse) => {
+            try {
+              const verifyRes = await fetch("/api/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok) {
+                throw new Error(verifyData.error ?? "Payment verification failed");
+              }
+              router.push(
+                `/account/orders?confirmed=${encodeURIComponent(orderNumber)}`,
+              );
+            } catch (verifyErr) {
+              setError(
+                verifyErr instanceof Error
+                  ? verifyErr.message
+                  : "Payment verification failed",
+              );
+              setSubmitting(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setError("Payment cancelled. Your order is saved — you can retry from your account.");
+              setSubmitting(false);
+            },
           },
         });
+
+        rzp.on("payment.failed", (response) => {
+          setError(
+            response.error?.description ?? "Payment failed. Please try again.",
+          );
+          setSubmitting(false);
+        });
+
         rzp.open();
       } else {
         throw new Error("Razorpay not available");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
-    } finally {
       setSubmitting(false);
     }
   }

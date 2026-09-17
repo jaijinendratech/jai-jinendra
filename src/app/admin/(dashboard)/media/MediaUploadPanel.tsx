@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { MediaUploader } from "@/components/admin/MediaUploader";
-import { secondaryBtnClassName } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 
 export function MediaUploadPanel({ enabled }: { enabled: boolean }) {
   const router = useRouter();
@@ -17,13 +17,12 @@ export function MediaUploadPanel({ enabled }: { enabled: boolean }) {
         disabledReason='Configure Supabase and create a public Storage bucket named "media".'
         onChange={() => router.refresh()}
       />
-      <button
-        type="button"
-        className={secondaryBtnClassName()}
+      <AdminIconButton
+        label="Refresh library"
+        icon="refresh"
+        variant="secondary"
         onClick={() => router.refresh()}
-      >
-        Refresh library
-      </button>
+      />
     </div>
   );
 }

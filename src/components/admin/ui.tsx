@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { statusBadgeClass } from "@/lib/admin/status";
+import { statusBadgeClass, type StatusBadgeKind } from "@/lib/admin/status";
 
 export {
   fieldClassName,
@@ -115,7 +115,7 @@ export function StatusBadge({
   value,
   label,
 }: {
-  kind: "order" | "payment" | "enquiry" | "stock";
+  kind: StatusBadgeKind;
   value: string;
   label?: string;
 }) {

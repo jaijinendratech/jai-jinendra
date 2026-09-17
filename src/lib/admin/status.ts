@@ -18,6 +18,13 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export const PAYMENT_STATUSES: PaymentStatus[] = [
+  "pending",
+  "paid",
+  "failed",
+  "refunded",
+];
+
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: "Pending",
   paid: "Paid",
@@ -31,8 +38,24 @@ export const ENQUIRY_STATUS_LABELS: Record<EnquiryStatus, string> = {
   closed: "Closed",
 };
 
-export function statusBadgeClass(kind: "order" | "payment" | "enquiry" | "stock", value: string) {
+export type StatusBadgeKind =
+  | "order"
+  | "payment"
+  | "enquiry"
+  | "stock"
+  | "publish"
+  | "featured";
+
+export function statusBadgeClass(kind: StatusBadgeKind, value: string) {
   const base = "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
+  if (kind === "publish") {
+    if (value === "true" || value === "published") return `${base} bg-emerald-100 text-emerald-800`;
+    return `${base} bg-zinc-100 text-zinc-700`;
+  }
+  if (kind === "featured") {
+    if (value === "true") return `${base} bg-violet-100 text-violet-800`;
+    return `${base} bg-zinc-100 text-zinc-700`;
+  }
   if (kind === "stock") {
     if (value === "out") return `${base} bg-red-100 text-red-800`;
     if (value === "low") return `${base} bg-amber-100 text-amber-800`;

@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LuPlus, LuTrash2, LuSave, LuArrowLeft } from "react-icons/lu";
 import type { AdminProductDetail } from "@/lib/admin/queries";
 import {
   saveProductAction,
@@ -15,10 +13,9 @@ import {
   AdminCard,
   fieldClassName,
   labelClassName,
-  primaryBtnClassName,
-  secondaryBtnClassName,
 } from "@/components/admin/ui";
-import { ConfirmDeleteButton } from "@/components/admin/ui-client";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { AdminActionsMenu } from "@/components/admin/AdminActionsMenu";
 import { SlugField } from "@/components/admin/SlugField";
 import { ChipInput } from "@/components/admin/ChipInput";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
@@ -62,13 +59,13 @@ export function ProductForm({
               : "Form preview — connect Supabase to persist."}
           </p>
         </div>
-        <Link
+        <AdminIconButton
+          as="link"
           href="/admin/products"
-          className={`${secondaryBtnClassName()} inline-flex items-center gap-2`}
-        >
-          <LuArrowLeft className="h-4 w-4" />
-          Back
-        </Link>
+          label="Back to products"
+          icon="arrow-left"
+          variant="secondary"
+        />
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-outline-variant/25 pb-2">
@@ -225,14 +222,13 @@ export function ProductForm({
           </AdminCard>
 
           <div className="flex flex-wrap gap-3">
-            <button
+            <AdminIconButton
               type="submit"
-              className={`${primaryBtnClassName()} inline-flex items-center gap-2`}
+              label={isNew ? "Create product" : "Save changes"}
+              icon="save"
+              variant="primary"
               disabled={!supabase && isNew}
-            >
-              <LuSave className="h-4 w-4" />
-              {isNew ? "Create product" : "Save changes"}
-            </button>
+            />
           </div>
         </form>
       ) : null}
@@ -253,10 +249,21 @@ export function ProductForm({
                   </p>
                 </div>
                 {supabase ? (
-                  <ConfirmDeleteButton action={deleteVariantAction} label="Remove">
-                    <input type="hidden" name="id" value={v.id} />
-                    <input type="hidden" name="productId" value={product.id} />
-                  </ConfirmDeleteButton>
+                  <AdminActionsMenu
+                    ariaLabel="Variant actions"
+                    items={[
+                      {
+                        id: "remove",
+                        type: "form",
+                        label: "Remove variant",
+                        icon: "trash",
+                        action: deleteVariantAction,
+                        fields: { id: v.id, productId: product.id },
+                        confirmMessage: "Remove this variant?",
+                        danger: true,
+                      },
+                    ]}
+                  />
                 ) : null}
               </li>
             ))}
@@ -299,10 +306,12 @@ export function ProductForm({
                 <input type="checkbox" name="available" defaultChecked />
                 Available for sale
               </label>
-              <button type="submit" className={`${primaryBtnClassName()} inline-flex items-center gap-2`}>
-                <LuPlus className="h-4 w-4" />
-                Add variant
-              </button>
+              <AdminIconButton
+                type="submit"
+                label="Add variant"
+                icon="plus"
+                variant="primary"
+              />
             </form>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to manage variants.</p>
@@ -333,11 +342,21 @@ export function ProductForm({
                   ) : null}
                 </div>
                 {supabase ? (
-                  <ConfirmDeleteButton action={deleteProductImageAction} label="">
-                    <input type="hidden" name="id" value={img.id} />
-                    <input type="hidden" name="productId" value={product.id} />
-                    <LuTrash2 className="h-4 w-4" aria-hidden />
-                  </ConfirmDeleteButton>
+                  <AdminActionsMenu
+                    ariaLabel="Image actions"
+                    items={[
+                      {
+                        id: "remove",
+                        type: "form",
+                        label: "Remove image",
+                        icon: "trash",
+                        action: deleteProductImageAction,
+                        fields: { id: img.id, productId: product.id },
+                        confirmMessage: "Remove this image?",
+                        danger: true,
+                      },
+                    ]}
+                  />
                 ) : null}
               </li>
             ))}
@@ -357,10 +376,12 @@ export function ProductForm({
                 <input name="alt" className={fieldClassName()} />
               </label>
               <input type="hidden" name="sortOrder" value={product.images.length} />
-              <button type="submit" className={`${primaryBtnClassName()} inline-flex items-center gap-2`}>
-                <LuPlus className="h-4 w-4" />
-                Attach image
-              </button>
+              <AdminIconButton
+                type="submit"
+                label="Attach image"
+                icon="plus"
+                variant="primary"
+              />
             </form>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to upload images.</p>

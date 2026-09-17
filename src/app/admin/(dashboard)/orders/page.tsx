@@ -3,12 +3,19 @@ import Link from "next/link";
 import { formatINR } from "@/lib/format";
 import { getAdminOrders, getIntegrationStatus } from "@/lib/admin/queries";
 import {
+  updateOrderPaymentStatusAction,
+  updateOrderStatusAction,
+} from "@/lib/admin/actions";
+import {
   AdminPageHeader,
   AdminTableShell,
   StatusBadge,
 } from "@/components/admin/ui";
+import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
+  ORDER_STATUSES,
   ORDER_STATUS_LABELS,
+  PAYMENT_STATUSES,
   PAYMENT_STATUS_LABELS,
 } from "@/lib/admin/status";
 import type { OrderStatus, PaymentStatus } from "@/types/database";
@@ -86,23 +93,49 @@ export default async function AdminOrdersPage({
                 </td>
                 <td className="px-4 py-3">{order.city}</td>
                 <td className="px-4 py-3">
-                  <StatusBadge
-                    kind="payment"
-                    value={order.paymentStatus}
-                    label={
-                      PAYMENT_STATUS_LABELS[order.paymentStatus as PaymentStatus] ??
-                      order.paymentStatus
-                    }
-                  />
+                  {supabase ? (
+                    <AdminStatusSelect
+                      action={updateOrderPaymentStatusAction}
+                      fields={{ orderId: order.dbId }}
+                      value={order.paymentStatus}
+                      kind="payment"
+                      options={PAYMENT_STATUSES.map((s) => ({
+                        value: s,
+                        label: PAYMENT_STATUS_LABELS[s],
+                      }))}
+                    />
+                  ) : (
+                    <StatusBadge
+                      kind="payment"
+                      value={order.paymentStatus}
+                      label={
+                        PAYMENT_STATUS_LABELS[order.paymentStatus as PaymentStatus] ??
+                        order.paymentStatus
+                      }
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge
-                    kind="order"
-                    value={order.status}
-                    label={
-                      ORDER_STATUS_LABELS[order.status as OrderStatus] ?? order.status
-                    }
-                  />
+                  {supabase ? (
+                    <AdminStatusSelect
+                      action={updateOrderStatusAction}
+                      fields={{ orderId: order.dbId }}
+                      value={order.status}
+                      kind="order"
+                      options={ORDER_STATUSES.map((s) => ({
+                        value: s,
+                        label: ORDER_STATUS_LABELS[s],
+                      }))}
+                    />
+                  ) : (
+                    <StatusBadge
+                      kind="order"
+                      value={order.status}
+                      label={
+                        ORDER_STATUS_LABELS[order.status as OrderStatus] ?? order.status
+                      }
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-3 price font-semibold">{formatINR(order.total)}</td>
               </tr>

@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  sendPhoneOtpAction,
-  verifyPhoneOtpAction,
-} from "@/lib/auth";
+import { sendPhoneOtpAction, verifyPhoneOtpAction } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -33,7 +30,8 @@ export default async function LoginPage({
           {step === "verify" ? "Enter OTP" : "Sign in with phone"}
         </h1>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Account required before checkout. We&apos;ll send a one-time code via SMS.
+          Account required before checkout. We&apos;ll send a one-time code via
+          SMS.
         </p>
 
         {error === "invalid_phone" ? (

@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { getAdminEnquiries, getIntegrationStatus } from "@/lib/admin/queries";
-import { updateEnquiryStatusAction } from "@/lib/admin/actions";
 import {
   AdminEmpty,
   AdminPageHeader,
   StatusBadge,
-  fieldClassName,
-  primaryBtnClassName,
 } from "@/components/admin/ui";
+import { EnquiryStatusForm } from "@/components/admin/EnquiryStatusForm";
 import { ENQUIRY_STATUS_LABELS } from "@/lib/admin/status";
 import type { EnquiryStatus } from "@/types/database";
 
@@ -56,11 +54,18 @@ export default async function AdminEnquiriesPage() {
                     {enquiry.name} · {enquiry.email}
                   </p>
                 </div>
-                <StatusBadge
-                  kind="enquiry"
-                  value={enquiry.status}
-                  label={ENQUIRY_STATUS_LABELS[enquiry.status as EnquiryStatus]}
-                />
+                {supabase ? (
+                  <EnquiryStatusForm
+                    id={enquiry.id}
+                    status={enquiry.status as EnquiryStatus}
+                  />
+                ) : (
+                  <StatusBadge
+                    kind="enquiry"
+                    value={enquiry.status}
+                    label={ENQUIRY_STATUS_LABELS[enquiry.status as EnquiryStatus]}
+                  />
+                )}
               </div>
               {enquiry.notes ? (
                 <p className="mt-3 text-sm text-on-surface-variant">
@@ -71,34 +76,6 @@ export default async function AdminEnquiriesPage() {
                 {enquiry.quantity ? `Qty ${enquiry.quantity} · ` : ""}
                 {new Date(enquiry.createdAt).toLocaleString("en-IN")}
               </p>
-
-              {supabase ? (
-                <form
-                  action={updateEnquiryStatusAction}
-                  className="mt-4 flex flex-wrap items-end gap-2"
-                >
-                  <input type="hidden" name="id" value={enquiry.id} />
-                  <select
-                    name="status"
-                    defaultValue={enquiry.status}
-                    className={`${fieldClassName()} mt-0! max-w-40`}
-                  >
-                    {(
-                      Object.keys(ENQUIRY_STATUS_LABELS) as EnquiryStatus[]
-                    ).map((s) => (
-                      <option key={s} value={s}>
-                        {ENQUIRY_STATUS_LABELS[s]}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className={`${primaryBtnClassName()} py-2! text-xs`}
-                  >
-                    Update
-                  </button>
-                </form>
-              ) : null}
             </article>
           ))}
         </div>

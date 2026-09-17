@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { formatINR } from "@/lib/format";
 import { getAdminInventory, getIntegrationStatus } from "@/lib/admin/queries";
-import { adjustInventoryAction } from "@/lib/admin/actions";
 import {
   AdminPageHeader,
   AdminTableShell,
   StatusBadge,
-  fieldClassName,
-  primaryBtnClassName,
 } from "@/components/admin/ui";
+import { InventoryAdjustForm } from "@/components/admin/InventoryAdjustForm";
 
 export const metadata: Metadata = {
   title: "Admin · Inventory",
@@ -65,30 +63,7 @@ export default async function AdminInventoryPage() {
                   </td>
                   <td className="px-4 py-3">
                     {supabase ? (
-                      <form
-                        action={adjustInventoryAction}
-                        className="flex flex-wrap items-center gap-2"
-                      >
-                        <input type="hidden" name="variantId" value={row.id} />
-                        <input
-                          name="delta"
-                          type="number"
-                          placeholder="+/-"
-                          required
-                          className={`${fieldClassName()} mt-0! w-20`}
-                        />
-                        <input
-                          name="reason"
-                          defaultValue="manual_adjust"
-                          className={`${fieldClassName()} mt-0! w-32`}
-                        />
-                        <button
-                          type="submit"
-                          className={`${primaryBtnClassName()} px-2! py-1! text-xs`}
-                        >
-                          Apply
-                        </button>
-                      </form>
+                      <InventoryAdjustForm variantId={row.id} />
                     ) : (
                       <span className="text-xs text-on-surface-variant">—</span>
                     )}

@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { getHeroCarouselContent, getIntegrationStatus } from "@/lib/admin/queries";
 import { saveCarouselSlidesAction } from "@/lib/admin/actions";
-import {
-  AdminPageHeader,
-  NoticeBanner,
-  primaryBtnClassName,
-} from "@/components/admin/ui";
+import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import { CarouselEditor } from "./CarouselEditor";
 
 export const metadata: Metadata = {
@@ -39,9 +36,12 @@ export default async function AdminCarouselsPage({
         className="space-y-4 rounded-xl border border-outline-variant/25 bg-white p-6 shadow-sm"
       >
         <CarouselEditor initial={slides} />
-        <button type="submit" className={primaryBtnClassName()}>
-          Save carousel slides
-        </button>
+        <AdminIconButton
+          type="submit"
+          label="Save carousel slides"
+          icon="save"
+          variant="primary"
+        />
       </form>
     </div>
   );

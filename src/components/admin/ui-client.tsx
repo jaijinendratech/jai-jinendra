@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useRef, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import {
   fieldClassName,
   labelClassName,
@@ -22,25 +23,50 @@ export function ConfirmDeleteButton({
   confirmMessage?: string;
   className?: string;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const allowSubmitRef = useRef(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
-    <form
-      action={action}
-      onSubmit={(e) => {
-        if (!window.confirm(confirmMessage)) e.preventDefault();
-      }}
-      className="inline"
-    >
-      {children}
-      <button
-        type="submit"
-        className={cn(
-          "text-sm font-semibold text-red-700 hover:underline",
-          className,
-        )}
+    <>
+      <form
+        ref={formRef}
+        action={action}
+        onSubmit={(e) => {
+          if (!allowSubmitRef.current) {
+            e.preventDefault();
+            setConfirmOpen(true);
+            return;
+          }
+          allowSubmitRef.current = false;
+        }}
+        className="inline"
       >
-        {label}
-      </button>
-    </form>
+        {children}
+        <button
+          type="submit"
+          className={cn(
+            "text-sm font-semibold text-red-700 hover:underline",
+            className,
+          )}
+        >
+          {label}
+        </button>
+      </form>
+
+      <AdminConfirmDialog
+        isOpen={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={confirmMessage}
+        message="This action cannot be undone."
+        confirmLabel={label}
+        danger
+        onConfirm={() => {
+          allowSubmitRef.current = true;
+          formRef.current?.requestSubmit();
+        }}
+      />
+    </>
   );
 }
 

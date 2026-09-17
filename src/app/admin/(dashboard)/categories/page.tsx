@@ -3,22 +3,22 @@ import {
   getAdminCategories,
   getIntegrationStatus,
 } from "@/lib/admin/queries";
-import {
-  saveCategoryAction,
-  deleteCategoryAction,
-} from "@/lib/admin/actions";
+import { saveCategoryAction, setCategoryFeaturedAction, setCategoryPublishedAction } from "@/lib/admin/actions";
 import {
   AdminCard,
   AdminPageHeader,
   NoticeBanner,
   fieldClassName,
   labelClassName,
-  primaryBtnClassName,
-  secondaryBtnClassName,
 } from "@/components/admin/ui";
-import { ConfirmDeleteButton } from "@/components/admin/ui-client";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { CategoryRowActions } from "@/components/admin/CategoryRowActions";
 import { MediaUploader } from "@/components/admin/MediaUploader";
-import { LuPencil, LuPlus, LuTrash2 } from "react-icons/lu";
+import {
+  AdminStatusSelect,
+  FEATURED_OPTIONS,
+  PUBLISH_HIDDEN_OPTIONS,
+} from "@/components/admin/AdminStatusSelect";
 
 export const metadata: Metadata = {
   title: "Admin · Categories",
@@ -55,7 +55,7 @@ export default async function AdminCategoriesPage({
               <th className="px-4 py-3 font-semibold">Slug</th>
               <th className="px-4 py-3 font-semibold">Products</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              <th className="w-12 px-4 py-3 font-semibold" />
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
@@ -67,32 +67,36 @@ export default async function AdminCategoriesPage({
                 </td>
                 <td className="px-4 py-3 font-mono text-xs">{c.slug}</td>
                 <td className="px-4 py-3">{c.productCount}</td>
-                <td className="px-4 py-3 text-xs font-semibold">
-                  {c.published ? "Published" : "Draft"}
-                  {c.featured ? " · Featured" : ""}
-                </td>
                 <td className="px-4 py-3">
                   {supabase ? (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <a
-                        href={`/admin/categories?edit=${c.id}`}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                      >
-                        <LuPencil className="h-3.5 w-3.5" />
-                        Edit
-                      </a>
-                      <ConfirmDeleteButton
-                        action={deleteCategoryAction}
-                        label="Delete"
-                        confirmMessage={
-                          c.productCount > 0
-                            ? "This category has linked products and cannot be deleted safely."
-                            : "Delete this category?"
-                        }
-                      >
-                        <input type="hidden" name="id" value={c.id} />
-                      </ConfirmDeleteButton>
+                    <div className="flex flex-wrap gap-1.5">
+                      <AdminStatusSelect
+                        action={setCategoryPublishedAction}
+                        fields={{ id: c.id }}
+                        name="published"
+                        value={String(c.published)}
+                        options={PUBLISH_HIDDEN_OPTIONS}
+                        kind="publish"
+                      />
+                      <AdminStatusSelect
+                        action={setCategoryFeaturedAction}
+                        fields={{ id: c.id }}
+                        name="featured"
+                        value={String(c.featured)}
+                        options={FEATURED_OPTIONS}
+                        kind="featured"
+                      />
                     </div>
+                  ) : (
+                    <span className="text-xs font-semibold">
+                      {c.published ? "Published" : "Hidden"}
+                      {c.featured ? " · Featured" : ""}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {supabase ? (
+                    <CategoryRowActions id={c.id} productCount={c.productCount} />
                   ) : (
                     <span className="text-xs text-on-surface-variant">View only</span>
                   )}
@@ -173,15 +177,21 @@ export default async function AdminCategoriesPage({
                 Featured
               </label>
             </div>
-            <div className="flex flex-wrap gap-2 sm:col-span-2">
-              <button type="submit" className={`${primaryBtnClassName()} inline-flex items-center gap-2`}>
-                <LuPlus className="h-4 w-4" />
-                {editing ? "Update category" : "Create category"}
-              </button>
+            <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+              <AdminIconButton
+                type="submit"
+                label={editing ? "Update category" : "Create category"}
+                icon={editing ? "save" : "plus"}
+                variant="primary"
+              />
               {editing ? (
-                <a href="/admin/categories" className={secondaryBtnClassName()}>
-                  Cancel edit
-                </a>
+                <AdminIconButton
+                  as="link"
+                  href="/admin/categories"
+                  label="Cancel edit"
+                  icon="x"
+                  variant="secondary"
+                />
               ) : null}
             </div>
           </form>

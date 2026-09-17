@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { EnquiryStatus, OrderStatus } from "@/types/database";
+import type { EnquiryStatus, OrderStatus, PaymentStatus } from "@/types/database";
 
 function revalidateAdmin(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
@@ -31,7 +31,19 @@ export async function updateOrderStatusAction(formData: FormData) {
 
   const admin = createAdminClient();
   await admin.from("orders").update({ status }).eq("id", orderId);
-  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`, "/admin");
+  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`, "/admin", "/admin/customers");
+}
+
+export async function updateOrderPaymentStatusAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const status = String(formData.get("status") ?? "") as PaymentStatus;
+
+  const admin = createAdminClient();
+  await admin.from("orders").update({ payment_status: status }).eq("id", orderId);
+  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`, "/admin", "/admin/customers");
 }
 
 export async function updateOrderShippingAction(formData: FormData) {
@@ -133,14 +145,14 @@ export async function deleteProductAction(formData: FormData) {
   revalidateAdmin("/admin/products", "/admin");
 }
 
-export async function toggleProductPublishedAction(formData: FormData) {
+export async function setProductPublishedAction(formData: FormData) {
   await requireAdmin();
   if (!isSupabaseConfigured()) return;
 
   const id = String(formData.get("id") ?? "");
   const published = formData.get("published") === "true";
   const admin = createAdminClient();
-  await admin.from("products").update({ published: !published }).eq("id", id);
+  await admin.from("products").update({ published }).eq("id", id);
   revalidateAdmin("/admin/products", `/admin/products/${id}`);
 }
 
@@ -473,6 +485,28 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidateAdmin("/admin/categories");
 }
 
+export async function setCategoryPublishedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const admin = createAdminClient();
+  await admin.from("categories").update({ published }).eq("id", id);
+  revalidateAdmin("/admin/categories", "/admin");
+}
+
+export async function setCategoryFeaturedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const featured = formData.get("featured") === "true";
+  const admin = createAdminClient();
+  await admin.from("categories").update({ featured }).eq("id", id);
+  revalidateAdmin("/admin/categories", "/admin");
+}
+
 export async function saveComboAction(formData: FormData) {
   await requireAdmin();
   if (!isSupabaseConfigured()) {
@@ -538,6 +572,28 @@ export async function deleteComboAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const admin = createAdminClient();
   await admin.from("combos").delete().eq("id", id);
+  revalidateAdmin("/admin/combos");
+}
+
+export async function setComboPublishedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const admin = createAdminClient();
+  await admin.from("combos").update({ published }).eq("id", id);
+  revalidateAdmin("/admin/combos");
+}
+
+export async function setComboFeaturedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const featured = formData.get("featured") === "true";
+  const admin = createAdminClient();
+  await admin.from("combos").update({ featured }).eq("id", id);
   revalidateAdmin("/admin/combos");
 }
 
@@ -666,6 +722,33 @@ export async function updateEnquiryStatusAction(formData: FormData) {
   revalidateAdmin("/admin/enquiries", "/admin");
 }
 
+export async function updateCustomerProfileAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!profile || profile.role === "admin") return;
+
+  await admin
+    .from("profiles")
+    .update({
+      full_name: String(formData.get("fullName") ?? "").trim() || null,
+      email: String(formData.get("email") ?? "").trim() || null,
+      phone: String(formData.get("phone") ?? "").trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  revalidateAdmin("/admin/customers", `/admin/customers/${id}`);
+}
+
 export async function saveOutletAction(formData: FormData) {
   await requireAdmin();
   if (!isSupabaseConfigured()) {
@@ -702,6 +785,17 @@ export async function deleteOutletAction(formData: FormData) {
   const admin = createAdminClient();
   await admin.from("outlets").delete().eq("id", id);
   revalidateAdmin("/admin/outlets");
+}
+
+export async function setOutletPublishedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const admin = createAdminClient();
+  await admin.from("outlets").update({ published }).eq("id", id);
+  revalidateAdmin("/admin/outlets", "/admin");
 }
 
 export async function saveMediaAssetAction(formData: FormData) {

@@ -2,22 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { formatINR } from "@/lib/format";
 import type { AdminProductListItem } from "@/lib/admin/queries";
+import { setProductPublishedAction } from "@/lib/admin/actions";
+import { StatusBadge, fieldClassName } from "@/components/admin/ui";
 import {
-  StatusBadge,
-  fieldClassName,
-  secondaryBtnClassName,
-} from "@/components/admin/ui";
+  AdminStatusSelect,
+  PUBLISH_DRAFT_OPTIONS,
+} from "@/components/admin/AdminStatusSelect";
 import { SearchField } from "@/components/admin/SearchField";
-import { ConfirmDeleteButton } from "@/components/admin/ui-client";
-import { LuCopy, LuPencil } from "react-icons/lu";
-import {
-  deleteProductAction,
-  duplicateProductAction,
-  toggleProductPublishedAction,
-} from "@/lib/admin/actions";
+import { ProductRowActions } from "@/components/admin/ProductRowActions";
 
 export function ProductsTable({
   products,
@@ -91,7 +85,7 @@ export function ProductsTable({
               <th className="px-4 py-3 font-semibold">Price</th>
               <th className="px-4 py-3 font-semibold">Stock</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              <th className="w-12 px-4 py-3 font-semibold" />
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
@@ -145,58 +139,27 @@ export function ProductsTable({
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`text-xs font-semibold ${
-                      product.published ? "text-emerald-700" : "text-zinc-500"
-                    }`}
-                  >
-                    {product.published ? "Published" : "Draft"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/admin/products/${product.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  {supabaseOn ? (
+                    <AdminStatusSelect
+                      action={setProductPublishedAction}
+                      fields={{ id: product.id }}
+                      name="published"
+                      value={String(product.published)}
+                      options={PUBLISH_DRAFT_OPTIONS}
+                      kind="publish"
+                    />
+                  ) : (
+                    <span
+                      className={`text-xs font-semibold ${
+                        product.published ? "text-emerald-700" : "text-zinc-500"
+                      }`}
                     >
-                      <LuPencil className="h-3.5 w-3.5" />
-                      Edit
-                    </Link>
-                    {supabaseOn ? (
-                      <>
-                        <form action={duplicateProductAction}>
-                          <input type="hidden" name="id" value={product.id} />
-                          <button
-                            type="submit"
-                            className={`${secondaryBtnClassName()} inline-flex items-center gap-1 px-2! py-1! text-xs`}
-                          >
-                            <LuCopy className="h-3.5 w-3.5" />
-                            Duplicate
-                          </button>
-                        </form>
-                        <form action={toggleProductPublishedAction}>
-                          <input type="hidden" name="id" value={product.id} />
-                          <input
-                            type="hidden"
-                            name="published"
-                            value={String(product.published)}
-                          />
-                          <button
-                            type="submit"
-                            className="text-xs font-semibold text-on-surface-variant hover:text-primary"
-                          >
-                            {product.published ? "Unpublish" : "Publish"}
-                          </button>
-                        </form>
-                        <ConfirmDeleteButton
-                          action={deleteProductAction}
-                          label="Delete"
-                        >
-                          <input type="hidden" name="id" value={product.id} />
-                        </ConfirmDeleteButton>
-                      </>
-                    ) : null}
-                  </div>
+                      {product.published ? "Published" : "Draft"}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <ProductRowActions product={product} supabaseOn={supabaseOn} />
                 </td>
               </tr>
             ))}

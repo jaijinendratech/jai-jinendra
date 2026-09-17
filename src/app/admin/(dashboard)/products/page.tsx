@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getAdminProducts, getIntegrationStatus } from "@/lib/admin/queries";
-import { AdminPageHeader, primaryBtnClassName } from "@/components/admin/ui";
+import { AdminPageHeader } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import { ProductsTable } from "./ProductsTable";
 
 export const metadata: Metadata = {
@@ -23,9 +23,13 @@ export default async function AdminProductsPage() {
             : `${products.length} catalogue items (mock — connect Supabase to persist).`
         }
         actions={
-          <Link href="/admin/products/new" className={primaryBtnClassName()}>
-            Add product
-          </Link>
+          <AdminIconButton
+            as="link"
+            href="/admin/products/new"
+            label="Add product"
+            icon="plus"
+            variant="primary"
+          />
         }
       />
       <ProductsTable products={products} supabaseOn={supabase} />

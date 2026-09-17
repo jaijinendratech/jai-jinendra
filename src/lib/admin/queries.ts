@@ -27,6 +27,17 @@ export type AdminOrderListItem = {
   itemCount: number;
 };
 
+export type AdminCustomer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  orderCount: number;
+  spent: number;
+  createdAt: string;
+};
+
 export type AdminProductListItem = {
   id: string;
   slug: string;
@@ -960,40 +971,37 @@ export async function getAdminInventory() {
   }));
 }
 
-export async function getAdminCustomers() {
-  if (!isSupabaseConfigured()) {
-    const map = new Map<
-      string,
-      { name: string; email: string; phone: string; orderCount: number; spent: number }
-    >();
-    for (const o of mockOrders) {
-      const cur = map.get(o.email) ?? {
-        name: o.customer,
-        email: o.email,
-        phone: o.phone,
-        orderCount: 0,
-        spent: 0,
-      };
-      cur.orderCount += 1;
-      cur.spent += o.total;
-      map.set(o.email, cur);
-    }
-    return Array.from(map.entries()).map(([email, c], i) => ({
-      id: `mock-${i}`,
-      ...c,
-      email,
-      role: "customer" as const,
-      createdAt: mockOrders.find((o) => o.email === email)?.placedAt ?? "",
-    }));
-  }
+function mapOrderListItem(o: {
+  id: string;
+  order_number: string;
+  customer_email: string | null;
+  customer_phone: string | null;
+  address_snapshot: { name?: string; city?: string } | null;
+  total_paise: number;
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  payment_method: string;
+  created_at: string;
+  order_items: { qty: number }[] | null;
+}): AdminOrderListItem {
+  return {
+    id: o.order_number,
+    dbId: o.id,
+    customer: o.address_snapshot?.name ?? "Customer",
+    email: o.customer_email ?? "",
+    phone: o.customer_phone ?? "",
+    city: o.address_snapshot?.city ?? "",
+    total: o.total_paise / 100,
+    status: o.status,
+    paymentStatus: o.payment_status,
+    paymentMethod: o.payment_method,
+    placedAt: o.created_at,
+    itemCount: (o.order_items ?? []).reduce((s, i) => s + i.qty, 0),
+  };
+}
 
+async function customerOrderStats() {
   const admin = createAdminClient();
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
   const { data: orders } = await admin
     .from("orders")
     .select("user_id, total_paise, customer_email");
@@ -1007,23 +1015,136 @@ export async function getAdminCustomers() {
     cur.spent += o.total_paise / 100;
     counts.set(key, cur);
   }
+  return counts;
+}
 
-  return (profiles ?? []).map((p) => {
-    const stats = counts.get(p.id) ?? counts.get(p.email ?? "") ?? {
-      count: 0,
+function toAdminCustomer(
+  p: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+    role: string;
+    created_at: string;
+  },
+  counts: Map<string, { count: number; spent: number }>,
+): AdminCustomer {
+  const stats = counts.get(p.id) ?? counts.get(p.email ?? "") ?? { count: 0, spent: 0 };
+  return {
+    id: p.id,
+    name: p.full_name ?? "—",
+    email: p.email ?? "",
+    phone: p.phone ?? "",
+    role: p.role,
+    orderCount: stats.count,
+    spent: stats.spent,
+    createdAt: p.created_at,
+  };
+}
+
+function mockCustomers(): AdminCustomer[] {
+  const map = new Map<
+    string,
+    { name: string; email: string; phone: string; orderCount: number; spent: number }
+  >();
+  for (const o of mockOrders) {
+    const cur = map.get(o.email) ?? {
+      name: o.customer,
+      email: o.email,
+      phone: o.phone,
+      orderCount: 0,
       spent: 0,
     };
-    return {
-      id: p.id,
-      name: p.full_name ?? "—",
-      email: p.email ?? "",
-      phone: p.phone ?? "",
-      role: p.role,
-      orderCount: stats.count,
-      spent: stats.spent,
-      createdAt: p.created_at,
-    };
-  });
+    cur.orderCount += 1;
+    cur.spent += o.total;
+    map.set(o.email, cur);
+  }
+  return Array.from(map.entries()).map(([email, c], i) => ({
+    id: `mock-${i}`,
+    ...c,
+    email,
+    role: "customer",
+    createdAt: mockOrders.find((o) => o.email === email)?.placedAt ?? "",
+  }));
+}
+
+export async function getAdminCustomers(): Promise<AdminCustomer[]> {
+  if (!isSupabaseConfigured()) {
+    return mockCustomers().filter((c) => c.role !== "admin");
+  }
+
+  const admin = createAdminClient();
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("*")
+    .neq("role", "admin")
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const counts = await customerOrderStats();
+  return (profiles ?? [])
+    .filter((p) => p.role !== "admin")
+    .map((p) => toAdminCustomer(p, counts));
+}
+
+export async function getAdminCustomerById(id: string): Promise<AdminCustomer | null> {
+  if (!isSupabaseConfigured()) {
+    const customer = mockCustomers().find((c) => c.id === id) ?? null;
+    if (!customer || customer.role === "admin") return null;
+    return customer;
+  }
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!profile || profile.role === "admin") return null;
+
+  const counts = await customerOrderStats();
+  return toAdminCustomer(profile, counts);
+}
+
+export async function getAdminCustomerOrders(
+  userId: string,
+  email: string,
+): Promise<AdminOrderListItem[]> {
+  if (!isSupabaseConfigured()) {
+    const customer = mockCustomers().find((c) => c.id === userId);
+    const matchEmail = (customer?.email || email).toLowerCase();
+    return (await getAdminOrders()).filter(
+      (o) => o.email.toLowerCase() === matchEmail,
+    );
+  }
+
+  const admin = createAdminClient();
+  const select =
+    "id, order_number, customer_email, customer_phone, address_snapshot, total_paise, status, payment_status, payment_method, created_at, order_items(qty)";
+
+  const { data: byUser } = await admin
+    .from("orders")
+    .select(select)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  const { data: byEmail } = email
+    ? await admin
+        .from("orders")
+        .select(select)
+        .eq("customer_email", email)
+        .order("created_at", { ascending: false })
+    : { data: [] as never[] };
+
+  type Row = Parameters<typeof mapOrderListItem>[0];
+  const merged = new Map<string, AdminOrderListItem>();
+  for (const row of [...(byUser ?? []), ...(byEmail ?? [])] as Row[]) {
+    merged.set(row.id, mapOrderListItem(row));
+  }
+  return Array.from(merged.values()).sort(
+    (a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime(),
+  );
 }
 
 export async function getAdminEnquiries() {
@@ -1119,6 +1240,9 @@ export async function getAdminCombos() {
         name: b.name,
         description: b.description,
         price: b.basePrice,
+        mrp: null as number | null,
+        sku: "" as string,
+        sortOrder: 0,
         slots: b.slots,
         published: true,
         featured: false,
@@ -1145,6 +1269,9 @@ export async function getAdminCombos() {
     name: string;
     description: string | null;
     price_paise: number;
+    mrp_paise: number | null;
+    sku: string | null;
+    sort_order: number;
     published: boolean;
     featured: boolean;
     image_url: string | null;
@@ -1159,6 +1286,9 @@ export async function getAdminCombos() {
       name: c.name,
       description: c.description ?? "",
       price: c.price_paise / 100,
+      mrp: c.mrp_paise != null ? c.mrp_paise / 100 : null,
+      sku: c.sku ?? "",
+      sortOrder: c.sort_order,
       slots: (c.combo_items ?? []).length,
       published: c.published,
       featured: c.featured,

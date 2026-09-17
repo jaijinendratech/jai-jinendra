@@ -12,8 +12,9 @@ import {
   NoticeBanner,
   fieldClassName,
   labelClassName,
-  primaryBtnClassName,
 } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { CarouselEditor } from "../carousels/CarouselEditor";
 
 export const metadata: Metadata = {
   title: "Admin · Homepage content",
@@ -68,28 +69,7 @@ export default async function AdminHomeContentPage({
         </AdminCard>
 
         <AdminCard title="Hero slides">
-          <input type="hidden" name="heroSlidesJson" value={JSON.stringify(slides)} />
-          <div className="space-y-3">
-            {slides.map((slide, index) => (
-              <div
-                key={slide.id}
-                className="rounded-lg border border-outline-variant/20 bg-surface-container-low p-3"
-              >
-                <p className="text-xs font-bold uppercase tracking-wide text-primary">
-                  Slide {index + 1} · {slide.id}
-                </p>
-                <p className="mt-2 text-xs text-on-surface-variant">Src: {slide.src}</p>
-                <p className="mt-1 text-xs text-on-surface-variant">Alt: {slide.alt}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-on-surface-variant">
-            Manage slide src/alt on the{" "}
-            <a href="/admin/content/carousels" className="font-semibold text-primary hover:underline">
-              Carousels
-            </a>{" "}
-            page. Saving here keeps the current slide JSON.
-          </p>
+          <CarouselEditor initial={slides} jsonFieldName="heroSlidesJson" />
         </AdminCard>
 
         <AdminCard title="Celebration banner">
@@ -112,9 +92,12 @@ export default async function AdminHomeContentPage({
           </label>
         </AdminCard>
 
-        <button type="submit" className={primaryBtnClassName()}>
-          Save homepage content
-        </button>
+        <AdminIconButton
+          type="submit"
+          label="Save homepage content"
+          icon="save"
+          variant="primary"
+        />
       </form>
     </div>
   );

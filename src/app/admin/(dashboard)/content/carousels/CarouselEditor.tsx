@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { LuPlus, LuTrash2 } from "react-icons/lu";
-import {
-  fieldClassName,
-  labelClassName,
-  secondaryBtnClassName,
-} from "@/components/admin/ui";
+import { fieldClassName, labelClassName } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import { MediaUploader } from "@/components/admin/MediaUploader";
 
 type Slide = { id: string; src: string; alt: string };
 
-export function CarouselEditor({ initial }: { initial: Slide[] }) {
+export function CarouselEditor({
+  initial,
+  jsonFieldName = "slidesJson",
+}: {
+  initial: Slide[];
+  jsonFieldName?: string;
+}) {
   const [slides, setSlides] = useState(initial);
 
   function update(index: number, patch: Partial<Slide>) {
@@ -22,7 +24,7 @@ export function CarouselEditor({ initial }: { initial: Slide[] }) {
 
   return (
     <div className="space-y-4">
-      <input type="hidden" name="slidesJson" value={JSON.stringify(slides)} />
+      <input type="hidden" name={jsonFieldName} value={JSON.stringify(slides)} />
       {slides.map((slide, index) => (
         <div
           key={`${slide.id}-${index}`}
@@ -32,14 +34,12 @@ export function CarouselEditor({ initial }: { initial: Slide[] }) {
             <p className="text-xs font-bold uppercase tracking-wide text-primary">
               Slide {index + 1}
             </p>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-red-700"
+            <AdminIconButton
+              label="Remove slide"
+              icon="trash"
+              variant="danger"
               onClick={() => setSlides(slides.filter((_, i) => i !== index))}
-            >
-              <LuTrash2 className="h-3.5 w-3.5" />
-              Remove
-            </button>
+            />
           </div>
           <label className={labelClassName()}>
             ID
@@ -72,9 +72,10 @@ export function CarouselEditor({ initial }: { initial: Slide[] }) {
           </label>
         </div>
       ))}
-      <button
-        type="button"
-        className={`${secondaryBtnClassName()} inline-flex items-center gap-2`}
+      <AdminIconButton
+        label="Add slide"
+        icon="plus"
+        variant="secondary"
         onClick={() =>
           setSlides([
             ...slides,
@@ -85,10 +86,7 @@ export function CarouselEditor({ initial }: { initial: Slide[] }) {
             },
           ])
         }
-      >
-        <LuPlus className="h-4 w-4" />
-        Add slide
-      </button>
+      />
     </div>
   );
 }

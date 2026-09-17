@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import { getAdminOrderById, getIntegrationStatus } from "@/lib/admin/queries";
 import {
-  updateOrderStatusAction,
+  updateOrderPaymentStatusAction,
   updateOrderShippingAction,
+  updateOrderStatusAction,
 } from "@/lib/admin/actions";
 import {
   AdminCard,
@@ -13,11 +14,13 @@ import {
   StatusBadge,
   fieldClassName,
   labelClassName,
-  primaryBtnClassName,
 } from "@/components/admin/ui";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
+  PAYMENT_STATUSES,
   PAYMENT_STATUS_LABELS,
 } from "@/lib/admin/status";
 import type { OrderStatus, PaymentStatus } from "@/types/database";
@@ -50,19 +53,46 @@ export default async function AdminOrderDetailPage({
       />
 
       <div className="flex flex-wrap gap-2">
-        <StatusBadge
-          kind="order"
-          value={order.status}
-          label={ORDER_STATUS_LABELS[order.status as OrderStatus] ?? order.status}
-        />
-        <StatusBadge
-          kind="payment"
-          value={order.paymentStatus}
-          label={
-            PAYMENT_STATUS_LABELS[order.paymentStatus as PaymentStatus] ??
-            order.paymentStatus
-          }
-        />
+        {supabase ? (
+          <>
+            <AdminStatusSelect
+              action={updateOrderStatusAction}
+              fields={{ orderId: order.dbId }}
+              value={order.status}
+              kind="order"
+              options={ORDER_STATUSES.map((s) => ({
+                value: s,
+                label: ORDER_STATUS_LABELS[s],
+              }))}
+            />
+            <AdminStatusSelect
+              action={updateOrderPaymentStatusAction}
+              fields={{ orderId: order.dbId }}
+              value={order.paymentStatus}
+              kind="payment"
+              options={PAYMENT_STATUSES.map((s) => ({
+                value: s,
+                label: PAYMENT_STATUS_LABELS[s],
+              }))}
+            />
+          </>
+        ) : (
+          <>
+            <StatusBadge
+              kind="order"
+              value={order.status}
+              label={ORDER_STATUS_LABELS[order.status as OrderStatus] ?? order.status}
+            />
+            <StatusBadge
+              kind="payment"
+              value={order.paymentStatus}
+              label={
+                PAYMENT_STATUS_LABELS[order.paymentStatus as PaymentStatus] ??
+                order.paymentStatus
+              }
+            />
+          </>
+        )}
       </div>
 
       <AdminCard title="Customer & shipping address">
@@ -158,27 +188,7 @@ export default async function AdminOrderDetailPage({
       </AdminCard>
 
       {supabase ? (
-        <>
-          <AdminCard title="Update status">
-            <form action={updateOrderStatusAction} className="flex flex-wrap items-end gap-3">
-              <input type="hidden" name="orderId" value={order.dbId} />
-              <label className={labelClassName()}>
-                Status
-                <select name="status" defaultValue={order.status} className={fieldClassName()}>
-                  {ORDER_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {ORDER_STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit" className={primaryBtnClassName()}>
-                Save status
-              </button>
-            </form>
-          </AdminCard>
-
-          <AdminCard title="Shipping (manual / Shiprocket fields)">
+        <AdminCard title="Shipping (manual / Shiprocket fields)">
             <p className="mb-4 text-xs text-on-surface-variant">
               Shiprocket API is not wired yet — enter courier/AWB manually when known.
             </p>
@@ -220,12 +230,14 @@ export default async function AdminOrderDetailPage({
                   className={fieldClassName()}
                 />
               </label>
-              <button type="submit" className={primaryBtnClassName()}>
-                Save shipping
-              </button>
+              <AdminIconButton
+                type="submit"
+                label="Save shipping"
+                icon="save"
+                variant="primary"
+              />
             </form>
           </AdminCard>
-        </>
       ) : (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Connect Supabase to update order status and shipping fields.

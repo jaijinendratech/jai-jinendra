@@ -67,7 +67,9 @@ export async function sendPhoneOtpAction(formData: FormData) {
     redirect(`/login?error=invalid_phone&next=${encodeURIComponent(next)}`);
   }
 
-  const normalized = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
+  const normalized = phone.startsWith("+")
+    ? phone
+    : `+91${phone.replace(/\D/g, "")}`;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
@@ -152,7 +154,9 @@ export async function loginAdminWithPasswordAction(formData: FormData) {
   const admin = await isAdminUser(data.user.id);
   if (!admin) {
     await supabase.auth.signOut();
-    redirect(`/admin/login?error=unauthorized&next=${encodeURIComponent(next)}`);
+    redirect(
+      `/admin/login?error=unauthorized&next=${encodeURIComponent(next)}`,
+    );
   }
 
   redirect(safeNext);
@@ -176,8 +180,5 @@ export async function promoteUserToAdmin(email: string) {
   const user = users.users.find((u) => u.email === email);
   if (!user) throw new Error(`User not found: ${email}`);
 
-  await admin
-    .from("profiles")
-    .update({ role: "admin" })
-    .eq("id", user.id);
+  await admin.from("profiles").update({ role: "admin" }).eq("id", user.id);
 }

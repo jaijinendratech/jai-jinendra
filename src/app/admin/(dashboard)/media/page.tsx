@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getAdminMedia, getIntegrationStatus } from "@/lib/admin/queries";
-import { deleteMediaAssetAction } from "@/lib/admin/actions";
 import { AdminPageHeader } from "@/components/admin/ui";
-import { ConfirmDeleteButton } from "@/components/admin/ui-client";
+import { MediaCardActions } from "@/components/admin/MediaCardActions";
 import { MediaUploadPanel } from "./MediaUploadPanel";
 
 export const metadata: Metadata = {
@@ -32,8 +31,13 @@ export default async function AdminMediaPage() {
         {assets.map((asset) => (
           <article
             key={asset.id}
-            className="overflow-hidden rounded-xl border border-outline-variant/25 bg-white shadow-sm"
+            className="relative overflow-hidden rounded-xl border border-outline-variant/25 bg-white shadow-sm"
           >
+            {supabase && !asset.storagePath.startsWith("/") ? (
+              <div className="absolute right-2 top-2 z-10 rounded-lg bg-white/95 shadow-sm backdrop-blur">
+                <MediaCardActions id={asset.id} />
+              </div>
+            ) : null}
             <div className="relative aspect-video bg-surface-container">
               <Image
                 src={asset.publicUrl}
@@ -51,13 +55,6 @@ export default async function AdminMediaPage() {
                 {asset.folder || "general"}
               </p>
               <p className="mt-1 truncate text-xs text-outline">{asset.storagePath}</p>
-              {supabase && !asset.storagePath.startsWith("/") ? (
-                <div className="mt-2">
-                  <ConfirmDeleteButton action={deleteMediaAssetAction} label="Remove">
-                    <input type="hidden" name="id" value={asset.id} />
-                  </ConfirmDeleteButton>
-                </div>
-              ) : null}
             </div>
           </article>
         ))}
