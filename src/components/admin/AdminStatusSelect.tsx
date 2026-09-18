@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { AdminIconTooltip } from "@/components/admin/AdminIconTooltip";
 import { statusBadgeClass, type StatusBadgeKind } from "@/lib/admin/status";
 
 export type AdminStatusOption = { value: string; label: string };
@@ -43,37 +42,36 @@ export function AdminStatusSelect({
   const [current, setCurrent] = useState(value);
 
   return (
-    <AdminIconTooltip label="Change status">
-      <form
-        ref={formRef}
-        action={action}
-        className="inline-flex"
-        onClick={(e) => e.stopPropagation()}
+    <form
+      ref={formRef}
+      action={action}
+      className="inline-flex"
+      title="Change status"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {Object.entries(fields).map(([key, val]) => (
+        <input key={key} type="hidden" name={key} value={val} />
+      ))}
+      <select
+        name={name}
+        value={current}
+        disabled={disabled}
+        aria-label="Change status"
+        onChange={(e) => {
+          setCurrent(e.target.value);
+          formRef.current?.requestSubmit();
+        }}
+        className={cn(
+          statusBadgeClass(kind, current),
+          "cursor-pointer border-0 bg-none pr-1 outline-none disabled:cursor-default",
+        )}
       >
-        {Object.entries(fields).map(([key, val]) => (
-          <input key={key} type="hidden" name={key} value={val} />
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
-        <select
-          name={name}
-          value={current}
-          disabled={disabled}
-          aria-label="Change status"
-          onChange={(e) => {
-            setCurrent(e.target.value);
-            formRef.current?.requestSubmit();
-          }}
-          className={cn(
-            statusBadgeClass(kind, current),
-            "cursor-pointer border-0 bg-none pr-1 outline-none disabled:cursor-default",
-          )}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </form>
-    </AdminIconTooltip>
+      </select>
+    </form>
   );
 }

@@ -1,15 +1,13 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import {
-  LuImagePlus,
-  LuTrash2,
-  LuStar,
-  LuGripVertical,
-  LuChevronDown,
-} from "react-icons/lu";
+import { LuImagePlus, LuTrash2, LuStar, LuGripVertical } from "react-icons/lu";
 import { cn } from "@/lib/cn";
-import { fieldClassName, labelClassName, secondaryBtnClassName } from "@/components/admin/ui";
+import {
+  fieldClassName,
+  labelClassName,
+  secondaryBtnClassName,
+} from "@/components/admin/ui";
 
 export type MediaItem = {
   id?: string;
@@ -86,7 +84,9 @@ export function MediaUploader({
   return (
     <div>
       <p className={labelClassName()}>{label}</p>
-      {!multiple ? <input type="hidden" name={name} value={primaryPath} /> : null}
+      {!multiple ? (
+        <input type="hidden" name={name} value={primaryPath} />
+      ) : null}
       {multiple
         ? items.map((item, i) => (
             <input
@@ -147,7 +147,10 @@ export function MediaUploader({
               key={`${item.path}-${index}`}
               className="flex items-center gap-2 rounded-lg border border-outline-variant/25 bg-white p-2"
             >
-              <LuGripVertical className="h-4 w-4 shrink-0 text-outline" aria-hidden />
+              <LuGripVertical
+                className="h-4 w-4 shrink-0 text-outline"
+                aria-hidden
+              />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.url || item.path}
@@ -155,9 +158,13 @@ export function MediaUploader({
                 className="h-14 w-14 rounded-md object-cover"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold">{item.alt || "Image"}</p>
+                <p className="truncate text-xs font-semibold">
+                  {item.alt || "Image"}
+                </p>
                 {index === 0 ? (
-                  <p className="text-[10px] font-semibold text-primary">Primary</p>
+                  <p className="text-[10px] font-semibold text-primary">
+                    Primary
+                  </p>
                 ) : null}
               </div>
               <button
@@ -186,14 +193,14 @@ export function MediaUploader({
         </ul>
       ) : null}
 
-      <button
+      {/* <button
         type="button"
         className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-on-surface-variant hover:text-primary"
         onClick={() => setShowPath((v) => !v)}
       >
         <LuChevronDown className={cn("h-3 w-3 transition", showPath && "rotate-180")} />
         Advanced: paste path / URL
-      </button>
+      </button> */}
       {showPath ? (
         <div className="mt-2 flex gap-2">
           <input

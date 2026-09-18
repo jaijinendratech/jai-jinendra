@@ -1,13 +1,45 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { statusBadgeClass, type StatusBadgeKind } from "@/lib/admin/status";
+import {
+  adminFieldFullClassName,
+  adminFieldGridClassName,
+} from "@/components/admin/styles";
 
 export {
   fieldClassName,
   labelClassName,
+  adminFieldGridClassName,
+  adminFieldFullClassName,
   primaryBtnClassName,
   secondaryBtnClassName,
 } from "@/components/admin/styles";
+
+/** Two-column field grid for admin modal/drawer forms. */
+export function AdminFieldGrid({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn(adminFieldGridClassName(), className)}>{children}</div>
+  );
+}
+
+/** Full-row cell inside an AdminFieldGrid. */
+export function AdminFieldFull({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn(adminFieldFullClassName(), className)}>{children}</div>
+  );
+}
 
 export function AdminPageHeader({
   title,
@@ -139,7 +171,9 @@ export function NoticeBanner({
       ? "Cannot delete a category that still has products."
       : notice === "supabase-required"
         ? "Connect Supabase to persist changes. Viewing mock/static data for now."
-        : error || notice;
+        : notice === "saved"
+          ? "Changes saved."
+          : error || notice;
   return (
     <p
       className={cn(

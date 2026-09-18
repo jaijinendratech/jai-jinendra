@@ -1,26 +1,31 @@
 "use client";
 
-import { deleteComboAction } from "@/lib/admin/actions";
 import {
   AdminActionsMenu,
   type AdminMenuItem,
 } from "@/components/admin/AdminActionsMenu";
 
-export function ComboCardActions({ id }: { id: string }) {
+export function ComboCardActions({
+  id,
+  onEdit,
+}: {
+  id: string;
+  onEdit: (id: string) => void;
+}) {
   const items: AdminMenuItem[] = [
     {
       id: "edit",
-      type: "link",
+      type: "button",
       label: "Edit",
       icon: "pencil",
-      href: `/admin/combos?edit=${id}`,
+      onPress: () => onEdit(id),
     },
     {
       id: "delete",
       type: "form",
       label: "Delete combo",
       icon: "trash",
-      action: deleteComboAction,
+      actionKey: "deleteCombo",
       fields: { id },
       confirmMessage: "Delete this combo?",
       danger: true,

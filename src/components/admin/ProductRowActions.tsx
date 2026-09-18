@@ -1,29 +1,29 @@
 "use client";
 
-import {
-  deleteProductAction,
-  duplicateProductAction,
-} from "@/lib/admin/actions";
 import type { AdminProductListItem } from "@/lib/admin/queries";
 import {
   AdminActionsMenu,
   type AdminMenuItem,
 } from "@/components/admin/AdminActionsMenu";
+import { preloadProductForm } from "@/components/admin/ProductEditModal";
 
 export function ProductRowActions({
   product,
   supabaseOn,
+  onEdit,
 }: {
   product: AdminProductListItem;
   supabaseOn: boolean;
+  onEdit: (id: string) => void;
 }) {
   const items: AdminMenuItem[] = [
     {
       id: "edit",
-      type: "link",
+      type: "button",
       label: "Edit",
       icon: "pencil",
-      href: `/admin/products/${product.id}`,
+      onPress: () => onEdit(product.id),
+      onPreload: preloadProductForm,
     },
   ];
 
@@ -34,7 +34,7 @@ export function ProductRowActions({
         type: "form",
         label: "Duplicate",
         icon: "copy",
-        action: duplicateProductAction,
+        actionKey: "duplicateProduct",
         fields: { id: product.id },
       },
       {
@@ -42,7 +42,7 @@ export function ProductRowActions({
         type: "form",
         label: "Delete",
         icon: "trash",
-        action: deleteProductAction,
+        actionKey: "deleteProduct",
         fields: { id: product.id },
         confirmMessage: "Delete this product permanently?",
         danger: true,

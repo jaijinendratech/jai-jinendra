@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { fieldClassName, labelClassName } from "@/components/admin/ui";
+import {
+  AdminFieldFull,
+  AdminFieldGrid,
+  fieldClassName,
+  labelClassName,
+} from "@/components/admin/ui";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import { MediaUploader } from "@/components/admin/MediaUploader";
 
@@ -41,41 +46,44 @@ export function CarouselEditor({
               onClick={() => setSlides(slides.filter((_, i) => i !== index))}
             />
           </div>
-          <label className={labelClassName()}>
-            ID
-            <input
-              value={slide.id}
-              onChange={(e) => update(index, { id: e.target.value })}
-              className={fieldClassName()}
-            />
-          </label>
-          <div className="mt-2">
-            <MediaUploader
-              key={slide.src}
-              name={`slide-src-${index}`}
-              folder="carousels"
-              label="Slide image"
-              defaultItems={slide.src ? [{ path: slide.src, url: slide.src }] : []}
-              onChange={(items) => {
-                const next = items[0]?.url || items[0]?.path || "";
-                if (next) update(index, { src: next });
-              }}
-            />
-          </div>
-          <label className={`${labelClassName()} mt-2`}>
-            Alt text
-            <input
-              value={slide.alt}
-              onChange={(e) => update(index, { alt: e.target.value })}
-              className={fieldClassName()}
-            />
-          </label>
+          <AdminFieldGrid>
+            <label className={labelClassName()}>
+              ID
+              <input
+                value={slide.id}
+                onChange={(e) => update(index, { id: e.target.value })}
+                className={fieldClassName()}
+              />
+            </label>
+            <label className={labelClassName()}>
+              Alt text
+              <input
+                value={slide.alt}
+                onChange={(e) => update(index, { alt: e.target.value })}
+                className={fieldClassName()}
+              />
+            </label>
+            <AdminFieldFull>
+              <MediaUploader
+                key={slide.src}
+                name={`slide-src-${index}`}
+                folder="carousels"
+                label="Slide image"
+                defaultItems={slide.src ? [{ path: slide.src, url: slide.src }] : []}
+                onChange={(items) => {
+                  const next = items[0]?.url || items[0]?.path || "";
+                  if (next) update(index, { src: next });
+                }}
+              />
+            </AdminFieldFull>
+          </AdminFieldGrid>
         </div>
       ))}
       <AdminIconButton
         label="Add slide"
         icon="plus"
         variant="secondary"
+        showLabel
         onClick={() =>
           setSlides([
             ...slides,

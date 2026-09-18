@@ -2,15 +2,73 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import { mockOrders, mockEnquiries, mockMediaAssets } from "@/data/admin-mock";
 import { catalogueProducts } from "@/data/catalogue";
-import { categories as homeCategories } from "@/data/home";
+import { categories as homeCategories, heroSlides } from "@/data/home";
 import { flagshipOutlets } from "@/data/promise-pages";
-import { comboBoxSizes, comboBuilderPoolIds } from "@/data/combo-builder";
-import { heroSlides } from "@/data/home";
+import {
+  comboBoxSizes,
+  comboBuilderPoolIds,
+  comboBuilderHeroSlides,
+} from "@/data/combo-builder";
+import {
+  sweetsPage,
+  kachorisPage,
+  hampersPage,
+} from "@/data/experience-pages";
 import type {
   EnquiryStatus,
   OrderStatus,
   PaymentStatus,
 } from "@/types/database";
+
+export type CarouselPageKey =
+  | "home"
+  | "sweets"
+  | "kachoris"
+  | "hampers"
+  | "combos";
+
+export const CAROUSEL_PAGE_KEYS: {
+  key: CarouselPageKey;
+  label: string;
+}[] = [
+  { key: "home", label: "Home page carousel" },
+  { key: "sweets", label: "Sweets page carousel" },
+  { key: "kachoris", label: "Kachori page carousel" },
+  { key: "hampers", label: "Hamper page carousel" },
+  { key: "combos", label: "Combo pack carousel" },
+];
+
+function staticCarouselFallback(pageKey: CarouselPageKey) {
+  if (pageKey === "sweets") {
+    return sweetsPage.slides.map((s) => ({
+      id: s.id,
+      src: s.src,
+      alt: s.alt,
+    }));
+  }
+  if (pageKey === "kachoris") {
+    return kachorisPage.slides.map((s) => ({
+      id: s.id,
+      src: s.src,
+      alt: s.alt,
+    }));
+  }
+  if (pageKey === "hampers") {
+    return hampersPage.slides.map((s) => ({
+      id: s.id,
+      src: s.src,
+      alt: s.alt,
+    }));
+  }
+  if (pageKey === "combos") {
+    return comboBuilderHeroSlides.map((s) => ({
+      id: s.id,
+      src: s.src,
+      alt: s.alt,
+    }));
+  }
+  return heroSlides.map((s) => ({ id: s.id, src: s.src, alt: s.alt }));
+}
 
 export type AdminOrderListItem = {
   id: string;
@@ -1345,12 +1403,14 @@ export async function getContentBlock(pageKey: string, sectionKey: string) {
   return data;
 }
 
-export async function getHeroCarouselContent() {
-  const block = await getContentBlock("home", "hero_slides");
-  if (block?.content && Array.isArray(block.content)) {
+export async function getHeroCarouselContent(
+  pageKey: CarouselPageKey = "home",
+) {
+  const block = await getContentBlock(pageKey, "hero_slides");
+  if (block?.content && Array.isArray(block.content) && block.content.length) {
     return block.content as { id: string; src: string; alt: string }[];
   }
-  return heroSlides.map((s) => ({ id: s.id, src: s.src, alt: s.alt }));
+  return staticCarouselFallback(pageKey);
 }
 
 export function getIntegrationStatus() {

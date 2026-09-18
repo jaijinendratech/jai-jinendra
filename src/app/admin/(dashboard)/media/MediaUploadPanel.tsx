@@ -21,6 +21,7 @@ export function MediaUploadPanel({ enabled }: { enabled: boolean }) {
         label="Refresh library"
         icon="refresh"
         variant="secondary"
+        showLabel
         onClick={() => router.refresh()}
       />
     </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getAdminCustomers, getIntegrationStatus } from "@/lib/admin/queries";
 import { AdminPageHeader, AdminEmpty } from "@/components/admin/ui";
 import { CustomersTable } from "./CustomersTable";
@@ -29,7 +30,9 @@ export default async function AdminCustomersPage() {
           description="Customer profiles appear after sign-ups or orders."
         />
       ) : (
-        <CustomersTable customers={customers} />
+        <Suspense fallback={<p className="text-sm text-on-surface-variant">Loading…</p>}>
+          <CustomersTable customers={customers} supabase={supabase} />
+        </Suspense>
       )}
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteMediaAssetAction } from "@/lib/admin/actions";
 import {
   AdminActionsMenu,
   type AdminMenuItem,
@@ -13,7 +12,7 @@ export function MediaCardActions({ id }: { id: string }) {
       type: "form",
       label: "Remove",
       icon: "trash",
-      action: deleteMediaAssetAction,
+      actionKey: "deleteMedia",
       fields: { id },
       confirmMessage: "Remove this asset from the library?",
       danger: true,

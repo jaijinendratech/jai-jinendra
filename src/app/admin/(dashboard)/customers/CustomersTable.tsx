@@ -1,15 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatINR } from "@/lib/format";
-import type { AdminCustomer } from "@/lib/admin/queries";
+import type { AdminCustomer, AdminOrderListItem } from "@/lib/admin/queries";
+import { loadAdminCustomerAction } from "@/lib/admin/actions";
 import { AdminTableShell, AdminEmpty } from "@/components/admin/ui";
 import { SearchField } from "@/components/admin/SearchField";
+import { AdminDrawer } from "@/components/admin/AdminDrawer";
+import { CustomerDetailPanel } from "./CustomerDetailPanel";
 
-export function CustomersTable({ customers }: { customers: AdminCustomer[] }) {
+export function CustomersTable({
+  customers,
+  supabase,
+}: {
+  customers: AdminCustomer[];
+  supabase: boolean;
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [q, setQ] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<{
+    customer: AdminCustomer;
+    orders: AdminOrderListItem[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -18,6 +35,58 @@ export function CustomersTable({ customers }: { customers: AdminCustomer[] }) {
       `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(needle),
     );
   }, [customers, q]);
+
+  const syncQuery = useCallback(
+    (customerId: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (customerId) params.set("customer", customerId);
+      else params.delete("customer");
+      const qs = params.toString();
+      router.replace(qs ? `/admin/customers?${qs}` : "/admin/customers", {
+        scroll: false,
+      });
+    },
+    [router, searchParams],
+  );
+
+  const openCustomer = useCallback(
+    async (id: string) => {
+      setOpenId(id);
+      setLoading(true);
+      setLoadError(null);
+      setDetail(null);
+      syncQuery(id);
+      try {
+        const data = await loadAdminCustomerAction(id);
+        if (!data) {
+          setLoadError("Customer not found.");
+          return;
+        }
+        setDetail(data);
+      } catch {
+        setLoadError("Could not load customer.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [syncQuery],
+  );
+
+  const closeCustomer = useCallback(() => {
+    setOpenId(null);
+    setDetail(null);
+    setLoadError(null);
+    syncQuery(null);
+  }, [syncQuery]);
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("customer");
+    if (fromQuery && fromQuery !== openId) {
+      void openCustomer(fromQuery);
+    }
+    // Only react to URL deep-links, not every openId change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div className="space-y-4">
@@ -51,30 +120,66 @@ export function CustomersTable({ customers }: { customers: AdminCustomer[] }) {
               {filtered.map((c) => (
                 <tr
                   key={c.id}
-                  role="link"
+                  role="button"
                   tabIndex={0}
                   className="cursor-pointer hover:bg-surface-container-low/50"
-                  onClick={() => router.push(`/admin/customers/${c.id}`)}
+                  onClick={() => void openCustomer(c.id)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      router.push(`/admin/customers/${c.id}`);
+                      void openCustomer(c.id);
                     }
                   }}
                 >
-                  <td className="px-4 py-3 font-semibold text-primary">{c.name}</td>
+                  <td className="px-4 py-3 font-semibold text-primary">
+                    {c.name}
+                  </td>
                   <td className="px-4 py-3">
                     <p>{c.email || "—"}</p>
-                    <p className="text-xs text-on-surface-variant">{c.phone || "—"}</p>
+                    <p className="text-xs text-on-surface-variant">
+                      {c.phone || "—"}
+                    </p>
                   </td>
                   <td className="px-4 py-3">{c.orderCount}</td>
-                  <td className="px-4 py-3 price font-semibold">{formatINR(c.spent)}</td>
+                  <td className="px-4 py-3 price font-semibold">
+                    {formatINR(c.spent)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </AdminTableShell>
       )}
+
+      <AdminDrawer
+        isOpen={openId !== null}
+        onOpenChange={(open) => {
+          if (!open) closeCustomer();
+        }}
+        title={
+          detail?.customer.name ??
+          (loading ? "Loading…" : loadError ? "Customer" : "Customer")
+        }
+      >
+        {loading ? (
+          <p className="py-8 text-sm text-on-surface-variant">
+            Loading customer…
+          </p>
+        ) : loadError ? (
+          <p className="py-8 text-sm text-red-700" role="alert">
+            {loadError}
+          </p>
+        ) : detail ? (
+          <CustomerDetailPanel
+            customer={detail.customer}
+            orders={detail.orders}
+            supabase={supabase}
+            onSaved={() => {
+              if (openId) void openCustomer(openId);
+            }}
+          />
+        ) : null}
+      </AdminDrawer>
     </div>
   );
 }

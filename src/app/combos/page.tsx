@@ -5,6 +5,7 @@ import { ComboBuilderSteps } from "@/components/experience/combo-builder/ComboBu
 import { ComboBuilderTrustStrip } from "@/components/experience/combo-builder/ComboBuilderTrustStrip";
 import { catalogueProducts } from "@/data/catalogue";
 import { comboBuilderMeta, comboBuilderPoolIds } from "@/data/combo-builder";
+import { getHeroCarouselContent } from "@/lib/admin/queries";
 
 export const metadata: Metadata = {
   title: comboBuilderMeta.metaTitle,
@@ -16,14 +17,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CombosPage() {
+export default async function CombosPage() {
   const builderProducts = catalogueProducts.filter((product) =>
     (comboBuilderPoolIds as readonly string[]).includes(product.id),
   );
+  const slides = await getHeroCarouselContent("combos");
 
   return (
     <>
-      <ComboBuilderHero />
+      <ComboBuilderHero slides={slides} />
       <ComboBuilderSteps />
       <ComboBuilder products={builderProducts} />
       <ComboBuilderTrustStrip />

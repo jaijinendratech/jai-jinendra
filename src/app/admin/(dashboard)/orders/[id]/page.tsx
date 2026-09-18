@@ -10,8 +10,10 @@ import {
 } from "@/lib/admin/actions";
 import {
   AdminCard,
+  AdminFieldGrid,
   AdminPageHeader,
   StatusBadge,
+  adminFieldFullClassName,
   fieldClassName,
   labelClassName,
 } from "@/components/admin/ui";
@@ -192,50 +194,55 @@ export default async function AdminOrderDetailPage({
             <p className="mb-4 text-xs text-on-surface-variant">
               Shiprocket API is not wired yet — enter courier/AWB manually when known.
             </p>
-            <form action={updateOrderShippingAction} className="grid gap-3 sm:grid-cols-2">
-              <input type="hidden" name="orderId" value={order.dbId} />
-              <label className={labelClassName()}>
-                Courier
-                <input
-                  name="courierName"
-                  defaultValue={order.courierName ?? ""}
-                  className={fieldClassName()}
-                />
-              </label>
-              <label className={labelClassName()}>
-                AWB / tracking code
-                <input name="awbCode" defaultValue={order.awbCode ?? ""} className={fieldClassName()} />
-              </label>
-              <label className={labelClassName()}>
-                Shipment ID
-                <input
-                  name="shipmentId"
-                  defaultValue={order.shipmentId ?? ""}
-                  className={fieldClassName()}
-                />
-              </label>
-              <label className={labelClassName()}>
-                Shipping status
-                <input
-                  name="shippingStatus"
-                  defaultValue={order.shippingStatus ?? ""}
-                  className={fieldClassName()}
-                />
-              </label>
-              <label className={`${labelClassName()} sm:col-span-2`}>
-                Tracking URL
-                <input
-                  name="trackingUrl"
-                  defaultValue={order.trackingUrl ?? ""}
-                  className={fieldClassName()}
-                />
-              </label>
-              <AdminIconButton
-                type="submit"
-                label="Save shipping"
-                icon="save"
-                variant="primary"
-              />
+            <form action={updateOrderShippingAction}>
+              <AdminFieldGrid>
+                <input type="hidden" name="orderId" value={order.dbId} />
+                <label className={labelClassName()}>
+                  Courier
+                  <input
+                    name="courierName"
+                    defaultValue={order.courierName ?? ""}
+                    className={fieldClassName()}
+                  />
+                </label>
+                <label className={labelClassName()}>
+                  AWB / tracking code
+                  <input name="awbCode" defaultValue={order.awbCode ?? ""} className={fieldClassName()} />
+                </label>
+                <label className={labelClassName()}>
+                  Shipment ID
+                  <input
+                    name="shipmentId"
+                    defaultValue={order.shipmentId ?? ""}
+                    className={fieldClassName()}
+                  />
+                </label>
+                <label className={labelClassName()}>
+                  Shipping status
+                  <input
+                    name="shippingStatus"
+                    defaultValue={order.shippingStatus ?? ""}
+                    className={fieldClassName()}
+                  />
+                </label>
+                <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
+                  Tracking URL
+                  <input
+                    name="trackingUrl"
+                    defaultValue={order.trackingUrl ?? ""}
+                    className={fieldClassName()}
+                  />
+                </label>
+                <div className={adminFieldFullClassName()}>
+                  <AdminIconButton
+                    type="submit"
+                    label="Save shipping"
+                    icon="save"
+                    variant="primary"
+                    showLabel
+                  />
+                </div>
+              </AdminFieldGrid>
             </form>
           </AdminCard>
       ) : (

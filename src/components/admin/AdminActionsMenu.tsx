@@ -1,14 +1,37 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button, Dropdown, Label } from "@heroui/react";
 import { LuEllipsisVertical } from "react-icons/lu";
 import { cn } from "@/lib/cn";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
-import { AdminIconTooltip } from "@/components/admin/AdminIconTooltip";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { AdminIcon } from "@/components/admin/admin-icons";
+import {
+  deleteCategoryAction,
+  deleteComboAction,
+  deleteMediaAssetAction,
+  deleteOutletAction,
+  deleteProductAction,
+  deleteProductImageAction,
+  deleteVariantAction,
+  duplicateProductAction,
+} from "@/lib/admin/actions";
+
+/** Stable keys — resolve server actions inside this client module so form bindings stay valid after HMR. */
+export const adminFormActions = {
+  deleteProduct: deleteProductAction,
+  duplicateProduct: duplicateProductAction,
+  deleteCategory: deleteCategoryAction,
+  deleteOutlet: deleteOutletAction,
+  deleteCombo: deleteComboAction,
+  deleteMedia: deleteMediaAssetAction,
+  deleteVariant: deleteVariantAction,
+  deleteProductImage: deleteProductImageAction,
+} as const;
+
+export type AdminFormActionKey = keyof typeof adminFormActions;
 
 export type AdminMenuLinkItem = {
   id: string;
@@ -16,6 +39,18 @@ export type AdminMenuLinkItem = {
   label: string;
   icon: AdminIconName;
   href: string;
+  /** Prefetch the route chunk (Next.js Link default is true). */
+  prefetch?: boolean;
+};
+
+export type AdminMenuButtonItem = {
+  id: string;
+  type: "button";
+  label: string;
+  icon: AdminIconName;
+  onPress: () => void;
+  /** Optional hover/focus preload (e.g. dynamic import of a heavy form). */
+  onPreload?: () => void;
 };
 
 export type AdminMenuFormItem = {
@@ -23,13 +58,16 @@ export type AdminMenuFormItem = {
   type: "form";
   label: string;
   icon: AdminIconName;
-  action: (formData: FormData) => void | Promise<void>;
+  actionKey: AdminFormActionKey;
   fields: Record<string, string>;
   confirmMessage?: string;
   danger?: boolean;
 };
 
-export type AdminMenuItem = AdminMenuLinkItem | AdminMenuFormItem;
+export type AdminMenuItem =
+  | AdminMenuLinkItem
+  | AdminMenuButtonItem
+  | AdminMenuFormItem;
 
 export function AdminActionsMenu({
   items,
@@ -43,17 +81,28 @@ export function AdminActionsMenu({
   const [pendingConfirm, setPendingConfirm] = useState<AdminMenuFormItem | null>(
     null,
   );
+  const [, startTransition] = useTransition();
 
   if (!items.length) return null;
 
-  const formItems = items.filter((item): item is AdminMenuFormItem => item.type === "form");
+  const formItems = items.filter(
+    (item): item is AdminMenuFormItem => item.type === "form",
+  );
 
-  function submitForm(itemId: string) {
-    formRefs.current[itemId]?.requestSubmit();
+  function runAction(item: AdminMenuFormItem) {
+    const action = adminFormActions[item.actionKey];
+    const formData = new FormData();
+    for (const [name, value] of Object.entries(item.fields)) {
+      formData.set(name, value);
+    }
+    startTransition(() => {
+      void action(formData);
+    });
   }
 
   return (
     <div className="inline-flex">
+      {/* Keep hidden forms for progressive enhancement / accessibility; actions resolve from registry */}
       {formItems.map((item) => (
         <form
           key={item.id}
@@ -61,8 +110,12 @@ export function AdminActionsMenu({
           ref={(node) => {
             formRefs.current[item.id] = node;
           }}
-          action={item.action}
+          action={adminFormActions[item.actionKey]}
           className="hidden"
+          onSubmit={(e) => {
+            e.preventDefault();
+            runAction(item);
+          }}
         >
           {Object.entries(item.fields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
@@ -71,27 +124,30 @@ export function AdminActionsMenu({
       ))}
 
       <Dropdown>
-        <AdminIconTooltip label={ariaLabel}>
-          <Button
-            isIconOnly
-            aria-label={ariaLabel}
-            variant="ghost"
-            size="sm"
-            className="min-w-8 text-on-surface-variant"
-          >
-            <LuEllipsisVertical className="h-4 w-4" />
-          </Button>
-        </AdminIconTooltip>
+        <Button
+          isIconOnly
+          aria-label={ariaLabel}
+          variant="ghost"
+          size="sm"
+          className="min-w-8 text-on-surface-variant"
+        >
+          <LuEllipsisVertical className="h-4 w-4" />
+        </Button>
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu
             onAction={(key) => {
               const item = items.find((entry) => entry.id === key);
-              if (!item || item.type !== "form") return;
+              if (!item) return;
+              if (item.type === "button") {
+                item.onPress();
+                return;
+              }
+              if (item.type !== "form") return;
               if (item.confirmMessage) {
                 setPendingConfirm(item);
                 return;
               }
-              submitForm(item.id);
+              runAction(item);
             }}
           >
             {items.map((item) => {
@@ -105,6 +161,7 @@ export function AdminActionsMenu({
                   >
                     <Link
                       href={item.href}
+                      prefetch={item.prefetch}
                       className="flex w-full items-center gap-2 px-2 py-1.5 text-sm font-medium text-on-surface"
                     >
                       <AdminIcon
@@ -113,6 +170,29 @@ export function AdminActionsMenu({
                       />
                       <Label>{item.label}</Label>
                     </Link>
+                  </Dropdown.Item>
+                );
+              }
+
+              if (item.type === "button") {
+                return (
+                  <Dropdown.Item
+                    key={item.id}
+                    id={item.id}
+                    textValue={item.label}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      className="flex w-full items-center gap-2"
+                      onMouseEnter={item.onPreload}
+                      onFocus={item.onPreload}
+                    >
+                      <AdminIcon
+                        name={item.icon}
+                        className="h-4 w-4 shrink-0 text-on-surface-variant"
+                      />
+                      <Label>{item.label}</Label>
+                    </span>
                   </Dropdown.Item>
                 );
               }
@@ -147,7 +227,7 @@ export function AdminActionsMenu({
         confirmLabel={pendingConfirm?.label ?? "Confirm"}
         danger={pendingConfirm?.danger ?? true}
         onConfirm={() => {
-          if (pendingConfirm) submitForm(pendingConfirm.id);
+          if (pendingConfirm) runAction(pendingConfirm);
         }}
       />
     </div>

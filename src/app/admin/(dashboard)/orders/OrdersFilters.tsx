@@ -32,15 +32,19 @@ export function OrdersFilters({
     if (qq) params.set("q", qq);
     if (ss && ss !== "all") params.set("status", ss);
     if (pp && pp !== "all") params.set("payment", pp);
-    router.push(`/admin/orders?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `/admin/orders?${qs}` : "/admin/orders");
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <SearchField
         value={query}
-        onChange={setQuery}
-        onSubmit={() => apply()}
+        onChange={(value) => {
+          setQuery(value);
+          apply({ q: value });
+        }}
+        onSubmit={() => apply({ q: query })}
         placeholder="Search order, customer, email…"
       />
       <select

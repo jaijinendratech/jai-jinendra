@@ -12,19 +12,28 @@ import {
 } from "@/components/admin/AdminStatusSelect";
 import { SearchField } from "@/components/admin/SearchField";
 import { ProductRowActions } from "@/components/admin/ProductRowActions";
+import {
+  ProductFormModal,
+  preloadProductForm,
+  type ProductModalState,
+} from "@/components/admin/ProductEditModal";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 
 export function ProductsTable({
   products,
+  categories,
   supabaseOn,
 }: {
   products: AdminProductListItem[];
+  categories: { id: string; title: string }[];
   supabaseOn: boolean;
 }) {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("name");
+  const [modal, setModal] = useState<ProductModalState>(null);
 
-  const categories = useMemo(
+  const categoryOptions = useMemo(
     () => Array.from(new Set(products.map((p) => p.category))).sort(),
     [products],
   );
@@ -46,7 +55,7 @@ export function ProductsTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SearchField
           value={q}
           onChange={setQ}
@@ -58,7 +67,7 @@ export function ProductsTable({
           className={`${fieldClassName()} max-w-45 mt-0!`}
         >
           <option value="all">All categories</option>
-          {categories.map((c) => (
+          {categoryOptions.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>
@@ -73,6 +82,18 @@ export function ProductsTable({
           <option value="price">Sort: price</option>
           <option value="stock">Sort: stock</option>
         </select>
+        <div className="ml-auto">
+          <AdminIconButton
+            label="Add product"
+            icon="plus"
+            variant="primary"
+            showLabel
+            onClick={() => {
+              preloadProductForm();
+              setModal({ mode: "create" });
+            }}
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-outline-variant/25 bg-white shadow-sm">
@@ -159,7 +180,11 @@ export function ProductsTable({
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <ProductRowActions product={product} supabaseOn={supabaseOn} />
+                  <ProductRowActions
+                    product={product}
+                    supabaseOn={supabaseOn}
+                    onEdit={(id) => setModal({ mode: "edit", productId: id })}
+                  />
                 </td>
               </tr>
             ))}
@@ -171,6 +196,14 @@ export function ProductsTable({
           No products match.
         </p>
       ) : null}
+
+      <ProductFormModal
+        state={modal}
+        categories={categories}
+        supabase={supabaseOn}
+        onClose={() => setModal(null)}
+        onCreated={(productId) => setModal({ mode: "edit", productId })}
+      />
     </div>
   );
 }

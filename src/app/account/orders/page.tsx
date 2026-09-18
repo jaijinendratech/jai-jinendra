@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -37,48 +36,57 @@ export default async function AccountOrdersPage({
   }
 
   return (
-    <main className="container-jj py-6 md:py-10">
-      <Breadcrumbs
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Account", href: "/account" },
-          { label: "Orders" },
-        ]}
-      />
-
-      <h1 className="font-display mt-4 text-3xl font-semibold text-on-surface">
-        Order history
-      </h1>
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-on-surface">
+          Orders
+        </h2>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Your complete order history.
+        </p>
+      </div>
 
       {params.confirmed ? (
-        <p className="mt-4 rounded-lg border border-secondary/30 bg-secondary-container/30 px-4 py-3 text-sm">
-          Order <strong>{params.confirmed}</strong> placed successfully. Confirmation email sent if configured.
+        <p className="rounded-lg border border-secondary/30 bg-secondary-container/30 px-4 py-3 text-sm">
+          Order <strong>{params.confirmed}</strong> placed successfully.
+          Confirmation email sent if configured.
         </p>
       ) : null}
 
       {orders.length === 0 ? (
-        <p className="mt-6 text-sm text-on-surface-variant">
+        <p className="text-sm text-on-surface-variant">
           No orders yet.{" "}
           <Link href="/catalogue" className="text-primary hover:underline">
             Start shopping
           </Link>
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-outline-variant/20 rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
+        <ul className="divide-y divide-outline-variant/20 rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
           {orders.map((order) => (
-            <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm">
-              <div>
-                <p className="font-semibold text-on-surface">{order.order_number}</p>
-                <p className="text-on-surface-variant">
-                  {new Date(order.created_at).toLocaleDateString("en-IN")} ·{" "}
-                  <span className="capitalize">{order.status.replace(/_/g, " ")}</span>
+            <li key={order.id}>
+              <Link
+                href={`/account/orders/${order.id}`}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm transition hover:bg-surface-container-low/60"
+              >
+                <div>
+                  <p className="font-semibold text-primary">
+                    {order.order_number}
+                  </p>
+                  <p className="text-on-surface-variant">
+                    {new Date(order.created_at).toLocaleDateString("en-IN")} ·{" "}
+                    <span className="capitalize">
+                      {order.status.replace(/_/g, " ")}
+                    </span>
+                  </p>
+                </div>
+                <p className="price font-bold">
+                  {formatINR(order.total_paise / 100)}
                 </p>
-              </div>
-              <p className="price font-bold">{formatINR(order.total_paise / 100)}</p>
+              </Link>
             </li>
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

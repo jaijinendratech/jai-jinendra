@@ -19,7 +19,6 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/orders", label: "Orders", group: "commerce" },
   { href: "/admin/customers", label: "Customers", group: "commerce" },
   { href: "/admin/content/home", label: "Homepage content", group: "content" },
-  { href: "/admin/content/promise", label: "Promise content", group: "content" },
   { href: "/admin/content/carousels", label: "Carousels", group: "content" },
   { href: "/admin/media", label: "Media", group: "content" },
   { href: "/admin/enquiries", label: "Enquiries", group: "ops" },

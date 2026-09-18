@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import {
   LuLayoutDashboard,
   LuPackage,
@@ -12,7 +12,6 @@ import {
   LuShoppingBag,
   LuUsers,
   LuFileText,
-  LuHeartHandshake,
   LuImages,
   LuImage,
   LuMessageSquare,
@@ -25,6 +24,7 @@ import {
 import type { IconType } from "react-icons";
 import { logoutAdminAction } from "@/lib/auth";
 import { adminNav } from "@/data/admin-mock";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 
 const groupLabels = {
   overview: "Overview",
@@ -43,7 +43,6 @@ const navIcons: Record<string, IconType> = {
   "/admin/orders": LuShoppingBag,
   "/admin/customers": LuUsers,
   "/admin/content/home": LuFileText,
-  "/admin/content/promise": LuHeartHandshake,
   "/admin/content/carousels": LuImages,
   "/admin/media": LuImage,
   "/admin/enquiries": LuMessageSquare,
@@ -51,9 +50,30 @@ const navIcons: Record<string, IconType> = {
   "/admin/settings": LuSettings,
 };
 
+/** High-traffic admin routes — warm the RSC/client chunks early. */
+const PREFETCH_HREFS = [
+  "/admin",
+  "/admin/products",
+  "/admin/orders",
+  "/admin/customers",
+  "/admin/categories",
+  "/admin/inventory",
+  "/admin/combos",
+  "/admin/outlets",
+] as const;
+
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    for (const href of PREFETCH_HREFS) {
+      router.prefetch(href);
+    }
+  }, [router]);
 
   const groups = (Object.keys(groupLabels) as (keyof typeof groupLabels)[]).map(
     (group) => ({
@@ -98,7 +118,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        prefetch
                         onClick={() => setOpen(false)}
+                        onMouseEnter={() => router.prefetch(item.href)}
                         className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition ${
                           active
                             ? "bg-primary text-white"
@@ -117,17 +139,31 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="shrink-0 border-t border-outline-variant/20 p-4">
-          <form action={logoutAdminAction}>
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2.5 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
-            >
-              <LuLogOut className="h-4 w-4" aria-hidden />
-              Sign out
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => setSignOutOpen(true)}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2.5 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
+          >
+            <LuLogOut className="h-4 w-4" aria-hidden />
+            Sign out
+          </button>
         </div>
       </aside>
+
+      <AdminConfirmDialog
+        isOpen={signOutOpen}
+        onOpenChange={setSignOutOpen}
+        title="Sign out?"
+        message="You will need to sign in again to manage the store."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        danger
+        onConfirm={() => {
+          startTransition(() => {
+            void logoutAdminAction();
+          });
+        }}
+      />
 
       {open ? (
         <button

@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteCategoryAction } from "@/lib/admin/actions";
 import {
   AdminActionsMenu,
   type AdminMenuItem,
@@ -9,24 +8,26 @@ import {
 export function CategoryRowActions({
   id,
   productCount,
+  onEdit,
 }: {
   id: string;
   productCount: number;
+  onEdit: (id: string) => void;
 }) {
   const items: AdminMenuItem[] = [
     {
       id: "edit",
-      type: "link",
+      type: "button",
       label: "Edit",
       icon: "pencil",
-      href: `/admin/categories?edit=${id}`,
+      onPress: () => onEdit(id),
     },
     {
       id: "delete",
       type: "form",
       label: "Delete",
       icon: "trash",
-      action: deleteCategoryAction,
+      actionKey: "deleteCategory",
       fields: { id },
       confirmMessage:
         productCount > 0

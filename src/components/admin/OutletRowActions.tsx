@@ -1,26 +1,31 @@
 "use client";
 
-import { deleteOutletAction } from "@/lib/admin/actions";
 import {
   AdminActionsMenu,
   type AdminMenuItem,
 } from "@/components/admin/AdminActionsMenu";
 
-export function OutletRowActions({ id }: { id: string }) {
+export function OutletRowActions({
+  id,
+  onEdit,
+}: {
+  id: string;
+  onEdit: (id: string) => void;
+}) {
   const items: AdminMenuItem[] = [
     {
       id: "edit",
-      type: "link",
+      type: "button",
       label: "Edit",
       icon: "pencil",
-      href: `/admin/outlets?edit=${id}`,
+      onPress: () => onEdit(id),
     },
     {
       id: "delete",
       type: "form",
       label: "Delete",
       icon: "trash",
-      action: deleteOutletAction,
+      actionKey: "deleteOutlet",
       fields: { id },
       confirmMessage: "Delete this outlet?",
       danger: true,

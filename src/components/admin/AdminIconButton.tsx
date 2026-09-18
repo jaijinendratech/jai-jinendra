@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useFormStatus } from "react-dom";
 import { cn } from "@/lib/cn";
 import { AdminIconTooltip } from "@/components/admin/AdminIconTooltip";
 import type { AdminIconName } from "@/components/admin/admin-icons";
@@ -21,6 +22,8 @@ type SharedProps = {
   variant?: keyof typeof variantClass;
   className?: string;
   disabled?: boolean;
+  /** When true, renders a compact icon + text button (for primary Add/Save CTAs). */
+  showLabel?: boolean;
 };
 
 export function AdminIconButton(
@@ -32,10 +35,20 @@ export function AdminIconButton(
       })
     | (SharedProps & { as: "link"; href: string }),
 ) {
-  const { label, icon, variant = "ghost", className, disabled } = props;
+  const {
+    label,
+    icon,
+    variant = "ghost",
+    className,
+    disabled,
+    showLabel = false,
+  } = props;
 
   const buttonClass = cn(
-    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+    "inline-flex shrink-0 items-center justify-center rounded-lg transition-colors",
+    showLabel
+      ? "h-8 gap-1.5 px-3 text-sm font-semibold"
+      : "h-8 w-8",
     variantClass[variant],
     className,
   );
@@ -44,6 +57,7 @@ export function AdminIconButton(
     props.as === "link" ? (
       <Link href={props.href} className={buttonClass} aria-label={label}>
         <AdminIcon name={icon} />
+        {showLabel ? <span>{label}</span> : null}
       </Link>
     ) : (
       <button
@@ -54,8 +68,40 @@ export function AdminIconButton(
         aria-label={label}
       >
         <AdminIcon name={icon} />
+        {showLabel ? <span>{label}</span> : null}
       </button>
     );
 
+  if (showLabel) return child;
   return <AdminIconTooltip label={label}>{child}</AdminIconTooltip>;
+}
+
+/** Submit button that disables and shows pending label via useFormStatus. */
+export function AdminFormSubmitButton({
+  label,
+  pendingLabel = "Saving…",
+  icon,
+  variant = "primary",
+  className,
+  disabled,
+}: {
+  label: string;
+  pendingLabel?: string;
+  icon: AdminIconName;
+  variant?: keyof typeof variantClass;
+  className?: string;
+  disabled?: boolean;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <AdminIconButton
+      type="submit"
+      label={pending ? pendingLabel : label}
+      icon={icon}
+      variant={variant}
+      showLabel
+      disabled={disabled || pending}
+      className={className}
+    />
+  );
 }

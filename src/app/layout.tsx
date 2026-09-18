@@ -83,7 +83,11 @@ export default async function RootLayout({
   const searchProducts = isAdmin ? [] : await getPublishedProducts();
 
   return (
-    <html lang="en" className={`${playfair.variable} ${jakarta.variable} h-full scroll-smooth`}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${playfair.variable} ${jakarta.variable} h-full scroll-smooth`}
+    >
       <body className="flex min-h-full flex-col bg-background font-sans text-on-surface antialiased">
         {isAdmin ? (
           <div className="flex-1">{children}</div>

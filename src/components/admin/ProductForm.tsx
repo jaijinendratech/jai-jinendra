@@ -1,27 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AdminProductDetail } from "@/lib/admin/queries";
 import {
   saveProductAction,
   saveVariantAction,
-  deleteVariantAction,
   saveProductImageAction,
-  deleteProductImageAction,
 } from "@/lib/admin/actions";
 import {
   AdminCard,
+  AdminFieldFull,
+  AdminFieldGrid,
+  adminFieldFullClassName,
   fieldClassName,
   labelClassName,
 } from "@/components/admin/ui";
-import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import {
+  AdminFormSubmitButton,
+  AdminIconButton,
+} from "@/components/admin/AdminIconButton";
 import { AdminActionsMenu } from "@/components/admin/AdminActionsMenu";
-import { SlugField } from "@/components/admin/SlugField";
 import { ChipInput } from "@/components/admin/ChipInput";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { MediaUploader } from "@/components/admin/MediaUploader";
 import { suggestTagline } from "@/lib/admin/slug";
+import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 import { formatINR } from "@/lib/format";
+import { cn } from "@/lib/cn";
 
 type CategoryOption = { id: string; title: string };
 
@@ -29,44 +35,102 @@ export function ProductForm({
   product,
   categories,
   supabase,
+  layout = "page",
+  onCreated,
+  onModalRefresh,
 }: {
   product: AdminProductDetail | null;
   categories: CategoryOption[];
   supabase: boolean;
+  /** `modal` hides page chrome (back link / outer title) for use inside AdminModal. */
+  layout?: "page" | "modal";
+  /** Called after a successful create in modal layout (auto-open Edit). */
+  onCreated?: (productId: string) => void;
+  /** Reload modal product detail after variant/image/save updates. */
+  onModalRefresh?: () => void;
 }) {
+  const router = useRouter();
   const isNew = !product;
+  const isModal = layout === "modal";
   const [name, setName] = useState(product?.name ?? "");
   const [tagline, setTagline] = useState(product?.tagline ?? "");
   const [taglineTouched, setTaglineTouched] = useState(Boolean(product?.tagline));
   const [tab, setTab] = useState<"details" | "variants" | "images">("details");
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!taglineTouched) setTagline(suggestTagline(name));
   }, [name, taglineTouched]);
 
+  async function handleSaveProduct(formData: FormData) {
+    setFormError(null);
+    try {
+      const result = await saveProductAction(formData);
+      if (result && "productId" in result && result.productId) {
+        router.refresh();
+        if (result.created && onCreated) {
+          onCreated(result.productId);
+          return;
+        }
+        onModalRefresh?.();
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setFormError(
+        error instanceof Error ? error.message : "Could not save product.",
+      );
+    }
+  }
+
+  async function handleNestedAction(
+    action: (formData: FormData) => Promise<void>,
+    formData: FormData,
+  ) {
+    setFormError(null);
+    try {
+      await action(formData);
+      router.refresh();
+      onModalRefresh?.();
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setFormError(
+        error instanceof Error ? error.message : "Could not save changes.",
+      );
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-on-surface">
-            {isNew ? "Add product" : "Edit product"}
-          </h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {supabase
-              ? isNew
-                ? "Create the product first, then add variants and images."
-                : "Changes save to Supabase."
-              : "Form preview — connect Supabase to persist."}
-          </p>
+    <div className={cn(isModal ? "space-y-4" : "mx-auto max-w-4xl space-y-6")}>
+      {!isModal ? (
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-on-surface">
+              {isNew ? "Add product" : "Edit product"}
+            </h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              {supabase
+                ? isNew
+                  ? "Create the product first, then add variants and images."
+                  : "Changes save to Supabase."
+                : "Form preview — connect Supabase to persist."}
+            </p>
+          </div>
+          <AdminIconButton
+            as="link"
+            href="/admin/products"
+            label="Back to products"
+            icon="arrow-left"
+            variant="secondary"
+            showLabel
+          />
         </div>
-        <AdminIconButton
-          as="link"
-          href="/admin/products"
-          label="Back to products"
-          icon="arrow-left"
-          variant="secondary"
-        />
-      </div>
+      ) : null}
+
+      {formError ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          {formError}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-2 border-b border-outline-variant/25 pb-2">
         {(
@@ -96,12 +160,22 @@ export function ProductForm({
       </div>
 
       {tab === "details" ? (
-        <form action={saveProductAction} className="space-y-6">
+        <form
+          action={
+            isModal
+              ? handleSaveProduct
+              : async (formData) => {
+                  await saveProductAction(formData);
+                }
+          }
+          className="space-y-6"
+        >
           {product ? <input type="hidden" name="id" value={product.id} /> : null}
+          {isModal ? <input type="hidden" name="returnTo" value="modal" /> : null}
 
           <AdminCard title="Basic information">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={`${labelClassName()} sm:col-span-2`}>
+            <AdminFieldGrid>
+              <label className={labelClassName()}>
                 Name
                 <input
                   name="name"
@@ -111,7 +185,6 @@ export function ProductForm({
                   className={fieldClassName()}
                 />
               </label>
-              <SlugField nameValue={name} defaultSlug={product?.slug ?? ""} />
               <label className={labelClassName()}>
                 Category
                 <select
@@ -127,7 +200,7 @@ export function ProductForm({
                   ))}
                 </select>
               </label>
-              <div className="sm:col-span-2">
+              <div>
                 <ChipInput
                   name="badge"
                   label="Badge"
@@ -136,7 +209,7 @@ export function ProductForm({
                   placeholder="e.g. Bestseller — press Enter"
                 />
               </div>
-              <label className={`${labelClassName()} sm:col-span-2`}>
+              <label className={labelClassName()}>
                 Tagline
                 <input
                   name="tagline"
@@ -151,22 +224,22 @@ export function ProductForm({
                   Auto-suggested from name — edit anytime
                 </span>
               </label>
-              <div className="sm:col-span-2">
+              <AdminFieldFull>
                 <RichTextEditor
                   name="description"
                   label="Short description"
                   defaultValue={product?.description ?? ""}
                   placeholder="Short product summary…"
                 />
-              </div>
-              <div className="sm:col-span-2">
+              </AdminFieldFull>
+              <AdminFieldFull>
                 <RichTextEditor
                   name="longDescription"
                   label="Long description"
                   defaultValue={product?.longDescription ?? ""}
                   placeholder="Full story, bullets, highlights…"
                 />
-              </div>
+              </AdminFieldFull>
               <label className="flex items-center gap-2 text-sm font-semibold">
                 <input type="checkbox" name="published" defaultChecked={product?.published ?? true} />
                 Published
@@ -183,11 +256,11 @@ export function ProductForm({
                 <input type="checkbox" name="newArrival" defaultChecked={product?.newArrival ?? false} />
                 New arrival
               </label>
-            </div>
+            </AdminFieldGrid>
           </AdminCard>
 
           <AdminCard title="Food attributes">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <AdminFieldGrid>
               <label className={labelClassName()}>
                 Spice note
                 <input name="spiceNote" defaultValue={product?.spiceNote ?? ""} className={fieldClassName()} />
@@ -196,11 +269,11 @@ export function ProductForm({
                 Origin
                 <input name="origin" defaultValue={product?.origin ?? ""} className={fieldClassName()} />
               </label>
-              <label className={labelClassName()}>
+              <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
                 Shelf life
                 <input name="shelfLife" defaultValue={product?.shelfLife ?? ""} className={fieldClassName()} />
               </label>
-              <div className="sm:col-span-2">
+              <AdminFieldFull>
                 <ChipInput
                   name="dietary"
                   label="Dietary tags"
@@ -208,8 +281,8 @@ export function ProductForm({
                   defaultValue={product?.dietary ?? []}
                   placeholder="e.g. Jain — press Enter"
                 />
-              </div>
-              <div className="sm:col-span-2">
+              </AdminFieldFull>
+              <AdminFieldFull>
                 <ChipInput
                   name="ingredients"
                   label="Ingredients"
@@ -217,16 +290,15 @@ export function ProductForm({
                   defaultValue={product?.ingredients ?? []}
                   placeholder="Add ingredient — press Enter"
                 />
-              </div>
-            </div>
+              </AdminFieldFull>
+            </AdminFieldGrid>
           </AdminCard>
 
           <div className="flex flex-wrap gap-3">
-            <AdminIconButton
-              type="submit"
-              label={isNew ? "Create product" : "Save changes"}
-              icon="save"
-              variant="primary"
+            <AdminFormSubmitButton
+              label={isNew ? "Add product" : "Save product"}
+              pendingLabel={isNew ? "Creating…" : "Saving…"}
+              icon={isNew ? "plus" : "save"}
               disabled={!supabase && isNew}
             />
           </div>
@@ -257,7 +329,7 @@ export function ProductForm({
                         type: "form",
                         label: "Remove variant",
                         icon: "trash",
-                        action: deleteVariantAction,
+                        actionKey: "deleteVariant",
                         fields: { id: v.id, productId: product.id },
                         confirmMessage: "Remove this variant?",
                         danger: true,
@@ -274,17 +346,13 @@ export function ProductForm({
 
           {supabase ? (
             <form
-              action={saveVariantAction}
+              action={(fd) => handleNestedAction(saveVariantAction, fd)}
               className="grid gap-3 rounded-lg border border-outline-variant/20 bg-surface-container-low p-4 sm:grid-cols-3"
             >
               <input type="hidden" name="productId" value={product.id} />
               <label className={labelClassName()}>
                 Label
                 <input name="label" required className={fieldClassName()} placeholder="400g" />
-              </label>
-              <label className={labelClassName()}>
-                SKU
-                <input name="sku" required className={fieldClassName()} />
               </label>
               <label className={labelClassName()}>
                 Price (INR)
@@ -306,12 +374,7 @@ export function ProductForm({
                 <input type="checkbox" name="available" defaultChecked />
                 Available for sale
               </label>
-              <AdminIconButton
-                type="submit"
-                label="Add variant"
-                icon="plus"
-                variant="primary"
-              />
+              <AdminFormSubmitButton label="Add variant" pendingLabel="Adding…" icon="plus" />
             </form>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to manage variants.</p>
@@ -350,7 +413,7 @@ export function ProductForm({
                         type: "form",
                         label: "Remove image",
                         icon: "trash",
-                        action: deleteProductImageAction,
+                        actionKey: "deleteProductImage",
                         fields: { id: img.id, productId: product.id },
                         confirmMessage: "Remove this image?",
                         danger: true,
@@ -368,7 +431,10 @@ export function ProductForm({
           </ul>
 
           {supabase ? (
-            <form action={saveProductImageAction} className="space-y-3">
+            <form
+              action={(fd) => handleNestedAction(saveProductImageAction, fd)}
+              className="space-y-3"
+            >
               <input type="hidden" name="productId" value={product.id} />
               <MediaUploader name="storagePath" folder="products" label="Upload image" />
               <label className={labelClassName()}>
@@ -376,12 +442,7 @@ export function ProductForm({
                 <input name="alt" className={fieldClassName()} />
               </label>
               <input type="hidden" name="sortOrder" value={product.images.length} />
-              <AdminIconButton
-                type="submit"
-                label="Attach image"
-                icon="plus"
-                variant="primary"
-              />
+              <AdminFormSubmitButton label="Attach image" pendingLabel="Attaching…" icon="plus" />
             </form>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to upload images.</p>

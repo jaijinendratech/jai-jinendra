@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   getAdminCategories,
   getAdminProductById,
@@ -22,9 +22,14 @@ export default async function AdminProductEditPage({
 }) {
   const { id } = await params;
   const { notice } = await searchParams;
-  const isNew = id === "new";
-  const product = isNew ? null : await getAdminProductById(id);
-  if (!isNew && !product) notFound();
+
+  // Create is modal-based on the products list; keep this route for edit deep-links / duplicate.
+  if (id === "new") {
+    redirect("/admin/products");
+  }
+
+  const product = await getAdminProductById(id);
+  if (!product) notFound();
 
   const categories = await getAdminCategories();
   const { supabase } = getIntegrationStatus();

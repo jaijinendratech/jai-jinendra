@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { getAdminProducts, getIntegrationStatus } from "@/lib/admin/queries";
-import { AdminPageHeader } from "@/components/admin/ui";
-import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { getAdminCategories, getAdminProducts, getIntegrationStatus } from "@/lib/admin/queries";
+import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
 import { ProductsTable } from "./ProductsTable";
 
 export const metadata: Metadata = {
@@ -9,8 +8,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminProductsPage() {
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const { notice } = await searchParams;
   const products = await getAdminProducts();
+  const categories = await getAdminCategories();
   const { supabase } = getIntegrationStatus();
 
   return (
@@ -22,17 +27,13 @@ export default async function AdminProductsPage() {
             ? `${products.length} products from Supabase.`
             : `${products.length} catalogue items (mock — connect Supabase to persist).`
         }
-        actions={
-          <AdminIconButton
-            as="link"
-            href="/admin/products/new"
-            label="Add product"
-            icon="plus"
-            variant="primary"
-          />
-        }
       />
-      <ProductsTable products={products} supabaseOn={supabase} />
+      <NoticeBanner notice={notice} />
+      <ProductsTable
+        products={products}
+        categories={categories.map((c) => ({ id: c.id, title: c.title }))}
+        supabaseOn={supabase}
+      />
     </div>
   );
 }

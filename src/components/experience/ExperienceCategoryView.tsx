@@ -3,22 +3,30 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { PageHeroCarousel } from "@/components/shared/PageHeroCarousel";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import type { ExperiencePageConfig } from "@/data/experience-pages";
+import type {
+  ExperiencePageConfig,
+  ExperienceSlide,
+} from "@/data/experience-pages";
 import type { Product } from "@/types/catalog";
 
 export function ExperienceCategoryView({
   config,
   products,
   gridId,
+  slides,
 }: {
   config: ExperiencePageConfig;
   products: Product[];
   gridId: string;
+  /** Optional CMS slides; falls back to config.slides. */
+  slides?: readonly ExperienceSlide[];
 }) {
+  const carouselSlides = slides?.length ? slides : config.slides;
+
   return (
     <>
       <PageHeroCarousel
-        slides={config.slides}
+        slides={carouselSlides}
         label={`${config.h1} highlights`}
         showNavButtons={false}
         compactMobile
@@ -31,7 +39,10 @@ export function ExperienceCategoryView({
           />
         </div>
 
-        <section id={gridId} className="mt-2 scroll-mt-24 md:mt-12 md:scroll-mt-28">
+        <section
+          id={gridId}
+          className="mt-2 scroll-mt-24 md:mt-12 md:scroll-mt-28"
+        >
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3 md:mb-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">

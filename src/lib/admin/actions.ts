@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import type { EnquiryStatus, OrderStatus, PaymentStatus } from "@/types/database";
+import { slugify } from "@/lib/admin/slug";
 
 function revalidateAdmin(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
@@ -20,6 +21,107 @@ function parseList(raw: string): string[] {
 
 function moneyToPaise(raw: FormDataEntryValue | null): number {
   return Math.round(Number(raw ?? 0) * 100);
+}
+
+async function uniqueCategorySlug(
+  title: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const base = slugify(title) || "category";
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin.from("categories").select("id").eq("slug", candidate).limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+}
+
+async function uniqueProductSlug(
+  name: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const base = slugify(name) || "product";
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin.from("products").select("id").eq("slug", candidate).limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+}
+
+async function uniqueComboSlug(
+  name: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const base = slugify(name) || "combo";
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin.from("combos").select("id").eq("slug", candidate).limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+}
+
+async function uniqueVariantSku(
+  productSlug: string,
+  label: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const labelSlug = slugify(label) || "var";
+  const base = `JJ-${slugify(productSlug) || "product"}-${labelSlug}`.toUpperCase();
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin
+      .from("product_variants")
+      .select("id")
+      .eq("sku", candidate)
+      .limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+}
+
+async function uniqueComboSku(
+  name: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const base = `JJ-COMBO-${slugify(name) || "pack"}`.toUpperCase();
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin.from("combos").select("id").eq("sku", candidate).limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
 }
 
 export async function updateOrderStatusAction(formData: FormData) {
@@ -75,8 +177,11 @@ export async function saveProductAction(formData: FormData) {
   const { sanitizeAdminHtml } = await import("@/lib/sanitize-html");
 
   const id = String(formData.get("id") ?? "");
-  const slug = String(formData.get("slug") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
+  if (!name) {
+    throw new Error("Name is required.");
+  }
+  const slug = await uniqueProductSlug(name, id || undefined);
   const description = sanitizeAdminHtml(String(formData.get("description") ?? ""));
   const longDescription =
     sanitizeAdminHtml(String(formData.get("longDescription") ?? "")) || null;
@@ -132,7 +237,36 @@ export async function saveProductAction(formData: FormData) {
   }
 
   revalidateAdmin("/admin/products", `/admin/products/${productId}`, "/admin");
+
+  const returnTo = String(formData.get("returnTo") ?? "");
+  // Modal CRUD: return id so the client can stay on the list and open Edit after create.
+  if (returnTo === "modal") {
+    return { ok: true as const, productId, created: !id };
+  }
+  if (returnTo === "list") {
+    redirect("/admin/products?notice=saved");
+  }
   if (productId) redirect(`/admin/products/${productId}`);
+  return { ok: true as const, productId, created: !id };
+}
+
+/** Load a product for the admin edit modal (client-callable). */
+export async function loadAdminProductAction(id: string) {
+  await requireAdmin();
+  const { getAdminProductById } = await import("@/lib/admin/queries");
+  return getAdminProductById(id);
+}
+
+/** Load a customer + orders for the admin detail drawer (client-callable). */
+export async function loadAdminCustomerAction(id: string) {
+  await requireAdmin();
+  const { getAdminCustomerById, getAdminCustomerOrders } = await import(
+    "@/lib/admin/queries"
+  );
+  const customer = await getAdminCustomerById(id);
+  if (!customer) return null;
+  const orders = await getAdminCustomerOrders(customer.id, customer.email);
+  return { customer, orders };
 }
 
 export async function deleteProductAction(formData: FormData) {
@@ -274,10 +408,34 @@ export async function saveVariantAction(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const productId = String(formData.get("productId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const admin = createAdminClient();
+
+  const { data: product } = await admin
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  const productSlug = product?.slug ?? "product";
+
+  // Keep existing SKU on edit so order line snapshots stay stable.
+  let sku = String(formData.get("sku") ?? "").trim();
+  if (id) {
+    const { data: existing } = await admin
+      .from("product_variants")
+      .select("sku")
+      .eq("id", id)
+      .maybeSingle();
+    sku = existing?.sku ?? sku;
+  } else {
+    sku = await uniqueVariantSku(productSlug, label);
+  }
+
   const payload = {
     product_id: productId,
-    label: String(formData.get("label") ?? "").trim(),
-    sku: String(formData.get("sku") ?? "").trim(),
+    label,
+    sku,
     price_paise: moneyToPaise(formData.get("price")),
     mrp_paise: formData.get("mrp")
       ? moneyToPaise(formData.get("mrp"))
@@ -291,7 +449,6 @@ export async function saveVariantAction(formData: FormData) {
     sort_order: Number(formData.get("sortOrder") ?? 0),
   };
 
-  const admin = createAdminClient();
   if (id) {
     await admin.from("product_variants").update(payload).eq("id", id);
   } else {
@@ -445,9 +602,16 @@ export async function saveCategoryAction(formData: FormData) {
   }
 
   const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) {
+    throw new Error("Title is required.");
+  }
+
+  const slug = await uniqueCategorySlug(title, id || undefined);
+
   const payload = {
-    slug: String(formData.get("slug") ?? "").trim(),
-    title: String(formData.get("title") ?? "").trim(),
+    slug,
+    title,
     subtitle: String(formData.get("subtitle") ?? "") || null,
     image_url: String(formData.get("imageUrl") ?? "") || null,
     sort_order: Number(formData.get("sortOrder") ?? 0),
@@ -458,9 +622,11 @@ export async function saveCategoryAction(formData: FormData) {
 
   const admin = createAdminClient();
   if (id) {
-    await admin.from("categories").update(payload).eq("id", id);
+    const { error } = await admin.from("categories").update(payload).eq("id", id);
+    if (error) throw new Error(error.message);
   } else {
-    await admin.from("categories").insert(payload);
+    const { error } = await admin.from("categories").insert(payload);
+    if (error) throw new Error(error.message);
   }
 
   revalidateAdmin("/admin/categories", "/admin");
@@ -514,12 +680,33 @@ export async function saveComboAction(formData: FormData) {
   }
 
   const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) {
+    throw new Error("Name is required.");
+  }
+
+  const slug = await uniqueComboSlug(name, id || undefined);
+  const admin = createAdminClient();
+
+  // Keep existing SKU on edit; generate only on create.
+  let sku: string | null = null;
+  if (id) {
+    const { data: existing } = await admin
+      .from("combos")
+      .select("sku")
+      .eq("id", id)
+      .maybeSingle();
+    sku = existing?.sku ?? null;
+  } else {
+    sku = await uniqueComboSku(name);
+  }
+
   const payload = {
-    slug: String(formData.get("slug") ?? "").trim(),
-    name: String(formData.get("name") ?? "").trim(),
+    slug,
+    name,
     description: String(formData.get("description") ?? "") || null,
     image_url: String(formData.get("imageUrl") ?? "") || null,
-    sku: String(formData.get("sku") ?? "") || null,
+    sku,
     price_paise: moneyToPaise(formData.get("price")),
     mrp_paise: formData.get("mrp") ? moneyToPaise(formData.get("mrp")) : null,
     featured: formData.get("featured") === "on",
@@ -528,7 +715,6 @@ export async function saveComboAction(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
-  const admin = createAdminClient();
   let comboId = id;
   if (id) {
     await admin.from("combos").update(payload).eq("id", id);
@@ -632,7 +818,6 @@ export async function saveHomepageContentAction(formData: FormData) {
   const announcement = String(formData.get("announcement") ?? "");
   const celebrationTitle = String(formData.get("celebrationTitle") ?? "");
   const celebrationBody = String(formData.get("celebrationBody") ?? "");
-  const slidesRaw = String(formData.get("heroSlidesJson") ?? "[]");
 
   const admin = createAdminClient();
   await Promise.all([
@@ -654,18 +839,9 @@ export async function saveHomepageContentAction(formData: FormData) {
       },
       { onConflict: "page_key,section_key" },
     ),
-    admin.from("content_blocks").upsert(
-      {
-        page_key: "home",
-        section_key: "hero_slides",
-        content: JSON.parse(slidesRaw),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "page_key,section_key" },
-    ),
   ]);
 
-  revalidateAdmin("/admin/content/home", "/admin/content/carousels", "/");
+  revalidateAdmin("/admin/content/home", "/");
 }
 
 export async function savePromiseContentAction(formData: FormData) {
@@ -695,11 +871,12 @@ export async function saveCarouselSlidesAction(formData: FormData) {
     redirect("/admin/content/carousels?notice=supabase-required");
   }
 
+  const pageKey = String(formData.get("pageKey") ?? "home").trim() || "home";
   const slidesRaw = String(formData.get("slidesJson") ?? "[]");
   const admin = createAdminClient();
   await admin.from("content_blocks").upsert(
     {
-      page_key: "home",
+      page_key: pageKey,
       section_key: "hero_slides",
       content: JSON.parse(slidesRaw),
       updated_at: new Date().toISOString(),
@@ -707,7 +884,18 @@ export async function saveCarouselSlidesAction(formData: FormData) {
     { onConflict: "page_key,section_key" },
   );
 
-  revalidateAdmin("/admin/content/carousels", "/admin/content/home", "/");
+  const storefrontPath =
+    pageKey === "home"
+      ? "/"
+      : pageKey === "kachoris"
+        ? "/kachoris"
+        : `/${pageKey}`;
+
+  revalidateAdmin(
+    "/admin/content/carousels",
+    "/admin/content/home",
+    storefrontPath,
+  );
 }
 
 export async function updateEnquiryStatusAction(formData: FormData) {
@@ -746,7 +934,7 @@ export async function updateCustomerProfileAction(formData: FormData) {
     })
     .eq("id", id);
 
-  revalidateAdmin("/admin/customers", `/admin/customers/${id}`);
+  revalidateAdmin("/admin/customers");
 }
 
 export async function saveOutletAction(formData: FormData) {
