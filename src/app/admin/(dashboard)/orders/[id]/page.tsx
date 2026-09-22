@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import { getAdminOrderById, getIntegrationStatus } from "@/lib/admin/queries";
 import {
+  createShiprocketShipmentAction,
   updateOrderPaymentStatusAction,
   updateOrderShippingAction,
   updateOrderStatusAction,
@@ -40,7 +41,8 @@ export default async function AdminOrderDetailPage({
   const { id } = await params;
   const order = await getAdminOrderById(id);
   if (!order) notFound();
-  const { supabase } = getIntegrationStatus();
+  const { supabase, shiprocket } = getIntegrationStatus();
+  const integrations = { shiprocket };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -190,10 +192,33 @@ export default async function AdminOrderDetailPage({
       </AdminCard>
 
       {supabase ? (
-        <AdminCard title="Shipping (manual / Shiprocket fields)">
-            <p className="mb-4 text-xs text-on-surface-variant">
-              Shiprocket API is not wired yet — enter courier/AWB manually when known.
-            </p>
+        <AdminCard title="Shipping">
+            {integrations.shiprocket && !order.shipmentId && !order.awbCode ? (
+              <form action={createShiprocketShipmentAction} className="mb-6">
+                <input type="hidden" name="orderId" value={order.dbId} />
+                <p className="mb-3 text-xs text-on-surface-variant">
+                  Creates a Shiprocket order for this address and assigns an AWB when
+                  a courier is available. Requires a valid Shiprocket API user in env.
+                </p>
+                <AdminIconButton
+                  type="submit"
+                  label="Create Shiprocket shipment"
+                  icon="truck"
+                  variant="primary"
+                  showLabel
+                />
+              </form>
+            ) : null}
+            {!integrations.shiprocket ? (
+              <p className="mb-4 text-xs text-amber-800">
+                Shiprocket env not set — enter courier/AWB manually below.
+              </p>
+            ) : order.shipmentId || order.awbCode ? (
+              <p className="mb-4 text-xs text-on-surface-variant">
+                Shipment linked. Edit fields below if you need to correct tracking
+                details.
+              </p>
+            ) : null}
             <form action={updateOrderShippingAction}>
               <AdminFieldGrid>
                 <input type="hidden" name="orderId" value={order.dbId} />

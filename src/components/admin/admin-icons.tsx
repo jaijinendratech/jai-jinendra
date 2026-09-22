@@ -12,6 +12,7 @@ import {
   LuRefreshCw,
   LuSave,
   LuTrash2,
+  LuTruck,
   LuX,
 } from "react-icons/lu";
 
@@ -27,6 +28,7 @@ export const adminIconMap = {
   copy: LuCopy,
   eye: LuEye,
   "eye-off": LuEyeOff,
+  truck: LuTruck,
 } as const satisfies Record<string, IconType>;
 
 export type AdminIconName = keyof typeof adminIconMap;

@@ -168,6 +168,128 @@ export async function updateOrderShippingAction(formData: FormData) {
   revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`);
 }
 
+/** Create Shiprocket shipment for a paid/COD order (admin-triggered). */
+export async function createShiprocketShipmentAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required for Shiprocket.");
+  }
+
+  const {
+    createShiprocketShipment,
+    isShiprocketConfigured,
+  } = await import("@/lib/shiprocket");
+
+  if (!isShiprocketConfigured()) {
+    throw new Error(
+      "Shiprocket is not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD.",
+    );
+  }
+
+  const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) throw new Error("Missing order id.");
+
+  type OrderShipRow = {
+    id: string;
+    order_number: string;
+    created_at: string;
+    payment_method: string;
+    subtotal_paise: number;
+    customer_phone: string | null;
+    customer_email: string | null;
+    status: OrderStatus;
+    shipment_id: string | null;
+    awb_code: string | null;
+    address_snapshot: Record<string, string | undefined> | null;
+    order_items: {
+      name_snapshot: string;
+      sku_snapshot: string | null;
+      qty: number;
+      unit_price_paise: number;
+    }[] | null;
+  };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error || !data) throw new Error("Order not found.");
+  const row = data as unknown as OrderShipRow;
+
+  if (row.shipment_id || row.awb_code) {
+    throw new Error(
+      "This order already has a shipment. Clear AWB/shipment fields first to recreate.",
+    );
+  }
+
+  const addr = (row.address_snapshot ?? {}) as {
+    name?: string;
+    phone?: string;
+    email?: string;
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
+
+  const items = (row.order_items ?? []).map(
+    (item: {
+      name_snapshot: string;
+      sku_snapshot: string | null;
+      qty: number;
+      unit_price_paise: number;
+    }) => ({
+      name: item.name_snapshot,
+      sku: item.sku_snapshot || "ITEM",
+      units: item.qty,
+      sellingPriceRupees: item.unit_price_paise / 100,
+    }),
+  );
+
+  const result = await createShiprocketShipment({
+    orderNumber: row.order_number,
+    orderDate: row.created_at,
+    paymentMethod: row.payment_method,
+    subtotalRupees: row.subtotal_paise / 100,
+    address: {
+      name: addr.name || "Customer",
+      phone: row.customer_phone || addr.phone || "",
+      email: row.customer_email || addr.email,
+      line1: addr.line1 || "",
+      line2: addr.line2,
+      city: addr.city || "",
+      state: addr.state || "",
+      pincode: addr.pincode || "",
+    },
+    items,
+  });
+
+  await admin
+    .from("orders")
+    .update({
+      shipment_id: result.shipmentId,
+      awb_code: result.awbCode,
+      courier_name: result.courierName,
+      tracking_url: result.trackingUrl,
+      shipping_status: result.shippingStatus,
+      status:
+        row.status === "pending_payment" || row.status === "cancelled"
+          ? row.status
+          : "dispatched",
+    })
+    .eq("id", orderId);
+
+  revalidateAdmin(
+    "/admin/orders",
+    `/admin/orders/${orderId}`,
+    `/admin/orders/${row.order_number}`,
+  );
+}
+
 export async function saveProductAction(formData: FormData) {
   await requireAdmin();
   if (!isSupabaseConfigured()) {

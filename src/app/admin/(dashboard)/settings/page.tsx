@@ -100,9 +100,10 @@ export default function AdminSettingsPage() {
 
       <AdminCard title="Shipping">
         <p className="text-sm text-on-surface-variant">
-          Free shipping threshold and zone rules live in code / shipping_zones.
-          Shiprocket order creation is intentionally deferred — order detail
-          supports manual courier, AWB, shipment ID, and tracking URL fields.
+          Flat rate ₹79 / free ≥ ₹999 lives in code. Shiprocket: set
+          SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD, and SHIPROCKET_PICKUP_LOCATION,
+          then use <strong>Create Shiprocket shipment</strong> on an order detail
+          page. Manual courier/AWB fields remain as fallback.
         </p>
       </AdminCard>
     </div>
