@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
 import { useCart } from "@/lib/cart/use-cart";
 import {
@@ -27,6 +28,7 @@ import {
   type ComboFilterId,
 } from "@/data/combo-builder";
 import { formatINR } from "@/lib/format";
+import { SafeHtml } from "@/components/shared/SafeHtml";
 
 type QtyMap = Record<string, number>;
 
@@ -43,7 +45,7 @@ function filterProducts(
       !filter ||
       filter.categories === "all" ||
       (Array.isArray(filter.categories) &&
-        filter.categories.includes(product.category as never));
+        filter.categories.includes(productCategorySlug(product) as never));
 
     const matchesQuery =
       !normalizedQuery ||
@@ -186,9 +188,11 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                     >
                       {box.name}
                     </p>
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      {box.description}
-                    </p>
+                    <SafeHtml
+                      html={box.description}
+                      as="p"
+                      className="mt-1 text-xs text-on-surface-variant"
+                    />
                     <div className="mt-3 flex items-center justify-between border-t border-outline-variant/30 pt-3">
                       <span
                         className={`text-[10px] font-bold ${isSelected ? "text-on-surface" : "text-on-surface-variant"}`}
@@ -217,7 +221,9 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                     : products.filter(
                         (product) =>
                           Array.isArray(filter.categories) &&
-                          filter.categories.includes(product.category as never),
+                          filter.categories.includes(
+                            productCategorySlug(product) as never,
+                          ),
                       ).length;
 
                 return (
@@ -279,7 +285,7 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                   <div className="relative aspect-4/3 overflow-hidden bg-surface-container-high">
                     <Image
                       src={product.image}
-                      alt={product.imageAlt}
+                      alt={product.imageAlt ?? product.name}
                       fill
                       sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -31,7 +31,7 @@ export function ProductCard({
         <Link href={productHref} className="absolute inset-0 block">
           <Image
             src={product.image}
-            alt={product.imageAlt}
+            alt={product.imageAlt ?? product.name}
             fill
             sizes="(max-width:640px) 50vw, (max-width:1024px) 50vw, 25vw"
             className="object-cover object-center transition-transform duration-300 hover:scale-105"

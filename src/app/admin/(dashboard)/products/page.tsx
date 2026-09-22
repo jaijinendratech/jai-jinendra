@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAdminCategories, getAdminProducts, getIntegrationStatus } from "@/lib/admin/queries";
+import { getAdminCategories, getAdminProducts, getAdminSubcategories, getIntegrationStatus } from "@/lib/admin/queries";
 import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
 import { ProductsTable } from "./ProductsTable";
 
@@ -16,22 +16,26 @@ export default async function AdminProductsPage({
   const { notice } = await searchParams;
   const products = await getAdminProducts();
   const categories = await getAdminCategories();
+  const subcategories = await getAdminSubcategories();
   const { supabase } = getIntegrationStatus();
+
+  const categoryOptions = categories.map((c) => ({
+    id: c.id,
+    title: c.title,
+    slug: c.slug,
+  }));
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Products"
-        description={
-          supabase
-            ? `${products.length} products from Supabase.`
-            : `${products.length} catalogue items (mock — connect Supabase to persist).`
-        }
+        description={`${products.length} treats ready for the shop floor.`}
       />
       <NoticeBanner notice={notice} />
       <ProductsTable
         products={products}
-        categories={categories.map((c) => ({ id: c.id, title: c.title }))}
+        categories={categoryOptions}
+        subcategories={subcategories}
         supabaseOn={supabase}
       />
     </div>

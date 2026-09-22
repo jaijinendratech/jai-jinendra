@@ -11,7 +11,6 @@ import {
   getLowStockItems,
   getAdminOrders,
   getAdminEnquiries,
-  getIntegrationStatus,
 } from "@/lib/admin/queries";
 import {
   AdminCard,
@@ -39,7 +38,6 @@ export default async function AdminDashboardPage({
 }) {
   const params = await searchParams;
   const days = Number(params.days ?? 14) || 14;
-  const live = getIntegrationStatus().supabase;
 
   const [
     kpis,
@@ -72,11 +70,7 @@ export default async function AdminDashboardPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Dashboard"
-        description={
-          live
-            ? "Live aggregates from Supabase."
-            : "Computed from mock catalogue & sample orders (Supabase offline)."
-        }
+        description="A quick look at today’s shop — orders, stock, and what’s moving."
         actions={
           <div className="flex gap-2 text-xs">
             {[7, 14, 30].map((d) => (

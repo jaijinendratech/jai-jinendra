@@ -19,7 +19,7 @@ export default function AdminSettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <AdminPageHeader
         title="Settings"
-        description="Store identity and integration status (secrets never shown)."
+        description="Store identity and how the shop is set up."
       />
 
       {/* <AdminCard title="Integrations">

@@ -23,11 +23,13 @@ import {
 import { ComboCardActions } from "@/components/admin/ComboCardActions";
 import { MediaUploader } from "@/components/admin/MediaUploader";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import {
   AdminStatusSelect,
   FEATURED_OPTIONS,
   PUBLISH_HIDDEN_OPTIONS,
 } from "@/components/admin/AdminStatusSelect";
+import { SafeHtml } from "@/components/shared/SafeHtml";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 
 export type AdminComboBox = {
@@ -82,15 +84,14 @@ function ComboFormFields({
             className={fieldClassName()}
           />
         </label>
-        <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
-          Description
-          <textarea
+        <AdminFieldFull>
+          <RichTextEditor
             name="description"
-            rows={2}
+            label="Description"
             defaultValue={combo?.description ?? ""}
-            className={fieldClassName()}
+            placeholder="Describe this combo…"
           />
-        </label>
+        </AdminFieldFull>
         <label className={labelClassName()}>
           Price (INR)
           <input
@@ -214,7 +215,10 @@ export function CombosManager({
               ) : null
             }
           >
-            <p className="text-sm text-on-surface-variant">{box.description}</p>
+            <SafeHtml
+              html={box.description ?? ""}
+              className="text-sm text-on-surface-variant"
+            />
             <p className="price mt-3 text-sm font-bold text-primary">
               {formatINR(box.price)}
               {box.slots ? ` · ${box.slots} slots/items` : null}

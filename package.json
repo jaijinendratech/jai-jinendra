@@ -11,6 +11,8 @@
     "seed": "npx tsx scripts/seed-supabase.ts",
     "smoke": "node scripts/smoke.mjs",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts",
+    "import:catalog": "npx tsx scripts/import-catalog.ts",
+    "seed:taxonomy": "npx tsx scripts/seed-canonical-taxonomy.ts",
     "create-admin": "npx tsx scripts/create-admin.ts",
     "promote-admin": "npx tsx scripts/promote-user-to-admin.ts",
     "test": "vitest run",
@@ -54,6 +56,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
+    "xlsx": "^0.18.5",
     "vitest": "^3.2.4"
   }
 }

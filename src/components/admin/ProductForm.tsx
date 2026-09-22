@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminProductDetail } from "@/lib/admin/queries";
+import type { AdminSubcategoryRow } from "@/lib/admin/queries";
 import {
   saveProductAction,
   saveVariantAction,
@@ -24,16 +25,173 @@ import { AdminActionsMenu } from "@/components/admin/AdminActionsMenu";
 import { ChipInput } from "@/components/admin/ChipInput";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { MediaUploader } from "@/components/admin/MediaUploader";
+import { SlugField } from "@/components/admin/SlugField";
 import { suggestTagline } from "@/lib/admin/slug";
+import { variantPresetsForCategory } from "@/lib/catalog/variant-presets";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 import { formatINR } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import type { SellingUnit } from "@/types/catalog";
 
-type CategoryOption = { id: string; title: string };
+type CategoryOption = { id: string; title: string; slug?: string };
+
+const SELLING_UNITS: SellingUnit[] = ["g", "kg", "pack", "pc", "other"];
+
+function VariantEditor({
+  productId,
+  variant,
+  onSaved,
+  onCancel,
+}: {
+  productId: string;
+  variant?: AdminProductDetail["variants"][number];
+  onSaved: () => void;
+  onCancel?: () => void;
+}) {
+  const router = useRouter();
+  const isEdit = Boolean(variant);
+
+  return (
+    <form
+      action={async (fd) => {
+        try {
+          await saveVariantAction(fd);
+          router.refresh();
+          onSaved();
+        } catch (error) {
+          if (isNextRedirectError(error)) throw error;
+          throw error;
+        }
+      }}
+      className="grid gap-3 rounded-lg border border-primary/20 bg-white p-4 sm:grid-cols-3"
+    >
+      {variant ? <input type="hidden" name="id" value={variant.id} /> : null}
+      <input type="hidden" name="productId" value={productId} />
+      <label className={labelClassName()}>
+        Label
+        <input
+          name="label"
+          required
+          defaultValue={variant?.label ?? ""}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        Selling unit
+        <select
+          name="sellingUnit"
+          defaultValue={variant?.sellingUnit ?? "other"}
+          className={fieldClassName()}
+        >
+          {SELLING_UNITS.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={labelClassName()}>
+        Qty value
+        <input
+          name="quantityValue"
+          type="number"
+          step="any"
+          defaultValue={variant?.quantityValue ?? ""}
+          className={fieldClassName()}
+          placeholder="250 / 1 for g/kg"
+        />
+      </label>
+      <label className={labelClassName()}>
+        Price (INR)
+        <input
+          name="price"
+          type="number"
+          step="0.01"
+          required
+          defaultValue={variant ? variant.pricePaise / 100 : ""}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        MRP (INR)
+        <input
+          name="mrp"
+          type="number"
+          step="0.01"
+          defaultValue={
+            variant?.mrpPaise != null ? variant.mrpPaise / 100 : ""
+          }
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        Weight (g)
+        <input
+          name="weightG"
+          type="number"
+          defaultValue={variant?.weightG ?? ""}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        Stock
+        <input
+          name="stockQty"
+          type="number"
+          defaultValue={variant?.stockQty ?? 0}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        Sort order
+        <input
+          name="sortOrder"
+          type="number"
+          defaultValue={variant?.sortOrder ?? 0}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className={labelClassName()}>
+        Low-stock threshold
+        <input
+          name="lowStockThreshold"
+          type="number"
+          defaultValue={variant?.lowStockThreshold ?? 5}
+          className={fieldClassName()}
+        />
+      </label>
+      <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-3">
+        <input
+          type="checkbox"
+          name="available"
+          defaultChecked={variant?.available ?? true}
+        />
+        Available for sale
+      </label>
+      <div className="flex flex-wrap gap-2 sm:col-span-3">
+        <AdminFormSubmitButton
+          label={isEdit ? "Save variant" : "Add variant"}
+          pendingLabel="Saving…"
+          icon={isEdit ? "save" : "plus"}
+        />
+        {onCancel ? (
+          <button
+            type="button"
+            className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-sm font-semibold"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        ) : null}
+      </div>
+    </form>
+  );
+}
 
 export function ProductForm({
   product,
   categories,
+  subcategories = [],
   supabase,
   layout = "page",
   onCreated,
@@ -41,12 +199,10 @@ export function ProductForm({
 }: {
   product: AdminProductDetail | null;
   categories: CategoryOption[];
+  subcategories?: AdminSubcategoryRow[];
   supabase: boolean;
-  /** `modal` hides page chrome (back link / outer title) for use inside AdminModal. */
   layout?: "page" | "modal";
-  /** Called after a successful create in modal layout (auto-open Edit). */
   onCreated?: (productId: string) => void;
-  /** Reload modal product detail after variant/image/save updates. */
   onModalRefresh?: () => void;
 }) {
   const router = useRouter();
@@ -55,8 +211,26 @@ export function ProductForm({
   const [name, setName] = useState(product?.name ?? "");
   const [tagline, setTagline] = useState(product?.tagline ?? "");
   const [taglineTouched, setTaglineTouched] = useState(Boolean(product?.tagline));
-  const [tab, setTab] = useState<"details" | "variants" | "images">("details");
+  const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
+  const [tab, setTab] = useState<"details" | "variants" | "images" | "seo">(
+    "details",
+  );
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [showAddVariant, setShowAddVariant] = useState(false);
+  const [presetDraft, setPresetDraft] = useState<
+    ReturnType<typeof variantPresetsForCategory>
+  >([]);
+
+  const categorySlug = useMemo(() => {
+    const cat = categories.find((c) => c.id === categoryId);
+    return cat?.slug ?? product?.categorySlug ?? "";
+  }, [categories, categoryId, product?.categorySlug]);
+
+  const filteredSubcategories = useMemo(
+    () => subcategories.filter((s) => s.categoryId === categoryId),
+    [subcategories, categoryId],
+  );
 
   useEffect(() => {
     if (!taglineTouched) setTagline(suggestTagline(name));
@@ -99,6 +273,11 @@ export function ProductForm({
     }
   }
 
+  function applyPresets() {
+    setPresetDraft(variantPresetsForCategory(categorySlug));
+    setShowAddVariant(true);
+  }
+
   return (
     <div className={cn(isModal ? "space-y-4" : "mx-auto max-w-4xl space-y-6")}>
       {!isModal ? (
@@ -110,9 +289,9 @@ export function ProductForm({
             <p className="mt-1 text-sm text-on-surface-variant">
               {supabase
                 ? isNew
-                  ? "Create the product first, then add variants and images."
-                  : "Changes save to Supabase."
-                : "Form preview — connect Supabase to persist."}
+                  ? "Create the product, then add variants and images."
+                  : "Update the story, pricing, and details shoppers see."
+                : "Preview the form — saving needs a live connection."}
             </p>
           </div>
           <AdminIconButton
@@ -138,6 +317,7 @@ export function ProductForm({
             { id: "details" as const, label: "Details", locked: false },
             { id: "variants" as const, label: "Variants", locked: isNew },
             { id: "images" as const, label: "Images", locked: isNew },
+            { id: "seo" as const, label: "SEO", locked: isNew },
           ] as const
         ).map((t) => (
           <button
@@ -185,11 +365,16 @@ export function ProductForm({
                   className={fieldClassName()}
                 />
               </label>
+              <SlugField
+                nameValue={name}
+                defaultSlug={product?.slug ?? ""}
+              />
               <label className={labelClassName()}>
                 Category
                 <select
                   name="categoryId"
-                  defaultValue={product?.categoryId ?? ""}
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
                   className={fieldClassName()}
                 >
                   <option value="">— Select —</option>
@@ -200,6 +385,35 @@ export function ProductForm({
                   ))}
                 </select>
               </label>
+              {filteredSubcategories.length > 0 ? (
+                <label className={labelClassName()}>
+                  Subcategory
+                  <select
+                    name="subcategoryId"
+                    defaultValue={product?.subcategoryId ?? ""}
+                    className={fieldClassName()}
+                  >
+                    <option value="">— None —</option>
+                    {filteredSubcategories.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <input type="hidden" name="subcategoryId" value="" />
+              )}
+              {product?.sourceName ? (
+                <label className={labelClassName()}>
+                  Source name (import)
+                  <input
+                    readOnly
+                    value={product.sourceName}
+                    className={`${fieldClassName()} bg-surface-container-low`}
+                  />
+                </label>
+              ) : null}
               <div>
                 <ChipInput
                   name="badge"
@@ -220,9 +434,6 @@ export function ProductForm({
                   }}
                   className={fieldClassName()}
                 />
-                <span className="mt-1 block text-[11px] font-normal text-on-surface-variant">
-                  Auto-suggested from name — edit anytime
-                </span>
               </label>
               <AdminFieldFull>
                 <RichTextEditor
@@ -255,6 +466,10 @@ export function ProductForm({
               <label className="flex items-center gap-2 text-sm font-semibold">
                 <input type="checkbox" name="newArrival" defaultChecked={product?.newArrival ?? false} />
                 New arrival
+              </label>
+              <label className="flex items-center gap-2 text-sm font-semibold">
+                <input type="checkbox" name="seasonal" defaultChecked={product?.seasonal ?? false} />
+                Seasonal
               </label>
             </AdminFieldGrid>
           </AdminCard>
@@ -305,38 +520,112 @@ export function ProductForm({
         </form>
       ) : null}
 
+      {tab === "seo" && product ? (
+        <form action={handleSaveProduct} className="space-y-6">
+          <input type="hidden" name="id" value={product.id} />
+          {isModal ? <input type="hidden" name="returnTo" value="modal" /> : null}
+          <input type="hidden" name="name" value={product.name} />
+          <input type="hidden" name="slug" value={product.slug} />
+          <input type="hidden" name="categoryId" value={product.categoryId ?? ""} />
+          <input type="hidden" name="subcategoryId" value={product.subcategoryId ?? ""} />
+          <input type="hidden" name="description" value={product.description} />
+          <input type="hidden" name="longDescription" value={product.longDescription ?? ""} />
+          <input type="hidden" name="spiceNote" value={product.spiceNote ?? ""} />
+          <input type="hidden" name="dietary" value={product.dietary.join(",")} />
+          <input type="hidden" name="badge" value={product.badge ?? ""} />
+          <input type="hidden" name="tagline" value={product.tagline ?? ""} />
+          <input type="hidden" name="origin" value={product.origin ?? ""} />
+          <input type="hidden" name="shelfLife" value={product.shelfLife ?? ""} />
+          <input type="hidden" name="ingredients" value={product.ingredients.join(",")} />
+          {product.published ? <input type="hidden" name="published" value="on" /> : null}
+          {product.featured ? <input type="hidden" name="featured" value="on" /> : null}
+          {product.bestseller ? <input type="hidden" name="bestseller" value="on" /> : null}
+          {product.newArrival ? <input type="hidden" name="newArrival" value="on" /> : null}
+          {product.seasonal ? <input type="hidden" name="seasonal" value="on" /> : null}
+
+          <AdminCard title="Search engine optimization">
+            <AdminFieldGrid>
+              <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
+                SEO title
+                <input
+                  name="seoTitle"
+                  defaultValue={product.seoTitle ?? ""}
+                  maxLength={120}
+                  className={fieldClassName()}
+                  placeholder="Overrides PDP title when set"
+                />
+              </label>
+              <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
+                SEO description
+                <textarea
+                  name="seoDescription"
+                  defaultValue={product.seoDescription ?? ""}
+                  maxLength={320}
+                  rows={3}
+                  className={fieldClassName()}
+                />
+              </label>
+            </AdminFieldGrid>
+          </AdminCard>
+          <AdminFormSubmitButton label="Save SEO" pendingLabel="Saving…" icon="save" />
+        </form>
+      ) : null}
+
       {tab === "variants" && product ? (
         <AdminCard title="Variants / commerce">
           <ul className="mb-6 divide-y divide-outline-variant/15">
             {product.variants.map((v) => (
-              <li
-                key={v.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-semibold">{v.label}</p>
-                  <p className="text-xs text-on-surface-variant">
-                    {v.sku} · {formatINR(v.pricePaise / 100)} · stock {v.stockQty}
-                    {!v.available ? " · unavailable" : ""}
-                  </p>
-                </div>
-                {supabase ? (
-                  <AdminActionsMenu
-                    ariaLabel="Variant actions"
-                    items={[
-                      {
-                        id: "remove",
-                        type: "form",
-                        label: "Remove variant",
-                        icon: "trash",
-                        actionKey: "deleteVariant",
-                        fields: { id: v.id, productId: product.id },
-                        confirmMessage: "Remove this variant?",
-                        danger: true,
-                      },
-                    ]}
+              <li key={v.id} className="py-3">
+                {editingVariantId === v.id ? (
+                  <VariantEditor
+                    productId={product.id}
+                    variant={v}
+                    onSaved={() => {
+                      setEditingVariantId(null);
+                      onModalRefresh?.();
+                    }}
+                    onCancel={() => setEditingVariantId(null)}
                   />
-                ) : null}
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div>
+                      <p className="font-semibold">{v.label}</p>
+                      <p className="text-xs text-on-surface-variant">
+                        {v.sku} · {v.sellingUnit}
+                        {v.quantityValue != null ? ` · qty ${v.quantityValue}` : ""} ·{" "}
+                        {formatINR(v.pricePaise / 100)}
+                        {v.mrpPaise ? ` (MRP ${formatINR(v.mrpPaise / 100)})` : ""} · stock{" "}
+                        {v.stockQty}
+                        {!v.available ? " · unavailable" : ""}
+                      </p>
+                    </div>
+                    {supabase ? (
+                      <AdminActionsMenu
+                        ariaLabel="Variant actions"
+                        items={[
+                          {
+                            id: "edit",
+                            type: "button",
+                            label: "Edit variant",
+                            icon: "pencil",
+                            onPress: () => setEditingVariantId(v.id),
+                          },
+                          {
+                            id: "remove",
+                            type: "form",
+                            label: "Remove variant",
+                            icon: "trash",
+                            actionKey: "deleteVariant",
+                            fields: { id: v.id, productId: product.id },
+                            confirmMessage:
+                              "Remove this variant? If referenced by orders it will be deactivated instead.",
+                            danger: true,
+                          },
+                        ]}
+                      />
+                    ) : null}
+                  </div>
+                )}
               </li>
             ))}
             {!product.variants.length ? (
@@ -345,37 +634,69 @@ export function ProductForm({
           </ul>
 
           {supabase ? (
-            <form
-              action={(fd) => handleNestedAction(saveVariantAction, fd)}
-              className="grid gap-3 rounded-lg border border-outline-variant/20 bg-surface-container-low p-4 sm:grid-cols-3"
-            >
-              <input type="hidden" name="productId" value={product.id} />
-              <label className={labelClassName()}>
-                Label
-                <input name="label" required className={fieldClassName()} placeholder="400g" />
-              </label>
-              <label className={labelClassName()}>
-                Price (INR)
-                <input name="price" type="number" step="0.01" required className={fieldClassName()} />
-              </label>
-              <label className={labelClassName()}>
-                MRP (INR)
-                <input name="mrp" type="number" step="0.01" className={fieldClassName()} />
-              </label>
-              <label className={labelClassName()}>
-                Stock
-                <input name="stockQty" type="number" defaultValue={0} className={fieldClassName()} />
-              </label>
-              <label className={labelClassName()}>
-                Low-stock threshold
-                <input name="lowStockThreshold" type="number" defaultValue={5} className={fieldClassName()} />
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-3">
-                <input type="checkbox" name="available" defaultChecked />
-                Available for sale
-              </label>
-              <AdminFormSubmitButton label="Add variant" pendingLabel="Adding…" icon="plus" />
-            </form>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-sm font-semibold"
+                  onClick={() => {
+                    setShowAddVariant((v) => !v);
+                    setPresetDraft([]);
+                  }}
+                >
+                  {showAddVariant ? "Hide add form" : "Add variant"}
+                </button>
+                {categorySlug ? (
+                  <button
+                    type="button"
+                    className="rounded-lg bg-surface-container-high px-3 py-1.5 text-sm font-semibold"
+                    onClick={applyPresets}
+                  >
+                    Load category presets
+                  </button>
+                ) : null}
+              </div>
+
+              {showAddVariant && !editingVariantId ? (
+                presetDraft.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-on-surface-variant">
+                      Preset rows — fill prices and save each variant.
+                    </p>
+                    {presetDraft.map((preset) => (
+                      <VariantEditor
+                        key={preset.label}
+                        productId={product.id}
+                        variant={{
+                          id: "",
+                          label: preset.label,
+                          sku: "",
+                          pricePaise: 0,
+                          mrpPaise: null,
+                          weightG: null,
+                          sellingUnit: preset.sellingUnit,
+                          quantityValue: preset.quantityValue,
+                          stockQty: 0,
+                          lowStockThreshold: 5,
+                          available: true,
+                          sortOrder: preset.sortOrder,
+                        }}
+                        onSaved={() => onModalRefresh?.()}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <VariantEditor
+                    productId={product.id}
+                    onSaved={() => {
+                      setShowAddVariant(false);
+                      onModalRefresh?.();
+                    }}
+                    onCancel={() => setShowAddVariant(false)}
+                  />
+                )
+              ) : null}
+            </div>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to manage variants.</p>
           )}

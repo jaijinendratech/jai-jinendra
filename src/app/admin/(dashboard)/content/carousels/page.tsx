@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import {
   CAROUSEL_PAGE_KEYS,
   getHeroCarouselContent,
-  getIntegrationStatus,
   type CarouselPageKey,
 } from "@/lib/admin/queries";
 import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
@@ -19,7 +18,6 @@ export default async function AdminCarouselsPage({
   searchParams: Promise<{ notice?: string }>;
 }) {
   const { notice } = await searchParams;
-  const { supabase } = getIntegrationStatus();
 
   const slidesByPage = {} as Record<
     CarouselPageKey,
@@ -35,11 +33,7 @@ export default async function AdminCarouselsPage({
     <div className="mx-auto max-w-3xl space-y-6">
       <AdminPageHeader
         title="Carousels"
-        description={
-          supabase
-            ? "Per-page hero slides in content_blocks (page_key / hero_slides)."
-            : "Editing UI over static hero slides — connect Supabase to persist."
-        }
+        description="Hero slides that greet every visitor."
       />
       <NoticeBanner notice={notice} />
       <CarouselsManager slidesByPage={slidesByPage} />

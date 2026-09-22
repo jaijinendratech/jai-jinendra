@@ -21,11 +21,7 @@ export default async function AdminCombosPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Combos"
-        description={
-          data.source === "supabase"
-            ? "Managed in combos / combo_items tables."
-            : "Static combo-builder config (fallback when Supabase is off)."
-        }
+        description="Curated boxes and gift sets that sell themselves."
       />
       <NoticeBanner notice={notice} />
       <CombosManager

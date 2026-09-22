@@ -26,6 +26,10 @@ import {
   FEATURED_OPTIONS,
   PUBLISH_HIDDEN_OPTIONS,
 } from "@/components/admin/AdminStatusSelect";
+import {
+  AdminTablePagination,
+  useAdminTablePagination,
+} from "@/components/admin/AdminTablePagination";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 
 export type AdminCategoryRow = {
@@ -156,6 +160,8 @@ export function CategoriesManager({
       ? (categories.find((c) => c.id === modal) ?? null)
       : null;
   const isOpen = modal !== null;
+  const { pageItems, page, setPage, totalPages, total, from, to } =
+    useAdminTablePagination(categories);
 
   return (
     <>
@@ -183,7 +189,7 @@ export function CategoriesManager({
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
-            {categories.map((c) => (
+            {pageItems.map((c) => (
               <tr key={c.id}>
                 <td className="px-4 py-3">
                   <p className="font-semibold">{c.title}</p>
@@ -236,6 +242,14 @@ export function CategoriesManager({
           </tbody>
         </table>
       </div>
+      <AdminTablePagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       <AdminModal
         isOpen={isOpen}

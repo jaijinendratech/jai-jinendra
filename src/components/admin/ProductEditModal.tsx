@@ -33,12 +33,14 @@ export type ProductModalState =
 export function ProductFormModal({
   state,
   categories,
+  subcategories = [],
   supabase,
   onClose,
   onCreated,
 }: {
   state: ProductModalState;
-  categories: { id: string; title: string }[];
+  categories: { id: string; title: string; slug?: string }[];
+  subcategories?: import("@/lib/admin/queries").AdminSubcategoryRow[];
   supabase: boolean;
   onClose: () => void;
   /** After create, parent should switch to edit mode for variants/images. */
@@ -106,6 +108,7 @@ export function ProductFormModal({
           key="create"
           product={null}
           categories={categories}
+          subcategories={subcategories}
           supabase={supabase}
           layout="modal"
           onCreated={onCreated}
@@ -123,6 +126,7 @@ export function ProductFormModal({
           key={product.id}
           product={product}
           categories={categories}
+          subcategories={subcategories}
           supabase={supabase}
           layout="modal"
           onCreated={onCreated}

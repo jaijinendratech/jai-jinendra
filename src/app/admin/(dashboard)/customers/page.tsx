@@ -17,11 +17,7 @@ export default async function AdminCustomersPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Customers"
-        description={
-          supabase
-            ? "Customer profiles only — click a row to view and edit."
-            : "Derived from mock orders (Supabase offline)."
-        }
+        description="Who’s buying — open a row to view and greet them."
       />
 
       {!customers.length ? (

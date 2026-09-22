@@ -119,6 +119,8 @@ export type AdminProductDetail = {
   longDescription: string | null;
   categoryId: string | null;
   categorySlug: string;
+  subcategoryId: string | null;
+  sourceName: string | null;
   spiceNote: string | null;
   dietary: string[];
   badge: string | null;
@@ -128,6 +130,7 @@ export type AdminProductDetail = {
   featured: boolean;
   bestseller: boolean;
   newArrival: boolean;
+  seasonal: boolean;
   origin: string | null;
   shelfLife: string | null;
   ingredients: string[];
@@ -139,6 +142,8 @@ export type AdminProductDetail = {
     pricePaise: number;
     mrpPaise: number | null;
     weightG: number | null;
+    sellingUnit: string;
+    quantityValue: number | null;
     stockQty: number;
     lowStockThreshold: number;
     available: boolean;
@@ -150,6 +155,19 @@ export type AdminProductDetail = {
     alt: string | null;
     sortOrder: number;
   }[];
+};
+
+export type AdminSubcategoryRow = {
+  id: string;
+  categoryId: string;
+  categoryTitle: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+  published: boolean;
+  productCount: number;
 };
 
 export type DashboardKpis = {
@@ -783,6 +801,8 @@ export async function getAdminProductById(
       longDescription: p.longDescription ?? null,
       categoryId: null,
       categorySlug: String(p.category),
+      subcategoryId: null,
+      sourceName: null,
       spiceNote: p.spiceNote ?? null,
       dietary: p.dietary ?? [],
       badge: p.badge ?? null,
@@ -792,6 +812,7 @@ export async function getAdminProductById(
       featured: Boolean(p.badge),
       bestseller: false,
       newArrival: false,
+      seasonal: false,
       origin: p.origin ?? null,
       shelfLife: p.shelfLife ?? null,
       ingredients: p.ingredients ?? [],
@@ -805,6 +826,8 @@ export async function getAdminProductById(
           ? Math.round(p.originalPrice * 100)
           : null,
         weightG: null,
+        sellingUnit: "other",
+        quantityValue: null,
         stockQty: v.stockQty ?? 12,
         lowStockThreshold: 5,
         available: true,
@@ -828,6 +851,8 @@ export async function getAdminProductById(
     price_paise: number;
     mrp_paise: number | null;
     weight_g: number | null;
+    selling_unit: string;
+    quantity_value: number | null;
     stock_qty: number;
     low_stock_threshold: number;
     available: boolean;
@@ -846,6 +871,9 @@ export async function getAdminProductById(
     description: string;
     long_description: string | null;
     category_id: string | null;
+    subcategory_id: string | null;
+    source_name: string | null;
+    seasonal: boolean;
     spice_note: string | null;
     dietary: string[] | null;
     badge: string | null;
@@ -891,6 +919,8 @@ export async function getAdminProductById(
     longDescription: data.long_description,
     categoryId: data.category_id,
     categorySlug: data.categories?.slug ?? "",
+    subcategoryId: data.subcategory_id,
+    sourceName: data.source_name,
     spiceNote: data.spice_note,
     dietary: data.dietary ?? [],
     badge: data.badge,
@@ -900,6 +930,7 @@ export async function getAdminProductById(
     featured: data.featured,
     bestseller: data.bestseller,
     newArrival: data.new_arrival,
+    seasonal: data.seasonal ?? false,
     origin: data.origin,
     shelfLife: data.shelf_life,
     ingredients: data.ingredients ?? [],
@@ -911,6 +942,8 @@ export async function getAdminProductById(
       pricePaise: v.price_paise,
       mrpPaise: v.mrp_paise,
       weightG: v.weight_g,
+      sellingUnit: v.selling_unit ?? "other",
+      quantityValue: v.quantity_value != null ? Number(v.quantity_value) : null,
       stockQty: v.stock_qty,
       lowStockThreshold: v.low_stock_threshold,
       available: v.available ?? true,
@@ -971,6 +1004,71 @@ export async function getAdminCategories() {
     featured: c.featured,
     productCount: (c.products ?? []).length,
   }));
+}
+
+export async function getAdminSubcategories(categoryId?: string) {
+  if (!isSupabaseConfigured()) return [] as AdminSubcategoryRow[];
+
+  const admin = createAdminClient();
+  let query = admin
+    .from("subcategories")
+    .select("*, categories(title), products(id)")
+    .order("sort_order");
+
+  if (categoryId) {
+    query = query.eq("category_id", categoryId);
+  }
+
+  const { data } = await query;
+
+  type Row = {
+    id: string;
+    category_id: string;
+    slug: string;
+    title: string;
+    subtitle: string | null;
+    image_url: string | null;
+    sort_order: number;
+    published: boolean;
+    categories: { title: string } | null;
+    products: { id: string }[] | null;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((s) => ({
+    id: s.id,
+    categoryId: s.category_id,
+    categoryTitle: s.categories?.title ?? "",
+    slug: s.slug,
+    title: s.title,
+    subtitle: s.subtitle,
+    imageUrl: s.image_url,
+    sortOrder: s.sort_order,
+    published: s.published,
+    productCount: (s.products ?? []).length,
+  }));
+}
+
+export async function getCategoryAttributeRules(
+  categoryId: string,
+  subcategoryId?: string | null,
+) {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  let query = admin
+    .from("category_attribute_rules")
+    .select("*, attribute_definitions(*)")
+    .eq("category_id", categoryId)
+    .order("sort_order");
+
+  if (subcategoryId) {
+    query = query.or(`subcategory_id.is.null,subcategory_id.eq.${subcategoryId}`);
+  } else {
+    query = query.is("subcategory_id", null);
+  }
+
+  const { data } = await query;
+  return data ?? [];
 }
 
 export async function getAdminInventory() {

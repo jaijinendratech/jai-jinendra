@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import {
   getAdminCategories,
   getAdminProductById,
+  getAdminSubcategories,
   getIntegrationStatus,
 } from "@/lib/admin/queries";
 import { NoticeBanner } from "@/components/admin/ui";
@@ -32,14 +33,22 @@ export default async function AdminProductEditPage({
   if (!product) notFound();
 
   const categories = await getAdminCategories();
+  const subcategories = await getAdminSubcategories();
   const { supabase } = getIntegrationStatus();
+
+  const categoryOptions = categories.map((c) => ({
+    id: c.id,
+    title: c.title,
+    slug: c.slug,
+  }));
 
   return (
     <div className="space-y-4">
       <NoticeBanner notice={notice} />
       <ProductForm
         product={product}
-        categories={categories.map((c) => ({ id: c.id, title: c.title }))}
+        categories={categoryOptions}
+        subcategories={subcategories}
         supabase={supabase}
       />
     </div>

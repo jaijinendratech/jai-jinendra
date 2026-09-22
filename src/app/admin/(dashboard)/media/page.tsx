@@ -18,11 +18,7 @@ export default async function AdminMediaPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Media library"
-        description={
-          storage
-            ? "Assets from media_assets + Supabase Storage bucket `media`."
-            : "Public folder inventory (upload requires Supabase Storage)."
-        }
+        description="Photos and assets that dress the storefront."
       />
 
       <MediaUploadPanel enabled={Boolean(supabase && storage)} />

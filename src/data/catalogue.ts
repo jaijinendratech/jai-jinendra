@@ -2,9 +2,42 @@ import images from "@/data/image-map.json";
 import type {
   CatalogueFilterOption,
   CataloguePill,
+  CategoryId,
   PriceRangeOption,
-  Product,
 } from "@/types/catalog";
+
+/** Static demo catalogue shape (legacy category string). */
+export type MockCatalogProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  longDescription?: string;
+  image: string;
+  imageAlt: string;
+  price: number;
+  originalPrice?: number;
+  discountLabel?: string;
+  badge?: string;
+  tagline?: string;
+  rating: number;
+  reviewCount: number;
+  category: CategoryId | "all";
+  variants: {
+    id: string;
+    label: string;
+    price?: number;
+    sku?: string;
+    variantId?: string;
+    stockQty?: number;
+  }[];
+  ctaNote?: string;
+  dietary?: string[];
+  spiceNote?: "mild" | "medium" | "teekha" | "chatpata";
+  ingredients?: string[];
+  shelfLife?: string;
+  origin?: string;
+};
 
 export const catalogueMeta = {
   title: "Our Complete Artisanal Catalogue",
@@ -109,7 +142,7 @@ export const sortOptions = [
   { id: "rating", label: "Customer Rating (4.8+)" },
 ] as const;
 
-export const catalogueProducts: Product[] = [
+export const catalogueProducts: MockCatalogProduct[] = [
   {
     id: "shahi-kaju-mixture",
     name: "Shahi Kaju Mixture",
@@ -513,7 +546,7 @@ export function getProductsByCategory(category: string) {
   return catalogueProducts.filter((product) => product.category === category);
 }
 
-export function getRelatedProducts(product: Product, limit = 4) {
+export function getRelatedProducts(product: MockCatalogProduct, limit = 4) {
   return catalogueProducts
     .filter((item) => item.id !== product.id && item.category === product.category)
     .slice(0, limit);

@@ -18,14 +18,20 @@ import {
   type ProductModalState,
 } from "@/components/admin/ProductEditModal";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import {
+  AdminTablePagination,
+  useAdminTablePagination,
+} from "@/components/admin/AdminTablePagination";
 
 export function ProductsTable({
   products,
   categories,
+  subcategories = [],
   supabaseOn,
 }: {
   products: AdminProductListItem[];
-  categories: { id: string; title: string }[];
+  categories: { id: string; title: string; slug?: string }[];
+  subcategories?: import("@/lib/admin/queries").AdminSubcategoryRow[];
   supabaseOn: boolean;
 }) {
   const [q, setQ] = useState("");
@@ -53,17 +59,26 @@ export function ProductsTable({
     return rows;
   }, [products, q, category, sort]);
 
+  const { pageItems, page, setPage, totalPages, total, from, to } =
+    useAdminTablePagination(filtered);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchField
           value={q}
-          onChange={setQ}
+          onChange={(value) => {
+            setQ(value);
+            setPage(1);
+          }}
           placeholder="Search products…"
         />
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(1);
+          }}
           className={`${fieldClassName()} max-w-45 mt-0!`}
         >
           <option value="all">All categories</option>
@@ -75,7 +90,10 @@ export function ProductsTable({
         </select>
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value)}
+          onChange={(e) => {
+            setSort(e.target.value);
+            setPage(1);
+          }}
           className={`${fieldClassName()} max-w-40 mt-0!`}
         >
           <option value="name">Sort: name</option>
@@ -110,7 +128,7 @@ export function ProductsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
-            {filtered.map((product) => (
+            {pageItems.map((product) => (
               <tr
                 key={product.id}
                 className="hover:bg-surface-container-low/50"
@@ -195,11 +213,21 @@ export function ProductsTable({
         <p className="text-center text-sm text-on-surface-variant">
           No products match.
         </p>
-      ) : null}
+      ) : (
+        <AdminTablePagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          from={from}
+          to={to}
+          onPageChange={setPage}
+        />
+      )}
 
       <ProductFormModal
         state={modal}
         categories={categories}
+        subcategories={subcategories}
         supabase={supabaseOn}
         onClose={() => setModal(null)}
         onCreated={(productId) => setModal({ mode: "edit", productId })}

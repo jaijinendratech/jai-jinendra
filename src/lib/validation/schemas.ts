@@ -148,6 +148,54 @@ export const adminPaymentStatusSchema = z.enum([
   "refunded",
 ]);
 
+export const sellingUnitSchema = z.enum(["g", "kg", "pack", "pc", "other"]);
+
+export const adminProductSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  slug: z.string().trim().min(1).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  categoryId: z.string().uuid().nullable(),
+  subcategoryId: z.string().uuid().nullable().optional(),
+  description: z.string().max(50000).default(""),
+  longDescription: z.string().max(100000).nullable().optional(),
+  spiceNote: z.string().max(80).nullable().optional(),
+  dietary: z.array(z.string()).default([]),
+  badge: z.string().max(80).nullable().optional(),
+  tagline: z.string().max(200).nullable().optional(),
+  seoTitle: z.string().max(120).nullable().optional(),
+  seoDescription: z.string().max(320).nullable().optional(),
+  origin: z.string().max(120).nullable().optional(),
+  shelfLife: z.string().max(120).nullable().optional(),
+  ingredients: z.array(z.string()).default([]),
+  published: z.boolean(),
+  featured: z.boolean(),
+  bestseller: z.boolean(),
+  newArrival: z.boolean(),
+  seasonal: z.boolean().optional(),
+});
+
+export const adminVariantSchema = z.object({
+  label: z.string().trim().min(1).max(80),
+  pricePaise: z.number().int().positive(),
+  mrpPaise: z.number().int().positive().nullable().optional(),
+  sellingUnit: sellingUnitSchema,
+  quantityValue: z.number().positive().nullable().optional(),
+  weightG: z.number().int().positive().nullable().optional(),
+  stockQty: z.number().int().min(0).default(0),
+  lowStockThreshold: z.number().int().min(0).default(5),
+  available: z.boolean(),
+  sortOrder: z.number().int().min(0).default(0),
+});
+
+export const adminSubcategorySchema = z.object({
+  categoryId: z.string().uuid(),
+  title: z.string().trim().min(1).max(120),
+  slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  subtitle: z.string().max(200).nullable().optional(),
+  imageUrl: z.string().max(500).nullable().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  published: z.boolean(),
+});
+
 export function parseOrThrow<T>(
   schema: z.ZodType<T>,
   data: unknown,

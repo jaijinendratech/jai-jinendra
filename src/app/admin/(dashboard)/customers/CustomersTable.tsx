@@ -8,6 +8,10 @@ import { loadAdminCustomerAction } from "@/lib/admin/actions";
 import { AdminTableShell, AdminEmpty } from "@/components/admin/ui";
 import { SearchField } from "@/components/admin/SearchField";
 import { AdminDrawer } from "@/components/admin/AdminDrawer";
+import {
+  AdminTablePagination,
+  useAdminTablePagination,
+} from "@/components/admin/AdminTablePagination";
 import { CustomerDetailPanel } from "./CustomerDetailPanel";
 
 export function CustomersTable({
@@ -35,6 +39,9 @@ export function CustomersTable({
       `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(needle),
     );
   }, [customers, q]);
+
+  const { pageItems, page, setPage, totalPages, total, from, to } =
+    useAdminTablePagination(filtered);
 
   const syncQuery = useCallback(
     (customerId: string | null) => {
@@ -92,7 +99,10 @@ export function CustomersTable({
     <div className="space-y-4">
       <SearchField
         value={q}
-        onChange={setQ}
+        onChange={(value) => {
+          setQ(value);
+          setPage(1);
+        }}
         placeholder="Search name, email, phone…"
       />
 
@@ -106,6 +116,7 @@ export function CustomersTable({
           }
         />
       ) : (
+        <>
         <AdminTableShell>
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
@@ -117,7 +128,7 @@ export function CustomersTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/15">
-              {filtered.map((c) => (
+              {pageItems.map((c) => (
                 <tr
                   key={c.id}
                   role="button"
@@ -149,6 +160,15 @@ export function CustomersTable({
             </tbody>
           </table>
         </AdminTableShell>
+        <AdminTablePagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          from={from}
+          to={to}
+          onPageChange={setPage}
+        />
+        </>
       )}
 
       <AdminDrawer

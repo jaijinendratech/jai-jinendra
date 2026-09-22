@@ -21,11 +21,7 @@ export default async function AdminOutletsPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Outlets"
-        description={
-          supabase
-            ? "Flagship stores from Supabase outlets table."
-            : "Static flagship outlets — connect Supabase to add/edit."
-        }
+        description="Flagship stores people can visit in person."
       />
       <NoticeBanner notice={notice} />
       <OutletsManager

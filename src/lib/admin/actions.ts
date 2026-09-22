@@ -11,8 +11,12 @@ import { slugify } from "@/lib/admin/slug";
 import {
   adminOrderStatusSchema,
   adminPaymentStatusSchema,
+  adminProductSchema,
+  adminSubcategorySchema,
+  adminVariantSchema,
   contentBlockSchema,
   heroSlideSchema,
+  zodErrorMessage,
 } from "@/lib/validation/schemas";
 
 function revalidateAdmin(...paths: string[]) {
@@ -88,6 +92,40 @@ async function uniqueComboSlug(
     candidate = `${base}-${n}`;
     n += 1;
   }
+}
+
+async function uniqueSubcategorySlug(
+  categoryId: string,
+  title: string,
+  excludeId?: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const base = slugify(title) || "subcategory";
+  let candidate = base;
+  let n = 2;
+
+  for (;;) {
+    let query = admin
+      .from("subcategories")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("slug", candidate)
+      .limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query.maybeSingle();
+    if (!data) return candidate;
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+}
+
+async function variantHasOrderReferences(variantId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("order_items")
+    .select("*", { count: "exact", head: true })
+    .eq("variant_id", variantId);
+  return (count ?? 0) > 0;
 }
 
 async function uniqueVariantSku(
@@ -332,51 +370,78 @@ export async function saveProductAction(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) {
-    throw new Error("Name is required.");
+  const slugInput = String(formData.get("slug") ?? "").trim();
+  const categoryIdRaw = String(formData.get("categoryId") ?? "");
+  const subcategoryIdRaw = String(formData.get("subcategoryId") ?? "");
+
+  const parsed = adminProductSchema.safeParse({
+    name,
+    slug: slugInput || slugify(name) || "product",
+    categoryId: categoryIdRaw || null,
+    subcategoryId: subcategoryIdRaw || null,
+    description: String(formData.get("description") ?? ""),
+    longDescription:
+      sanitizeAdminHtml(String(formData.get("longDescription") ?? "")) || null,
+    spiceNote: String(formData.get("spiceNote") ?? "") || null,
+    dietary: parseList(String(formData.get("dietary") ?? "")),
+    badge: String(formData.get("badge") ?? "") || null,
+    tagline: String(formData.get("tagline") ?? "") || null,
+    seoTitle: String(formData.get("seoTitle") ?? "") || null,
+    seoDescription: String(formData.get("seoDescription") ?? "") || null,
+    origin: String(formData.get("origin") ?? "") || null,
+    shelfLife: String(formData.get("shelfLife") ?? "") || null,
+    ingredients: parseList(String(formData.get("ingredients") ?? "")),
+    published: formData.get("published") === "on",
+    featured: formData.get("featured") === "on",
+    bestseller: formData.get("bestseller") === "on",
+    newArrival: formData.get("newArrival") === "on",
+    seasonal: formData.get("seasonal") === "on",
+  });
+
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
   }
-  const slug = await uniqueProductSlug(name, id || undefined);
-  const description = sanitizeAdminHtml(String(formData.get("description") ?? ""));
-  const longDescription =
-    sanitizeAdminHtml(String(formData.get("longDescription") ?? "")) || null;
-  const categoryId = String(formData.get("categoryId") ?? "") || null;
-  const spiceNote = String(formData.get("spiceNote") ?? "") || null;
-  const dietary = parseList(String(formData.get("dietary") ?? ""));
-  const badge = String(formData.get("badge") ?? "") || null;
-  const tagline = String(formData.get("tagline") ?? "") || null;
-  const seoTitle = String(formData.get("seoTitle") ?? "") || null;
-  const seoDescription = String(formData.get("seoDescription") ?? "") || null;
-  const origin = String(formData.get("origin") ?? "") || null;
-  const shelfLife = String(formData.get("shelfLife") ?? "") || null;
-  const ingredients = parseList(String(formData.get("ingredients") ?? ""));
-  const published = formData.get("published") === "on";
-  const featured = formData.get("featured") === "on";
-  const bestseller = formData.get("bestseller") === "on";
-  const newArrival = formData.get("newArrival") === "on";
+
+  const admin = createAdminClient();
+  let slug = parsed.data.slug;
+  const { data: slugConflict } = await admin
+    .from("products")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (slugConflict && slugConflict.id !== id) {
+    slug = await uniqueProductSlug(name, id || undefined);
+  }
+
+  const description = sanitizeAdminHtml(parsed.data.description);
+  const longDescription = parsed.data.longDescription
+    ? sanitizeAdminHtml(parsed.data.longDescription)
+    : null;
 
   const payload = {
     slug,
-    name,
+    name: parsed.data.name,
     description,
     long_description: longDescription,
-    category_id: categoryId,
-    spice_note: spiceNote,
-    dietary,
-    badge,
-    tagline,
-    seo_title: seoTitle,
-    seo_description: seoDescription,
-    origin,
-    shelf_life: shelfLife,
-    ingredients,
-    published,
-    featured,
-    bestseller,
-    new_arrival: newArrival,
+    category_id: parsed.data.categoryId,
+    subcategory_id: parsed.data.subcategoryId ?? null,
+    spice_note: parsed.data.spiceNote,
+    dietary: parsed.data.dietary,
+    badge: parsed.data.badge,
+    tagline: parsed.data.tagline,
+    seo_title: parsed.data.seoTitle,
+    seo_description: parsed.data.seoDescription,
+    origin: parsed.data.origin,
+    shelf_life: parsed.data.shelfLife,
+    ingredients: parsed.data.ingredients,
+    published: parsed.data.published,
+    featured: parsed.data.featured,
+    bestseller: parsed.data.bestseller,
+    new_arrival: parsed.data.newArrival,
+    seasonal: parsed.data.seasonal ?? false,
     updated_at: new Date().toISOString(),
   };
 
-  const admin = createAdminClient();
   let productId = id;
 
   if (id) {
@@ -393,7 +458,6 @@ export async function saveProductAction(formData: FormData) {
   revalidateAdmin("/admin/products", `/admin/products/${productId}`, "/admin");
 
   const returnTo = String(formData.get("returnTo") ?? "");
-  // Modal CRUD: return id so the client can stay on the list and open Edit after create.
   if (returnTo === "modal") {
     return { ok: true as const, productId, created: !id };
   }
@@ -563,6 +627,34 @@ export async function saveVariantAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const productId = String(formData.get("productId") ?? "");
   const label = String(formData.get("label") ?? "").trim();
+  const sellingUnit = String(formData.get("sellingUnit") ?? "other");
+  const quantityRaw = formData.get("quantityValue");
+  const quantityValue =
+    quantityRaw != null && String(quantityRaw) !== ""
+      ? Number(quantityRaw)
+      : null;
+
+  const parsed = adminVariantSchema.safeParse({
+    label,
+    pricePaise: moneyToPaise(formData.get("price")),
+    mrpPaise: formData.get("mrp")
+      ? moneyToPaise(formData.get("mrp"))
+      : null,
+    sellingUnit,
+    quantityValue,
+    weightG: formData.get("weightG")
+      ? Number(formData.get("weightG"))
+      : null,
+    stockQty: Number(formData.get("stockQty") ?? 0),
+    lowStockThreshold: Number(formData.get("lowStockThreshold") ?? 5),
+    available: formData.get("available") === "on",
+    sortOrder: Number(formData.get("sortOrder") ?? 0),
+  });
+
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
   const admin = createAdminClient();
 
   const { data: product } = await admin
@@ -573,7 +665,6 @@ export async function saveVariantAction(formData: FormData) {
 
   const productSlug = product?.slug ?? "product";
 
-  // Keep existing SKU on edit so order line snapshots stay stable.
   let sku = String(formData.get("sku") ?? "").trim();
   if (id) {
     const { data: existing } = await admin
@@ -586,21 +677,27 @@ export async function saveVariantAction(formData: FormData) {
     sku = await uniqueVariantSku(productSlug, label);
   }
 
+  const weightG =
+    parsed.data.weightG ??
+    (parsed.data.sellingUnit === "g" && parsed.data.quantityValue
+      ? Math.round(parsed.data.quantityValue)
+      : parsed.data.sellingUnit === "kg" && parsed.data.quantityValue
+        ? Math.round(parsed.data.quantityValue * 1000)
+        : null);
+
   const payload = {
     product_id: productId,
-    label,
+    label: parsed.data.label,
     sku,
-    price_paise: moneyToPaise(formData.get("price")),
-    mrp_paise: formData.get("mrp")
-      ? moneyToPaise(formData.get("mrp"))
-      : null,
-    weight_g: formData.get("weightG")
-      ? Number(formData.get("weightG"))
-      : null,
-    stock_qty: Number(formData.get("stockQty") ?? 0),
-    low_stock_threshold: Number(formData.get("lowStockThreshold") ?? 5),
-    available: formData.get("available") === "on",
-    sort_order: Number(formData.get("sortOrder") ?? 0),
+    price_paise: parsed.data.pricePaise,
+    mrp_paise: parsed.data.mrpPaise ?? null,
+    weight_g: weightG,
+    selling_unit: parsed.data.sellingUnit,
+    quantity_value: parsed.data.quantityValue ?? null,
+    stock_qty: parsed.data.stockQty,
+    low_stock_threshold: parsed.data.lowStockThreshold,
+    available: parsed.data.available,
+    sort_order: parsed.data.sortOrder,
   };
 
   if (id) {
@@ -623,7 +720,16 @@ export async function deleteVariantAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const productId = String(formData.get("productId") ?? "");
   const admin = createAdminClient();
-  await admin.from("product_variants").delete().eq("id", id);
+
+  if (await variantHasOrderReferences(id)) {
+    await admin
+      .from("product_variants")
+      .update({ available: false })
+      .eq("id", id);
+  } else {
+    await admin.from("product_variants").delete().eq("id", id);
+  }
+
   revalidateAdmin(`/admin/products/${productId}`, "/admin/inventory");
 }
 
@@ -827,11 +933,102 @@ export async function setCategoryFeaturedAction(formData: FormData) {
   revalidateAdmin("/admin/categories", "/admin");
 }
 
+export async function saveSubcategoryAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    redirect("/admin/categories?notice=supabase-required");
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const slugInput = String(formData.get("slug") ?? "").trim();
+
+  const parsed = adminSubcategorySchema.safeParse({
+    categoryId,
+    title,
+    slug: slugInput || slugify(title) || "subcategory",
+    subtitle: String(formData.get("subtitle") ?? "") || null,
+    imageUrl: String(formData.get("imageUrl") ?? "") || null,
+    sortOrder: Number(formData.get("sortOrder") ?? 0),
+    published: formData.get("published") === "on",
+  });
+
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
+  let slug = parsed.data.slug;
+  const admin = createAdminClient();
+  const { data: conflict } = await admin
+    .from("subcategories")
+    .select("id")
+    .eq("category_id", categoryId)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (conflict && conflict.id !== id) {
+    slug = await uniqueSubcategorySlug(categoryId, title, id || undefined);
+  }
+
+  const payload = {
+    category_id: parsed.data.categoryId,
+    slug,
+    title: parsed.data.title,
+    subtitle: parsed.data.subtitle ?? null,
+    image_url: parsed.data.imageUrl ?? null,
+    sort_order: parsed.data.sortOrder,
+    published: parsed.data.published,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (id) {
+    const { error } = await admin.from("subcategories").update(payload).eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await admin.from("subcategories").insert(payload);
+    if (error) throw new Error(error.message);
+  }
+
+  revalidateAdmin("/admin/categories", "/admin");
+}
+
+export async function deleteSubcategoryAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("products")
+    .select("*", { count: "exact", head: true })
+    .eq("subcategory_id", id);
+
+  if ((count ?? 0) > 0) {
+    redirect("/admin/categories?error=has-subcategory-products");
+  }
+
+  await admin.from("subcategories").delete().eq("id", id);
+  revalidateAdmin("/admin/categories");
+}
+
+export async function setSubcategoryPublishedAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const admin = createAdminClient();
+  await admin.from("subcategories").update({ published }).eq("id", id);
+  revalidateAdmin("/admin/categories", "/admin");
+}
+
 export async function saveComboAction(formData: FormData) {
   await requireAdmin();
   if (!isSupabaseConfigured()) {
     redirect("/admin/combos?notice=supabase-required");
   }
+
+  const { sanitizeAdminHtml } = await import("@/lib/sanitize-html");
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -858,7 +1055,8 @@ export async function saveComboAction(formData: FormData) {
   const payload = {
     slug,
     name,
-    description: String(formData.get("description") ?? "") || null,
+    description:
+      sanitizeAdminHtml(String(formData.get("description") ?? "")) || null,
     image_url: String(formData.get("imageUrl") ?? "") || null,
     sku,
     price_paise: moneyToPaise(formData.get("price")),

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/products/ProductCard";
 import { productFilters } from "@/data/home";
+import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
 
 type FeaturedProductsProps = {
@@ -15,9 +16,14 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
   const products = useMemo(() => {
     if (filter === "all") return allProducts;
     if (filter === "gifts") {
-      return allProducts.filter((p) => p.category === "gifts" || p.badge?.includes("Royal"));
+      return allProducts.filter(
+        (p) =>
+          productCategorySlug(p) === "gifts" ||
+          productCategorySlug(p) === "gifting" ||
+          p.badge?.includes("Royal"),
+      );
     }
-    return allProducts.filter((p) => p.category === filter);
+    return allProducts.filter((p) => productCategorySlug(p) === filter);
   }, [allProducts, filter]);
 
   return (

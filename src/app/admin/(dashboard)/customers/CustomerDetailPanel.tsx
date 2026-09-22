@@ -29,6 +29,10 @@ import {
 } from "@/lib/admin/status";
 import type { OrderStatus, PaymentStatus } from "@/types/database";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
+import {
+  AdminTablePagination,
+  useAdminTablePagination,
+} from "@/components/admin/AdminTablePagination";
 
 export function CustomerDetailPanel({
   customer,
@@ -43,6 +47,8 @@ export function CustomerDetailPanel({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const { pageItems, page, setPage, totalPages, total, from, to } =
+    useAdminTablePagination(orders);
 
   return (
     <div className="space-y-5">
@@ -122,89 +128,99 @@ export function CustomerDetailPanel({
             No orders for this customer.
           </p>
         ) : (
-          <AdminTableShell>
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Order</th>
-                  <th className="px-4 py-3 font-semibold">Date</th>
-                  <th className="px-4 py-3 font-semibold">Total</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Payment</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/15">
-                {orders.map((order) => (
-                  <tr
-                    key={order.dbId}
-                    className="hover:bg-surface-container-low/50"
-                  >
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="font-semibold text-primary hover:underline"
-                      >
-                        {order.id}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-on-surface-variant">
-                      {new Date(order.placedAt).toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-4 py-3 price font-semibold">
-                      {formatINR(order.total)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {supabase ? (
-                        <AdminStatusSelect
-                          action={updateOrderStatusAction}
-                          fields={{ orderId: order.dbId }}
-                          value={order.status}
-                          kind="order"
-                          options={ORDER_STATUSES.map((s) => ({
-                            value: s,
-                            label: ORDER_STATUS_LABELS[s],
-                          }))}
-                        />
-                      ) : (
-                        <StatusBadge
-                          kind="order"
-                          value={order.status}
-                          label={
-                            ORDER_STATUS_LABELS[order.status as OrderStatus] ??
-                            order.status
-                          }
-                        />
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {supabase ? (
-                        <AdminStatusSelect
-                          action={updateOrderPaymentStatusAction}
-                          fields={{ orderId: order.dbId }}
-                          value={order.paymentStatus}
-                          kind="payment"
-                          options={PAYMENT_STATUSES.map((s) => ({
-                            value: s,
-                            label: PAYMENT_STATUS_LABELS[s],
-                          }))}
-                        />
-                      ) : (
-                        <StatusBadge
-                          kind="payment"
-                          value={order.paymentStatus}
-                          label={
-                            PAYMENT_STATUS_LABELS[
-                              order.paymentStatus as PaymentStatus
-                            ] ?? order.paymentStatus
-                          }
-                        />
-                      )}
-                    </td>
+          <>
+            <AdminTableShell>
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Order</th>
+                    <th className="px-4 py-3 font-semibold">Date</th>
+                    <th className="px-4 py-3 font-semibold">Total</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Payment</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </AdminTableShell>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/15">
+                  {pageItems.map((order) => (
+                    <tr
+                      key={order.dbId}
+                      className="hover:bg-surface-container-low/50"
+                    >
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="font-semibold text-primary hover:underline"
+                        >
+                          {order.id}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-on-surface-variant">
+                        {new Date(order.placedAt).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3 price font-semibold">
+                        {formatINR(order.total)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {supabase ? (
+                          <AdminStatusSelect
+                            action={updateOrderStatusAction}
+                            fields={{ orderId: order.dbId }}
+                            value={order.status}
+                            kind="order"
+                            options={ORDER_STATUSES.map((s) => ({
+                              value: s,
+                              label: ORDER_STATUS_LABELS[s],
+                            }))}
+                          />
+                        ) : (
+                          <StatusBadge
+                            kind="order"
+                            value={order.status}
+                            label={
+                              ORDER_STATUS_LABELS[order.status as OrderStatus] ??
+                              order.status
+                            }
+                          />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {supabase ? (
+                          <AdminStatusSelect
+                            action={updateOrderPaymentStatusAction}
+                            fields={{ orderId: order.dbId }}
+                            value={order.paymentStatus}
+                            kind="payment"
+                            options={PAYMENT_STATUSES.map((s) => ({
+                              value: s,
+                              label: PAYMENT_STATUS_LABELS[s],
+                            }))}
+                          />
+                        ) : (
+                          <StatusBadge
+                            kind="payment"
+                            value={order.paymentStatus}
+                            label={
+                              PAYMENT_STATUS_LABELS[
+                                order.paymentStatus as PaymentStatus
+                              ] ?? order.paymentStatus
+                            }
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </AdminTableShell>
+            <AdminTablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              from={from}
+              to={to}
+              onPageChange={setPage}
+            />
+          </>
         )}
       </AdminCard>
     </div>

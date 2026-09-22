@@ -18,6 +18,15 @@ export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "razorpay" | "cod";
 export type EnquiryType = "corporate" | "newsletter" | "support";
 export type EnquiryStatus = "new" | "in_progress" | "closed";
+export type AttributeDataType =
+  | "text"
+  | "number"
+  | "boolean"
+  | "select"
+  | "multi_select"
+  | "rich_text"
+  | "number_unit";
+export type SellingUnit = "g" | "kg" | "pack" | "pc" | "other";
 
 export type Database = {
   public: {
@@ -91,6 +100,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      subcategories: {
+        Row: {
+          id: string;
+          category_id: string;
+          slug: string;
+          title: string;
+          subtitle: string | null;
+          image_url: string | null;
+          sort_order: number;
+          published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          slug: string;
+          title: string;
+          subtitle?: string | null;
+          image_url?: string | null;
+          sort_order?: number;
+          published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string;
+          slug?: string;
+          title?: string;
+          subtitle?: string | null;
+          image_url?: string | null;
+          sort_order?: number;
+          published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
@@ -99,6 +147,9 @@ export type Database = {
           description: string;
           long_description: string | null;
           category_id: string | null;
+          subcategory_id: string | null;
+          source_name: string | null;
+          seasonal: boolean;
           spice_note: string | null;
           dietary: string[] | null;
           badge: string | null;
@@ -124,6 +175,9 @@ export type Database = {
           description?: string;
           long_description?: string | null;
           category_id?: string | null;
+          subcategory_id?: string | null;
+          source_name?: string | null;
+          seasonal?: boolean;
           spice_note?: string | null;
           dietary?: string[] | null;
           badge?: string | null;
@@ -149,6 +203,9 @@ export type Database = {
           description?: string;
           long_description?: string | null;
           category_id?: string | null;
+          subcategory_id?: string | null;
+          source_name?: string | null;
+          seasonal?: boolean;
           spice_note?: string | null;
           dietary?: string[] | null;
           badge?: string | null;
@@ -178,6 +235,8 @@ export type Database = {
           price_paise: number;
           mrp_paise: number | null;
           weight_g: number | null;
+          selling_unit: SellingUnit;
+          quantity_value: number | null;
           stock_qty: number;
           low_stock_threshold: number;
           available: boolean;
@@ -192,6 +251,8 @@ export type Database = {
           price_paise: number;
           mrp_paise?: number | null;
           weight_g?: number | null;
+          selling_unit?: SellingUnit;
+          quantity_value?: number | null;
           stock_qty?: number;
           low_stock_threshold?: number;
           available?: boolean;
@@ -206,11 +267,109 @@ export type Database = {
           price_paise?: number;
           mrp_paise?: number | null;
           weight_g?: number | null;
+          selling_unit?: SellingUnit;
+          quantity_value?: number | null;
           stock_qty?: number;
           low_stock_threshold?: number;
           available?: boolean;
           sort_order?: number;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      attribute_definitions: {
+        Row: {
+          id: string;
+          key: string;
+          label: string;
+          data_type: AttributeDataType;
+          options: Json | null;
+          unit: string | null;
+          description: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          label: string;
+          data_type: AttributeDataType;
+          options?: Json | null;
+          unit?: string | null;
+          description?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          label?: string;
+          data_type?: AttributeDataType;
+          options?: Json | null;
+          unit?: string | null;
+          description?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      category_attribute_rules: {
+        Row: {
+          id: string;
+          category_id: string;
+          subcategory_id: string | null;
+          attribute_id: string;
+          required: boolean;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          subcategory_id?: string | null;
+          attribute_id: string;
+          required?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          category_id?: string;
+          subcategory_id?: string | null;
+          attribute_id?: string;
+          required?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      product_attribute_values: {
+        Row: {
+          id: string;
+          product_id: string;
+          attribute_id: string;
+          value_text: string | null;
+          value_number: number | null;
+          value_boolean: boolean | null;
+          value_json: Json | null;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          attribute_id: string;
+          value_text?: string | null;
+          value_number?: number | null;
+          value_boolean?: boolean | null;
+          value_json?: Json | null;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          attribute_id?: string;
+          value_text?: string | null;
+          value_number?: number | null;
+          value_boolean?: boolean | null;
+          value_json?: Json | null;
         };
         Relationships: [];
       };

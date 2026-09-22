@@ -6,6 +6,8 @@ import { ComboBuilderTrustStrip } from "@/components/experience/combo-builder/Co
 import { catalogueProducts } from "@/data/catalogue";
 import { comboBuilderMeta, comboBuilderPoolIds } from "@/data/combo-builder";
 import { getHeroCarouselContent } from "@/lib/admin/queries";
+import { getPublishedProducts } from "@/lib/catalog/queries";
+import { isSupabaseConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: comboBuilderMeta.metaTitle,
@@ -18,7 +20,23 @@ export const metadata: Metadata = {
 };
 
 export default async function CombosPage() {
-  const builderProducts = catalogueProducts.filter((product) =>
+  const allProducts = isSupabaseConfigured()
+    ? await getPublishedProducts()
+    : catalogueProducts.map((p) => ({
+        ...p,
+        category: { slug: String(p.category), title: String(p.category) },
+        attributes: [],
+        variants: p.variants.map((v) => ({
+          id: v.variantId ?? v.id,
+          label: v.label,
+          price: v.price ?? p.price,
+          sku: v.sku ?? `${p.slug}-${v.id}`,
+          stockQty: v.stockQty ?? 0,
+          available: true,
+          variantId: v.variantId ?? v.id,
+        })),
+      }));
+  const builderProducts = allProducts.filter((product) =>
     (comboBuilderPoolIds as readonly string[]).includes(product.id),
   );
   const slides = await getHeroCarouselContent("combos");

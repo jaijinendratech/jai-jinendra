@@ -22,11 +22,7 @@ export default async function AdminEnquiriesPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Enquiries"
-        description={
-          supabase
-            ? "Inbox from enquiries table."
-            : "Sample corporate enquiries (mock)."
-        }
+        description="Corporate and support messages waiting for a reply."
       />
 
       {!enquiries.length ? (

@@ -15,6 +15,7 @@ import {
   deleteOutletAction,
   deleteProductAction,
   deleteProductImageAction,
+  deleteSubcategoryAction,
   deleteVariantAction,
   duplicateProductAction,
 } from "@/lib/admin/actions";
@@ -24,6 +25,7 @@ export const adminFormActions = {
   deleteProduct: deleteProductAction,
   duplicateProduct: duplicateProductAction,
   deleteCategory: deleteCategoryAction,
+  deleteSubcategory: deleteSubcategoryAction,
   deleteOutlet: deleteOutletAction,
   deleteCombo: deleteComboAction,
   deleteMedia: deleteMediaAssetAction,

@@ -132,7 +132,7 @@ export function ProductDetailView({
               ) : null}
               <Image
                 src={product.image}
-                alt={product.imageAlt}
+                alt={product.imageAlt ?? product.name}
                 fill
                 priority
                 sizes="(max-width:1024px) 100vw, 50vw"

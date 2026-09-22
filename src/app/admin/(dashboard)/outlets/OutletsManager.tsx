@@ -21,6 +21,10 @@ import {
   PUBLISH_HIDDEN_OPTIONS,
 } from "@/components/admin/AdminStatusSelect";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
+import {
+  AdminTablePagination,
+  useAdminTablePagination,
+} from "@/components/admin/AdminTablePagination";
 
 export type AdminOutletRow = {
   id: string;
@@ -151,6 +155,8 @@ export function OutletsManager({
       ? (outlets.find((o) => o.id === modal) ?? null)
       : null;
   const isOpen = modal !== null;
+  const { pageItems, page, setPage, totalPages, total, from, to } =
+    useAdminTablePagination(outlets);
 
   return (
     <>
@@ -178,7 +184,7 @@ export function OutletsManager({
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
-            {outlets.map((outlet) => (
+            {pageItems.map((outlet) => (
               <tr key={outlet.id}>
                 <td className="px-4 py-3">
                   <p className="font-semibold text-on-surface">{outlet.name}</p>
@@ -225,6 +231,14 @@ export function OutletsManager({
           </tbody>
         </table>
       </AdminTableShell>
+      <AdminTablePagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       <AdminModal
         isOpen={isOpen}
