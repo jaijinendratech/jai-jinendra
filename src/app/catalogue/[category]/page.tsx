@@ -10,6 +10,8 @@ import { getProductsByCategory } from "@/lib/catalog/queries";
 import { categories, siteConfig } from "@/data/home";
 import type { CategoryId } from "@/types/catalog";
 
+export const revalidate = 60;
+
 const validCategories: CategoryId[] = [
   "namkeens",
   "kachoris",

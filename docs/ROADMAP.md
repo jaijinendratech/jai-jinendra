@@ -8,11 +8,51 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 
 | Sprint | Days | Theme | Status |
 |--------|------|-------|--------|
-| **Sprint 0** | 1–3 | Foundation — docs, Supabase, Stitch, auth | In progress |
-| **Sprint 1** | 4–10 | Cart + Auth | Pending |
-| **Sprint 2** | 11–18 | Checkout + Payments | Pending |
-| **Sprint 3** | 19–25 | Admin CMS + Ops | Pending |
-| **Sprint 4** | 26–30 | Hardening + Launch | Pending |
+| **Sprint 0** | 1–3 | Foundation — docs, Supabase, Stitch, auth | Largely done |
+| **Sprint 1–3** | — | Cart, checkout, admin CMS | Largely done in code |
+| **Hardening Phase 0–1** | — | Security + inventory + Zod | **Launch gate** — code done; apply migrations |
+| **Hardening Phase 2–3** | — | Cache, rate limits, tests, Sentry | **Post-launch** — code scaffolded |
+
+---
+
+## Production hardening (audit roadmap)
+
+### Phase 0 — Ship blockers (launch gate) ✅ code
+
+- [x] Remove unauthenticated `/api/create-order`
+- [x] Require `ADMIN_PASSWORD`; no hardcoded default
+- [x] Move `promoteUserToAdmin` to `scripts/`
+- [x] Migration: lock `profiles.role` (`004_lock_profiles_role.sql`)
+- [x] `requireAdmin()` in admin dashboard layout
+- [x] Validate login `next` redirect
+- [x] `crypto.timingSafeEqual` for Razorpay HMAC
+
+### Phase 1 — Integrity (launch gate) ✅ code
+
+- [x] Atomic `decrement_stock` / `confirm_order_payment` (`005_atomic_inventory.sql`)
+- [x] Cart clear by `user_id` on payment success
+- [x] Zod schemas on mutating APIs + account/admin content
+- [x] Experience pages → catalog queries; no mock when Supabase on
+- [x] Stronger order numbers + indexes
+
+### Phase 2 — Scale (post-launch) ✅ code
+
+- [x] Cached product search index in root layout
+- [x] `revalidateTag` from admin + catalogue `revalidate = 60`
+- [x] SQL KPI RPC (`006_scale_ops.sql`)
+- [x] Rate limits (memory / Upstash)
+- [x] Security headers + CSP report-only
+- [x] Webhook dedupe + Shiprocket token table + Resend retry
+
+### Phase 3 — Ops (post-launch) ✅ scaffold
+
+- [x] Vitest unit tests (`npm run test`)
+- [x] Playwright smoke (`npm run test:e2e`)
+- [x] GitHub Actions CI (`tsc` + lint + unit tests)
+- [x] Sentry (`NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN`) + Vercel Analytics
+- [x] Structured payment logs (no PII)
+
+**Apply on Supabase before launch:** migrations `004`, `005`, `006`.
 
 ---
 
@@ -32,53 +72,33 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 
 #### Commerce (critical path)
 
-- [ ] Real cart (API + client state)
-- [ ] Add to cart / Buy now on PDP + combo builder
-- [ ] Checkout route (`/checkout`)
-- [ ] Customer login/signup (phone OTP)
-- [ ] Razorpay integration + webhooks
-- [ ] Order creation + lifecycle
-- [ ] Order tracking (real API)
-- [ ] Pincode validation (pan-India)
-- [ ] Shipping calculator (live rules)
+- [x] Real cart (API + client state)
+- [x] Add to cart / Buy now on PDP + combo builder
+- [x] Checkout route (`/checkout`)
+- [x] Customer login/signup (phone OTP)
+- [x] Razorpay integration + webhooks
+- [x] Order creation + lifecycle
+- [x] Order tracking (real API)
+- [x] Pincode validation (pan-India)
+- [ ] Shipping calculator (live zones — flat ₹79 until wired)
 
 #### Backend / data
 
-- [ ] Supabase project + schema + RLS
-- [ ] API routes / server actions
-- [ ] Replace `src/data/*` in prod paths
-- [ ] `.env.example` + Vercel env vars
-- [ ] Resend email templates
-- [ ] Admin media upload (Supabase Storage)
-
-#### Admin CMS
-
-- [ ] Products CRUD (persist)
-- [ ] Categories CRUD
-- [ ] Orders management (status updates)
-- [ ] Content editors (home/promise)
-- [ ] Enquiries inbox
-- [ ] Outlets CRUD
-- [ ] Settings persistence
-- [ ] Real admin auth (Supabase + role)
-
-#### Frontend gaps
-
-- [ ] Search v1
-- [ ] Functional catalogue filters
-- [ ] Account pages (`/account`, `/account/orders`)
-- [ ] Newsletter + corporate enquiry (real submit)
-- [ ] Loading/error/empty states for real data
-- [ ] Stitch MCP connected + screens exported
+- [x] Supabase schema + RLS (apply remaining migrations)
+- [x] API routes / server actions
+- [x] Replace `src/data/*` in prod paths when Supabase on
+- [x] `.env.example` + Vercel env vars
+- [x] Resend email (retry)
+- [x] Admin media upload (Supabase Storage)
 
 #### Ops / quality
 
-- [ ] Unit / e2e tests
-- [ ] CI pipeline
-- [ ] `sitemap.ts` / `robots.ts`
-- [ ] Monitoring baseline (Sentry / Vercel Analytics)
-- [ ] Production deploy
-
+- [x] Unit tests (Vitest foundation)
+- [x] CI pipeline
+- [ ] Expand Playwright: login → cart → COD
+- [ ] `sitemap.ts` / `robots.ts` audit
+- [x] Monitoring baseline (Sentry / Vercel Analytics)
+- [ ] Production deploy READY + webhook 2xx
 ---
 
 ## Sprint 0 — Foundation

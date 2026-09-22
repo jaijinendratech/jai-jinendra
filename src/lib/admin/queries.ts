@@ -248,67 +248,63 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
   if (!isSupabaseConfigured()) return computeMockKpis();
 
   const admin = createAdminClient();
-  const todayIso = startOfDay().toISOString();
-  const monthIso = startOfMonth().toISOString();
+  const { data, error } = await admin.rpc("admin_dashboard_kpis");
 
-  const [
-    { data: orders },
-    { count: productsTotal },
-    { count: productsActive },
-    { data: variants },
-    { count: customers },
-    { data: enquiries },
-    { count: outlets },
-  ] = await Promise.all([
-    admin.from("orders").select("total_paise, status, created_at"),
-    admin.from("products").select("*", { count: "exact", head: true }),
-    admin
-      .from("products")
-      .select("*", { count: "exact", head: true })
-      .eq("published", true),
-    admin
-      .from("product_variants")
-      .select("stock_qty, low_stock_threshold"),
-    admin.from("profiles").select("*", { count: "exact", head: true }),
-    admin.from("enquiries").select("type, status"),
-    admin.from("outlets").select("*", { count: "exact", head: true }),
-  ]);
+  if (error || !data) {
+    // Fallback: lightweight counts only (no full order dump)
+    const [
+      { count: ordersTotal },
+      { count: productsTotal },
+      { count: productsActive },
+      { count: customers },
+      { count: outlets },
+    ] = await Promise.all([
+      admin.from("orders").select("*", { count: "exact", head: true }),
+      admin.from("products").select("*", { count: "exact", head: true }),
+      admin
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("published", true),
+      admin.from("profiles").select("*", { count: "exact", head: true }),
+      admin.from("outlets").select("*", { count: "exact", head: true }),
+    ]);
 
-  const orderRows = orders ?? [];
-  const revenueTotal = orderRows.reduce((s, o) => s + o.total_paise, 0) / 100;
-  const revenueToday =
-    orderRows
-      .filter((o) => o.created_at >= todayIso)
-      .reduce((s, o) => s + o.total_paise, 0) / 100;
-  const revenueMonth =
-    orderRows
-      .filter((o) => o.created_at >= monthIso)
-      .reduce((s, o) => s + o.total_paise, 0) / 100;
+    return {
+      revenueTotal: 0,
+      revenueToday: 0,
+      revenueMonth: 0,
+      ordersTotal: ordersTotal ?? 0,
+      ordersToday: 0,
+      ordersPending: 0,
+      ordersCompleted: 0,
+      ordersCancelled: 0,
+      productsTotal: productsTotal ?? 0,
+      productsActive: productsActive ?? 0,
+      productsLowStock: 0,
+      customers: customers ?? 0,
+      enquiriesPending: 0,
+      enquiriesCorporate: 0,
+      outlets: outlets ?? 0,
+    };
+  }
 
-  const lowStock = (variants ?? []).filter(
-    (v) => v.stock_qty <= (v.low_stock_threshold ?? 5),
-  ).length;
-
-  const enq = enquiries ?? [];
-
+  const k = data as Record<string, number>;
   return {
-    revenueTotal,
-    revenueToday,
-    revenueMonth,
-    ordersTotal: orderRows.length,
-    ordersToday: orderRows.filter((o) => o.created_at >= todayIso).length,
-    ordersPending: orderRows.filter((o) =>
-      ["pending_payment", "cod_confirmed", "confirmed"].includes(o.status),
-    ).length,
-    ordersCompleted: orderRows.filter((o) => o.status === "delivered").length,
-    ordersCancelled: orderRows.filter((o) => o.status === "cancelled").length,
-    productsTotal: productsTotal ?? 0,
-    productsActive: productsActive ?? 0,
-    productsLowStock: lowStock,
-    customers: customers ?? 0,
-    enquiriesPending: enq.filter((e) => e.status === "new").length,
-    enquiriesCorporate: enq.filter((e) => e.type === "corporate").length,
-    outlets: outlets ?? 0,
+    revenueTotal: Number(k.revenue_total_paise ?? 0) / 100,
+    revenueToday: Number(k.revenue_today_paise ?? 0) / 100,
+    revenueMonth: Number(k.revenue_month_paise ?? 0) / 100,
+    ordersTotal: Number(k.orders_total ?? 0),
+    ordersToday: Number(k.orders_today ?? 0),
+    ordersPending: Number(k.orders_pending ?? 0),
+    ordersCompleted: Number(k.orders_completed ?? 0),
+    ordersCancelled: Number(k.orders_cancelled ?? 0),
+    productsTotal: Number(k.products_total ?? 0),
+    productsActive: Number(k.products_active ?? 0),
+    productsLowStock: Number(k.products_low_stock ?? 0),
+    customers: Number(k.customers ?? 0),
+    enquiriesPending: Number(k.enquiries_pending ?? 0),
+    enquiriesCorporate: Number(k.enquiries_corporate ?? 0),
+    outlets: Number(k.outlets ?? 0),
   };
 }
 
@@ -413,7 +409,7 @@ export async function getCategoryDistribution(): Promise<NamedCount[]> {
     .select("categories(title, slug)");
   type Row = { categories: { title: string; slug: string } | null };
   const map = new Map<string, number>();
-  for (const p of (data ?? []) as Row[]) {
+  for (const p of (data ?? []) as unknown as Row[]) {
     const name = p.categories?.title ?? p.categories?.slug ?? "Uncategorized";
     map.set(name, (map.get(name) ?? 0) + 1);
   }
@@ -499,7 +495,7 @@ export async function getLowStockItems(limit = 10) {
     products: { name: string } | null;
   };
 
-  return ((data ?? []) as Row[])
+  return ((data ?? []) as unknown as Row[])
     .filter((v) => v.stock_qty <= (v.low_stock_threshold ?? 5))
     .slice(0, limit)
     .map((v) => ({
@@ -551,7 +547,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
     order_items: { qty: number }[] | null;
   };
 
-  return ((data ?? []) as Row[]).map((o) => ({
+  return ((data ?? []) as unknown as Row[]).map((o) => ({
     id: o.order_number,
     dbId: o.id,
     customer: o.address_snapshot?.name ?? "Customer",
@@ -748,7 +744,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
     product_images: { storage_path: string; sort_order: number }[] | null;
   };
 
-  return ((data ?? []) as Row[]).map((p) => {
+  return ((data ?? []) as unknown as Row[]).map((p) => {
     const variants = p.product_variants ?? [];
     const images = (p.product_images ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
@@ -964,7 +960,7 @@ export async function getAdminCategories() {
     products: { id: string }[] | null;
   };
 
-  return ((data ?? []) as Row[]).map((c) => ({
+  return ((data ?? []) as unknown as Row[]).map((c) => ({
     id: c.id,
     slug: c.slug,
     title: c.title,
@@ -1016,7 +1012,7 @@ export async function getAdminInventory() {
     products: { name: string } | null;
   };
 
-  return ((data ?? []) as Row[]).map((v) => ({
+  return ((data ?? []) as unknown as Row[]).map((v) => ({
     id: v.id,
     productId: v.product_id,
     productName: v.products?.name ?? "Product",
@@ -1197,7 +1193,7 @@ export async function getAdminCustomerOrders(
 
   type Row = Parameters<typeof mapOrderListItem>[0];
   const merged = new Map<string, AdminOrderListItem>();
-  for (const row of [...(byUser ?? []), ...(byEmail ?? [])] as Row[]) {
+  for (const row of [...(byUser ?? []), ...(byEmail ?? [])] as unknown as Row[]) {
     merged.set(row.id, mapOrderListItem(row));
   }
   return Array.from(merged.values()).sort(
@@ -1338,7 +1334,7 @@ export async function getAdminCombos() {
 
   return {
     source: "supabase" as const,
-    boxes: ((data ?? []) as Row[]).map((c) => ({
+    boxes: ((data ?? []) as unknown as Row[]).map((c) => ({
       id: c.id,
       slug: c.slug,
       name: c.name,

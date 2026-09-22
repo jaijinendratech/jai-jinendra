@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetailView } from "@/components/products/ProductDetailView";
-import { catalogueProducts } from "@/data/catalogue";
 import {
   getProductBySlug,
+  getPublishedProducts,
   getRelatedProducts,
 } from "@/lib/catalog/queries";
 import { categories, siteConfig } from "@/data/home";
+import { isSupabaseConfigured } from "@/lib/env";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateStaticParams() {
+  if (isSupabaseConfigured()) {
+    const products = await getPublishedProducts();
+    return products.map((product) => ({ slug: product.slug }));
+  }
+  const { catalogueProducts } = await import("@/data/catalogue");
   return catalogueProducts.map((product) => ({ slug: product.slug }));
 }
 

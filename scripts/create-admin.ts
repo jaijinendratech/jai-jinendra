@@ -19,7 +19,13 @@ const admin = createClient(url, key, {
 
 async function main() {
   const email = ADMIN_EMAIL;
-  const password = getAdminPassword();
+  let password: string;
+  try {
+    password = getAdminPassword();
+  } catch {
+    console.error("Set ADMIN_PASSWORD in the environment (no default)");
+    process.exit(1);
+  }
 
   const { data: list } = await admin.auth.admin.listUsers();
   const existing = list.users.find(

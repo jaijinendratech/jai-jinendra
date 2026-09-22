@@ -1,15 +1,25 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { EnquiryStatus, OrderStatus, PaymentStatus } from "@/types/database";
+import type { EnquiryStatus, OrderStatus } from "@/types/database";
 import { slugify } from "@/lib/admin/slug";
+import {
+  adminOrderStatusSchema,
+  adminPaymentStatusSchema,
+  contentBlockSchema,
+  heroSlideSchema,
+} from "@/lib/validation/schemas";
 
 function revalidateAdmin(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
+  revalidateTag("products", "max");
+  revalidateTag("categories", "max");
+  revalidateTag("content", "max");
 }
 
 function parseList(raw: string): string[] {
@@ -129,11 +139,22 @@ export async function updateOrderStatusAction(formData: FormData) {
   if (!isSupabaseConfigured()) return;
 
   const orderId = String(formData.get("orderId") ?? "");
-  const status = String(formData.get("status") ?? "") as OrderStatus;
+  const statusParsed = adminOrderStatusSchema.safeParse(
+    String(formData.get("status") ?? ""),
+  );
+  if (!orderId || !statusParsed.success) return;
 
   const admin = createAdminClient();
-  await admin.from("orders").update({ status }).eq("id", orderId);
-  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`, "/admin", "/admin/customers");
+  await admin
+    .from("orders")
+    .update({ status: statusParsed.data })
+    .eq("id", orderId);
+  revalidateAdmin(
+    "/admin/orders",
+    `/admin/orders/${orderId}`,
+    "/admin",
+    "/admin/customers",
+  );
 }
 
 export async function updateOrderPaymentStatusAction(formData: FormData) {
@@ -141,11 +162,22 @@ export async function updateOrderPaymentStatusAction(formData: FormData) {
   if (!isSupabaseConfigured()) return;
 
   const orderId = String(formData.get("orderId") ?? "");
-  const status = String(formData.get("status") ?? "") as PaymentStatus;
+  const statusParsed = adminPaymentStatusSchema.safeParse(
+    String(formData.get("status") ?? ""),
+  );
+  if (!orderId || !statusParsed.success) return;
 
   const admin = createAdminClient();
-  await admin.from("orders").update({ payment_status: status }).eq("id", orderId);
-  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`, "/admin", "/admin/customers");
+  await admin
+    .from("orders")
+    .update({ payment_status: statusParsed.data })
+    .eq("id", orderId);
+  revalidateAdmin(
+    "/admin/orders",
+    `/admin/orders/${orderId}`,
+    "/admin",
+    "/admin/customers",
+  );
 }
 
 export async function updateOrderShippingAction(formData: FormData) {
@@ -913,22 +945,37 @@ export async function saveContentBlockAction(formData: FormData) {
     );
   }
 
-  const pageKey = String(formData.get("pageKey") ?? "");
-  const sectionKey = String(formData.get("sectionKey") ?? "");
-  const contentRaw = String(formData.get("content") ?? "{}");
+  let content: Record<string, unknown>;
+  try {
+    content = JSON.parse(String(formData.get("content") ?? "{}")) as Record<
+      string,
+      unknown
+    >;
+  } catch {
+    redirect("/admin?error=invalid-content");
+  }
+
+  const parsed = contentBlockSchema.safeParse({
+    pageKey: String(formData.get("pageKey") ?? ""),
+    sectionKey: String(formData.get("sectionKey") ?? ""),
+    content,
+  });
+  if (!parsed.success) {
+    redirect("/admin?error=invalid-content");
+  }
 
   const admin = createAdminClient();
   await admin.from("content_blocks").upsert(
     {
-      page_key: pageKey,
-      section_key: sectionKey,
-      content: JSON.parse(contentRaw),
+      page_key: parsed.data.pageKey,
+      section_key: parsed.data.sectionKey,
+      content: parsed.data.content as import("@/types/database").Json,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "page_key,section_key" },
   );
 
-  revalidateAdmin(`/admin/content/${pageKey}`, "/");
+  revalidateAdmin(`/admin/content/${parsed.data.pageKey}`, "/");
 }
 
 export async function saveHomepageContentAction(formData: FormData) {
@@ -995,12 +1042,24 @@ export async function saveCarouselSlidesAction(formData: FormData) {
 
   const pageKey = String(formData.get("pageKey") ?? "home").trim() || "home";
   const slidesRaw = String(formData.get("slidesJson") ?? "[]");
+  let slides: unknown;
+  try {
+    slides = JSON.parse(slidesRaw);
+  } catch {
+    redirect("/admin/content/carousels?error=invalid-slides");
+  }
+
+  const parsed = z.array(heroSlideSchema).safeParse(slides);
+  if (!parsed.success) {
+    redirect("/admin/content/carousels?error=invalid-slides");
+  }
+
   const admin = createAdminClient();
   await admin.from("content_blocks").upsert(
     {
       page_key: pageKey,
       section_key: "hero_slides",
-      content: JSON.parse(slidesRaw),
+      content: parsed.data as unknown as import("@/types/database").Json,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "page_key,section_key" },

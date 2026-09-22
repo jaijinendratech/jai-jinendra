@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
+import {
+  accountAddressSchema,
+  profileUpdateSchema,
+} from "@/lib/validation/schemas";
 
 export async function updateAccountProfileAction(formData: FormData) {
   const user = await requireUser("/login?next=/account/profile");
@@ -12,13 +16,22 @@ export async function updateAccountProfileAction(formData: FormData) {
     redirect("/account/profile?notice=supabase-required");
   }
 
+  const parsed = profileUpdateSchema.safeParse({
+    fullName: String(formData.get("fullName") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+  });
+  if (!parsed.success) {
+    redirect("/account/profile?error=save-failed");
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
     .update({
-      full_name: String(formData.get("fullName") ?? "").trim() || null,
-      email: String(formData.get("email") ?? "").trim() || null,
-      phone: String(formData.get("phone") ?? "").trim() || null,
+      full_name: parsed.data.fullName?.trim() || null,
+      email: parsed.data.email?.trim() || null,
+      phone: parsed.data.phone?.trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
@@ -38,27 +51,39 @@ export async function saveAccountAddressAction(formData: FormData) {
     redirect("/account/addresses?notice=supabase-required");
   }
 
-  const id = String(formData.get("id") ?? "");
-  const isDefault = formData.get("isDefault") === "on";
-  const payload = {
-    user_id: user.id,
-    name: String(formData.get("name") ?? "").trim(),
-    phone: String(formData.get("phone") ?? "").trim(),
-    line1: String(formData.get("line1") ?? "").trim(),
-    line2: String(formData.get("line2") ?? "").trim() || null,
-    city: String(formData.get("city") ?? "").trim(),
-    state: String(formData.get("state") ?? "").trim(),
-    pincode: String(formData.get("pincode") ?? "").trim(),
-    is_default: isDefault,
-  };
+  const idRaw = String(formData.get("id") ?? "");
+  const parsed = accountAddressSchema.safeParse({
+    id: idRaw || undefined,
+    name: String(formData.get("name") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    line1: String(formData.get("line1") ?? ""),
+    line2: String(formData.get("line2") ?? "") || null,
+    city: String(formData.get("city") ?? ""),
+    state: String(formData.get("state") ?? ""),
+    pincode: String(formData.get("pincode") ?? ""),
+    isDefault: formData.get("isDefault") === "on",
+  });
 
-  if (!payload.name || !payload.phone || !payload.line1 || !payload.city || !payload.state || !payload.pincode) {
+  if (!parsed.success) {
     redirect("/account/addresses?error=missing-fields");
   }
 
+  const { id, isDefault, ...fields } = parsed.data;
+  const payload = {
+    user_id: user.id,
+    name: fields.name,
+    phone: fields.phone,
+    line1: fields.line1,
+    line2: fields.line2 || null,
+    city: fields.city,
+    state: fields.state,
+    pincode: fields.pincode,
+    is_default: Boolean(isDefault),
+  };
+
   const supabase = await createClient();
 
-  if (isDefault) {
+  if (payload.is_default) {
     await supabase
       .from("addresses")
       .update({ is_default: false })

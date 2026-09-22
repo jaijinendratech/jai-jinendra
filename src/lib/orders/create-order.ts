@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCartSummary, clearCart } from "@/lib/cart/cart-service";
+import { getCartSummary, clearCart, clearCartForUser } from "@/lib/cart/cart-service";
 import { calculateOrderTotals } from "@/lib/shipping";
 import { createRazorpayOrder } from "@/lib/payments/razorpay";
 import { sendOrderConfirmationEmail } from "@/lib/email/resend";
@@ -20,10 +20,14 @@ export type AddressInput = {
   email: string;
 };
 
+/** JJ- + base36 timestamp + random; retry on unique violation. */
 function generateOrderNumber() {
-  const n = Math.floor(10000 + Math.random() * 90000);
-  return `JJ-${n}`;
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `JJ-${ts}-${rand}`;
 }
+
+const UNIQUE_VIOLATION = "23505";
 
 export async function validateCheckout(userId: string, address: AddressInput) {
   const cart = await getCartSummary();
@@ -53,7 +57,6 @@ export async function createOrder(params: {
 }) {
   const { cart } = await validateCheckout(params.userId, params.address);
   const admin = createAdminClient();
-  const orderNumber = generateOrderNumber();
   const totals = calculateOrderTotals(cart.subtotalPaise);
 
   const addressSnapshot: Json = {
@@ -62,31 +65,49 @@ export async function createOrder(params: {
 
   const initialStatus =
     params.paymentMethod === "cod" ? "cod_confirmed" : "pending_payment";
-  const paymentStatus = params.paymentMethod === "cod" ? "pending" : "pending";
+  const paymentStatus = "pending" as const;
 
-  const { data: order, error } = await admin
-    .from("orders")
-    .insert({
-      order_number: orderNumber,
-      user_id: params.userId,
-      status: initialStatus,
-      payment_method: params.paymentMethod,
-      payment_status: paymentStatus,
-      subtotal_paise: totals.subtotalPaise,
-      shipping_paise: totals.shippingPaise,
-      total_paise: totals.totalPaise,
-      address_snapshot: addressSnapshot,
-      customer_email: params.address.email,
-      customer_phone: params.address.phone,
-      notes: params.notes ?? null,
-    })
-    .select("*")
-    .single();
+  let order: Database["public"]["Tables"]["orders"]["Row"] | null = null;
+  let lastError: { code?: string; message: string } | null = null;
 
-  if (error) throw error;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const orderNumber = generateOrderNumber();
+    const { data, error } = await admin
+      .from("orders")
+      .insert({
+        order_number: orderNumber,
+        user_id: params.userId,
+        status: initialStatus,
+        payment_method: params.paymentMethod,
+        payment_status: paymentStatus,
+        subtotal_paise: totals.subtotalPaise,
+        shipping_paise: totals.shippingPaise,
+        total_paise: totals.totalPaise,
+        address_snapshot: addressSnapshot,
+        customer_email: params.address.email,
+        customer_phone: params.address.phone,
+        notes: params.notes ?? null,
+      })
+      .select("*")
+      .single();
+
+    if (!error && data) {
+      order = data;
+      break;
+    }
+
+    lastError = error;
+    if (error?.code !== UNIQUE_VIOLATION) {
+      throw error;
+    }
+  }
+
+  if (!order) {
+    throw lastError ?? new Error("Failed to allocate order number");
+  }
 
   const orderItems = cart.items.map((item) => ({
-    order_id: order.id,
+    order_id: order!.id,
     variant_id: item.variantId,
     qty: item.qty,
     unit_price_paise: item.unitPricePaise,
@@ -102,7 +123,7 @@ export async function createOrder(params: {
     if (params.address.email) {
       await sendOrderConfirmationEmail({
         to: params.address.email,
-        orderNumber,
+        orderNumber: order.order_number,
         totalPaise: totals.totalPaise,
         paymentMethod: "cod",
       }).catch(() => undefined);
@@ -112,7 +133,7 @@ export async function createOrder(params: {
 
   const rzOrder = await createRazorpayOrder({
     amountPaise: totals.totalPaise,
-    receipt: orderNumber,
+    receipt: order.order_number,
     notes: { order_id: order.id },
   });
 
@@ -124,47 +145,22 @@ export async function createOrder(params: {
   return { order, razorpay: rzOrder };
 }
 
-export async function confirmOrderInventory(orderId: string) {
+/**
+ * Atomically claim pending payment + decrement stock via Postgres RPC.
+ * Safe under concurrent webhook + verify-payment.
+ */
+export async function confirmOrderInventory(
+  orderId: string,
+  razorpayPaymentId?: string | null,
+) {
   const admin = createAdminClient();
+  const { data, error } = await admin.rpc("confirm_order_payment", {
+    p_order_id: orderId,
+    p_razorpay_payment_id: razorpayPaymentId ?? null,
+  });
 
-  const { data: items } = await admin
-    .from("order_items")
-    .select("variant_id, qty")
-    .eq("order_id", orderId);
-
-  for (const item of items ?? []) {
-    if (!item.variant_id) continue;
-
-    const { data: variant } = await admin
-      .from("product_variants")
-      .select("stock_qty")
-      .eq("id", item.variant_id)
-      .single();
-
-    if (!variant) continue;
-
-    const newQty = variant.stock_qty - item.qty;
-    await admin
-      .from("product_variants")
-      .update({ stock_qty: Math.max(0, newQty) })
-      .eq("id", item.variant_id);
-
-    await admin.from("inventory_logs").insert({
-      variant_id: item.variant_id,
-      delta: -item.qty,
-      reason: "order_confirmed",
-      order_id: orderId,
-    });
-  }
-
-  await admin
-    .from("orders")
-    .update({
-      status: "confirmed",
-      payment_status: "paid",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", orderId);
+  if (error) throw error;
+  return data as Database["public"]["Tables"]["orders"]["Row"] | null;
 }
 
 export async function handleRazorpayPaymentSuccess(params: {
@@ -179,18 +175,19 @@ export async function handleRazorpayPaymentSuccess(params: {
     .eq("razorpay_order_id", params.razorpayOrderId)
     .maybeSingle();
 
-  if (!order || order.status === "confirmed") return order;
+  if (!order) return null;
+  if (order.payment_status === "paid" || order.status === "confirmed") {
+    return order;
+  }
 
-  await admin
-    .from("orders")
-    .update({
-      razorpay_payment_id: params.razorpayPaymentId,
-      payment_status: "paid",
-    })
-    .eq("id", order.id);
+  const confirmed = await confirmOrderInventory(
+    order.id,
+    params.razorpayPaymentId,
+  );
 
-  await confirmOrderInventory(order.id);
-  await clearCart();
+  if (order.user_id) {
+    await clearCartForUser(order.user_id);
+  }
 
   if (order.customer_email) {
     await sendOrderConfirmationEmail({
@@ -201,7 +198,7 @@ export async function handleRazorpayPaymentSuccess(params: {
     }).catch(() => undefined);
   }
 
-  return order;
+  return confirmed ?? order;
 }
 
 export async function trackOrder(orderNumber: string, phone: string) {
@@ -217,7 +214,9 @@ export async function trackOrder(orderNumber: string, phone: string) {
   const order = data as OrderRow | null;
   if (!order) return null;
 
-  const orderPhone = String(order.customer_phone ?? "").replace(/\D/g, "").slice(-10);
+  const orderPhone = String(order.customer_phone ?? "")
+    .replace(/\D/g, "")
+    .slice(-10);
   const snapshotPhone = String(
     (order.address_snapshot as { phone?: string })?.phone ?? "",
   )

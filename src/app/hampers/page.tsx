@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { ExperienceCategoryView } from "@/components/experience/ExperienceCategoryView";
-import { getProductsByCategory } from "@/data/catalogue";
 import { hampersPage } from "@/data/experience-pages";
 import { getHeroCarouselContent } from "@/lib/admin/queries";
+import { getProductsByCategory } from "@/lib/catalog/queries";
 
 export const metadata: Metadata = {
   title: hampersPage.metaTitle,
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HampersPage() {
-  const products = getProductsByCategory("gifts");
+  const products = await getProductsByCategory("gifts");
   const slides = await getHeroCarouselContent("hampers");
 
   return (

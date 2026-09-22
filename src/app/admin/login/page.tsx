@@ -3,6 +3,7 @@ import Image from "next/image";
 import { loginAdminWithPasswordAction } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/admin-config";
 import { siteConfig } from "@/data/home";
+import { safeAdminRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
   title: "Admin Login",
@@ -16,7 +17,7 @@ export default async function AdminLoginPage({
 }) {
   const params = await searchParams;
   const hasError = params.error === "1" || params.error === "unauthorized";
-  const next = params.next?.startsWith("/admin") ? params.next : "/admin";
+  const next = safeAdminRedirectPath(params.next, "/admin");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f6f4f2] px-4 py-12">

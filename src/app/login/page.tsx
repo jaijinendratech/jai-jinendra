@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sendPhoneOtpAction, verifyPhoneOtpAction } from "@/lib/auth";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -20,7 +21,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const step = params.step === "verify" ? "verify" : "phone";
   const phone = params.phone ?? "";
-  const next = params.next?.startsWith("/") ? params.next : "/account";
+  const next = safeRedirectPath(params.next, "/account");
   const error = params.error;
 
   return (

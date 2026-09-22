@@ -1,9 +1,10 @@
-import { getEnv } from "@/lib/env";
+import { getEnv, isSupabaseConfigured } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const BASE = "https://apiv2.shiprocket.in/v1/external";
 
 type TokenCache = { token: string; expiresAt: number };
-let tokenCache: TokenCache | null = null;
+let memoryToken: TokenCache | null = null;
 
 export type ShiprocketAddress = {
   name: string;
@@ -79,34 +80,76 @@ async function shiprocketFetch<T>(
   return data as T;
 }
 
+async function loadStoredToken(): Promise<TokenCache | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("integration_tokens")
+      .select("token, expires_at")
+      .eq("provider", "shiprocket")
+      .maybeSingle();
+    if (!data?.token || !data.expires_at) return null;
+    const expiresAt = new Date(data.expires_at).getTime();
+    if (expiresAt <= Date.now() + 60_000) return null;
+    return { token: data.token, expiresAt };
+  } catch {
+    return null;
+  }
+}
+
+async function persistToken(cache: TokenCache) {
+  memoryToken = cache;
+  if (!isSupabaseConfigured()) return;
+  try {
+    const admin = createAdminClient();
+    await admin.from("integration_tokens").upsert(
+      {
+        provider: "shiprocket",
+        token: cache.token,
+        expires_at: new Date(cache.expiresAt).toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "provider" },
+    );
+  } catch {
+    // best-effort shared store
+  }
+}
+
 export async function getShiprocketToken(force = false): Promise<string> {
   if (
     !force &&
-    tokenCache &&
-    tokenCache.expiresAt > Date.now() + 60_000
+    memoryToken &&
+    memoryToken.expiresAt > Date.now() + 60_000
   ) {
-    return tokenCache.token;
+    return memoryToken.token;
+  }
+
+  if (!force) {
+    const stored = await loadStoredToken();
+    if (stored) {
+      memoryToken = stored;
+      return stored.token;
+    }
   }
 
   const { email, password } = credentials();
-  const data = await shiprocketFetch<{ token?: string }>(
-    "/auth/login",
-    {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    },
-  );
+  const data = await shiprocketFetch<{ token?: string }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 
   if (!data?.token) {
     throw new Error("Shiprocket login did not return a token.");
   }
 
-  // Tokens last ~10 days; refresh a day early.
-  tokenCache = {
+  const cache = {
     token: data.token,
     expiresAt: Date.now() + 9 * 24 * 60 * 60 * 1000,
   };
-  return data.token;
+  await persistToken(cache);
+  return cache.token;
 }
 
 type PickupListResponse = {

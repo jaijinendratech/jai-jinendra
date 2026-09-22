@@ -158,7 +158,7 @@ export async function getCartSummary(): Promise<CartSummary> {
     };
   };
 
-  const items: CartLine[] = ((rows ?? []) as CartRow[]).map((row) => {
+  const items: CartLine[] = ((rows ?? []) as unknown as CartRow[]).map((row) => {
     const variant = row.product_variants;
 
     const images = [...(variant.products.product_images ?? [])].sort(
@@ -287,4 +287,17 @@ export async function clearCart() {
   const sessionId = await getOrCreateSessionId();
   const cartId = await resolveCartId(admin, user?.id ?? null, sessionId);
   await admin.from("cart_items").delete().eq("cart_id", cartId);
+}
+
+/** Clear cart by user id (webhook / payment success — no cookie session). */
+export async function clearCartForUser(userId: string) {
+  if (!isSupabaseConfigured() || !userId) return;
+  const admin = createAdminClient();
+  const { data: cart } = await admin
+    .from("carts")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!cart) return;
+  await admin.from("cart_items").delete().eq("cart_id", cart.id);
 }

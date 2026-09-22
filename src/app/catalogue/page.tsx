@@ -4,6 +4,8 @@ import { catalogueMeta } from "@/data/catalogue";
 import { getPublishedProducts } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Full Product Catalogue",
   description: catalogueMeta.description,

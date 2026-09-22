@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { headers } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
-import { getPublishedProducts } from "@/lib/catalog/queries";
+import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -80,7 +81,7 @@ export default async function RootLayout({
   const headerList = await headers();
   const pathname = headerList.get("x-jj-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin");
-  const searchProducts = isAdmin ? [] : await getPublishedProducts();
+  const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
 
   return (
     <html
@@ -99,6 +100,7 @@ export default async function RootLayout({
             <SiteFooter />
           </>
         )}
+        <Analytics />
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCartSummary, upsertCartItem } from "@/lib/cart/cart-service";
 import { isSupabaseConfigured } from "@/lib/env";
+import { cartLineSchema, zodErrorMessage } from "@/lib/validation/schemas";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
@@ -34,16 +35,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const raw = await request.json();
+    const body = cartLineSchema.parse(raw);
     const cart = await upsertCartItem({
       sku: body.sku,
       variantId: body.variantId,
-      qty: Number(body.qty),
+      qty: body.qty,
     });
     return NextResponse.json(cart);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Cart update failed" },
+      { error: zodErrorMessage(err) },
       { status: 400 },
     );
   }

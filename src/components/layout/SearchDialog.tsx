@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
+import type { SearchProductHit } from "@/lib/catalog/cached";
 
-export function SearchDialog({ products }: { products: Product[] }) {
+export function SearchDialog({
+  products,
+}: {
+  products: SearchProductHit[];
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 

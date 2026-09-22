@@ -143,28 +143,43 @@ Frontend types live in [`src/types/catalog.ts`](src/types/catalog.ts). Supabase 
 
 ## Current sprint focus
 
-**Sprint 0 — Foundation** (in progress)
+**Production hardening** (Phases 0–1 = **launch gate**; Phases 2–3 = post-launch)
 
-| Track | Work |
-|-------|------|
-| Docs | PROJECT.md, ROADMAP, DESIGN, ARCHITECTURE, .env.example |
-| Supabase | Schema migrations, RLS, seed from mocks, client helpers |
-| Stitch | Connect MCP, link project, generate screens from DESIGN.md |
-| Auth | Replace demo cookie admin with Supabase Auth + roles |
+| Phase | Status | Focus |
+|-------|--------|--------|
+| 0 — Ship blockers | Done in code | Unsafe create-order removed; ADMIN_PASSWORD required; role lock RLS; `requireAdmin` layout; open-redirect + timingSafeEqual |
+| 1 — Integrity | Done in code | Atomic inventory RPC; Zod on mutating APIs; no mock fallback when Supabase on; stronger order numbers |
+| 2 — Scale | Done in code | Cached search index; SQL KPIs; rate limits; security headers; Shiprocket token store; webhook dedupe |
+| 3 — Ops | Done in code | Vitest + Playwright scaffold + CI; Sentry + Vercel Analytics; structured payment logs |
+
+**Manual before go-live:** apply migrations `004`–`006` on Supabase; set `ADMIN_PASSWORD` + Sentry/Upstash env on Vercel; confirm Production deploy READY and Razorpay webhook 2xx on `www.jaijinendrasweets.com`.
 
 ---
 
 ## Definition of done (v1 launch)
 
+**Launch gate (Phase 0–1 must be true in Production):**
+
+- [x] No unauthenticated Razorpay mint (`/api/create-order` removed; use `/api/orders/create` only)
+- [x] `ADMIN_PASSWORD` required (no hardcoded default); cookie admin disabled when Supabase configured
+- [x] Non-admins cannot change `profiles.role` (migration + trigger)
+- [x] Admin dashboard layout calls `requireAdmin()`
+- [x] Open redirects blocked on login `next`
+- [x] Razorpay HMAC via `timingSafeEqual`
+- [x] Atomic stock decrement + payment idempotency RPC
+- [x] Mutating APIs Zod-validated
+- [x] Storefront experience pages use catalog queries (no mock when Supabase on)
 - [ ] Customer must login (phone OTP) before payment
 - [ ] Full pan-India checkout with address + pincode validation
-- [ ] Razorpay test payment completes → order confirmed → email sent
+- [ ] Razorpay live/test payment → order confirmed → email sent
 - [ ] COD creates order without gateway charge
-- [ ] Inventory blocks OOS checkout
+- [ ] Inventory blocks OOS checkout (RPC enforced after migrations applied)
 - [ ] Admin can manage products, stock, orders, content, media
 - [ ] Track order works with order number + phone
-- [ ] No production reads from `src/data/*` mocks
-- [ ] `PROJECT.md` accurate and linked from `CLAUDE.md`
-- [ ] Deployed on Vercel with all env vars
+- [ ] No production reads from `src/data/*` mocks when Supabase configured
+- [ ] Deployed on Vercel with all env vars; Production **READY**
+- [ ] Razorpay webhook URL live on production domain
+
+**Post-launch (Phase 2–3):** rate limits + Upstash, Sentry alerts on webhook 5xx, expand Playwright COD path, CSP report-only → enforce.
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for phase breakdown.

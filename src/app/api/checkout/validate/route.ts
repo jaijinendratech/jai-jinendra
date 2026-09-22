@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getCartSummary } from "@/lib/cart/cart-service";
 import { isValidPincode } from "@/lib/shipping";
 import { isSupabaseConfigured } from "@/lib/env";
+import {
+  checkoutValidateBodySchema,
+  zodErrorMessage,
+} from "@/lib/validation/schemas";
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -21,21 +25,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Login required" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const pincode = String(body.pincode ?? "");
+  try {
+    const raw = await request.json();
+    const body = checkoutValidateBodySchema.parse(raw);
 
-  if (!isValidPincode(pincode)) {
-    return NextResponse.json({ error: "Invalid pincode" }, { status: 400 });
+    if (!isValidPincode(body.pincode)) {
+      return NextResponse.json({ error: "Invalid pincode" }, { status: 400 });
+    }
+
+    const cart = await getCartSummary();
+    if (cart.items.length === 0) {
+      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    if (cart.warnings.length > 0) {
+      return NextResponse.json(
+        { error: cart.warnings.join("; ") },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, cart });
+  } catch (err) {
+    return NextResponse.json(
+      { error: zodErrorMessage(err) },
+      { status: 400 },
+    );
   }
-
-  const cart = await getCartSummary();
-  if (cart.items.length === 0) {
-    return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
-  }
-
-  if (cart.warnings.length > 0) {
-    return NextResponse.json({ error: cart.warnings.join("; ") }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true, cart });
 }

@@ -7,9 +7,13 @@ import { useState } from "react";
 import { navLinks, siteConfig } from "@/data/home";
 import { CartBadge } from "@/components/cart/CartBadge";
 import { SearchDialog } from "@/components/layout/SearchDialog";
-import type { Product } from "@/types/catalog";
+import type { SearchProductHit } from "@/lib/catalog/cached";
 
-export function SiteHeader({ searchProducts = [] }: { searchProducts?: Product[] }) {
+export function SiteHeader({
+  searchProducts = [],
+}: {
+  searchProducts?: SearchProductHit[];
+}) {
   const [open, setOpen] = useState(false);
 
   return (

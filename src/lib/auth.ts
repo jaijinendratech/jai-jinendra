@@ -3,13 +3,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
   ADMIN_EMAIL,
   ADMIN_SESSION_COOKIE,
   verifyAdminCredentials,
 } from "@/lib/admin-config";
+import {
+  safeAdminRedirectPath,
+  safeRedirectPath,
+} from "@/lib/safe-redirect";
 
 export async function getSessionUser() {
   if (!isSupabaseConfigured()) return null;
@@ -42,18 +45,23 @@ export async function requireUser(redirectTo = "/login") {
   return user;
 }
 
+/**
+ * Fail closed: cookie demo admin only when Supabase is NOT configured.
+ * When Supabase is configured, require a real admin-role session.
+ */
 export async function requireAdmin() {
-  if (!isSupabaseConfigured()) {
-    const cookieStore = await cookies();
-    if (cookieStore.get(ADMIN_SESSION_COOKIE)?.value === "1") {
-      return { id: "dev-admin", email: ADMIN_EMAIL };
-    }
-    redirect("/admin/login?error=1");
+  if (isSupabaseConfigured()) {
+    const user = await requireUser("/admin/login");
+    const admin = await isAdminUser(user.id);
+    if (!admin) redirect("/admin/login?error=unauthorized");
+    return user;
   }
-  const user = await requireUser("/admin/login");
-  const admin = await isAdminUser(user.id);
-  if (!admin) redirect("/admin/login?error=unauthorized");
-  return user;
+
+  const cookieStore = await cookies();
+  if (cookieStore.get(ADMIN_SESSION_COOKIE)?.value === "1") {
+    return { id: "dev-admin", email: ADMIN_EMAIL };
+  }
+  redirect("/admin/login?error=1");
 }
 
 export async function sendPhoneOtpAction(formData: FormData) {
@@ -61,7 +69,10 @@ export async function sendPhoneOtpAction(formData: FormData) {
     redirect("/login?error=otp_failed");
   }
   const phone = String(formData.get("phone") ?? "").trim();
-  const next = String(formData.get("next") ?? "/account");
+  const next = safeRedirectPath(
+    String(formData.get("next") ?? "/account"),
+    "/account",
+  );
 
   if (!phone.match(/^\+?[0-9]{10,15}$/)) {
     redirect(`/login?error=invalid_phone&next=${encodeURIComponent(next)}`);
@@ -70,6 +81,18 @@ export async function sendPhoneOtpAction(formData: FormData) {
   const normalized = phone.startsWith("+")
     ? phone
     : `+91${phone.replace(/\D/g, "")}`;
+
+  const { rateLimit } = await import("@/lib/rate-limit");
+  const limited = await rateLimit({
+    key: `otp:${normalized}`,
+    limit: 5,
+    windowMs: 15 * 60_000,
+  });
+  if (!limited.success) {
+    redirect(
+      `/login?error=otp_failed&phone=${encodeURIComponent(normalized)}&next=${encodeURIComponent(next)}`,
+    );
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
@@ -91,7 +114,10 @@ export async function verifyPhoneOtpAction(formData: FormData) {
   }
   const phone = String(formData.get("phone") ?? "").trim();
   const token = String(formData.get("token") ?? "").trim();
-  const next = String(formData.get("next") ?? "/account");
+  const next = safeRedirectPath(
+    String(formData.get("next") ?? "/account"),
+    "/account",
+  );
 
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({
@@ -130,9 +156,12 @@ async function setDevAdminSession() {
 export async function loginAdminWithPasswordAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/admin");
-  const safeNext = next.startsWith("/admin") ? next : "/admin";
+  const safeNext = safeAdminRedirectPath(
+    String(formData.get("next") ?? "/admin"),
+    "/admin",
+  );
 
+  // Cookie demo path only without Supabase; never when Supabase is configured
   if (!isSupabaseConfigured()) {
     if (!verifyAdminCredentials(email, password)) {
       redirect(`/admin/login?error=1&next=${encodeURIComponent(safeNext)}`);
@@ -148,14 +177,14 @@ export async function loginAdminWithPasswordAction(formData: FormData) {
   });
 
   if (error || !data.user) {
-    redirect(`/admin/login?error=1&next=${encodeURIComponent(next)}`);
+    redirect(`/admin/login?error=1&next=${encodeURIComponent(safeNext)}`);
   }
 
   const admin = await isAdminUser(data.user.id);
   if (!admin) {
     await supabase.auth.signOut();
     redirect(
-      `/admin/login?error=unauthorized&next=${encodeURIComponent(next)}`,
+      `/admin/login?error=unauthorized&next=${encodeURIComponent(safeNext)}`,
     );
   }
 
@@ -171,14 +200,4 @@ export async function logoutAdminAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/admin/login");
-}
-
-/** Promote a user to admin by email (run once via service role / script). */
-export async function promoteUserToAdmin(email: string) {
-  const admin = createAdminClient();
-  const { data: users } = await admin.auth.admin.listUsers();
-  const user = users.users.find((u) => u.email === email);
-  if (!user) throw new Error(`User not found: ${email}`);
-
-  await admin.from("profiles").update({ role: "admin" }).eq("id", user.id);
 }

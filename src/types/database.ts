@@ -667,9 +667,71 @@ export type Database = {
         };
         Relationships: [];
       };
+      webhook_events: {
+        Row: {
+          id: string;
+          provider: string;
+          event_type: string | null;
+          received_at: string;
+        };
+        Insert: {
+          id: string;
+          provider?: string;
+          event_type?: string | null;
+          received_at?: string;
+        };
+        Update: {
+          id?: string;
+          provider?: string;
+          event_type?: string | null;
+          received_at?: string;
+        };
+        Relationships: [];
+      };
+      integration_tokens: {
+        Row: {
+          provider: string;
+          token: string;
+          expires_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          provider: string;
+          token: string;
+          expires_at: string;
+          updated_at?: string;
+        };
+        Update: {
+          provider?: string;
+          token?: string;
+          expires_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      decrement_stock: {
+        Args: {
+          p_variant_id: string;
+          p_qty: number;
+          p_order_id: string;
+        };
+        Returns: Database["public"]["Tables"]["product_variants"]["Row"];
+      };
+      confirm_order_payment: {
+        Args: {
+          p_order_id: string;
+          p_razorpay_payment_id?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["orders"]["Row"];
+      };
+      admin_dashboard_kpis: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+    };
     Enums: {
       user_role: UserRole;
       order_status: OrderStatus;

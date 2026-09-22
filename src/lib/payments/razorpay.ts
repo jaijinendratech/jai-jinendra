@@ -28,6 +28,17 @@ export async function createRazorpayOrder(params: {
   });
 }
 
+function timingSafeEqualHex(expected: string, received: string): boolean {
+  try {
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(received, "utf8");
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
 export function verifyRazorpayPaymentSignature(params: {
   orderId: string;
   paymentId: string;
@@ -38,7 +49,7 @@ export function verifyRazorpayPaymentSignature(params: {
     .createHmac("sha256", keySecret)
     .update(`${params.orderId}|${params.paymentId}`)
     .digest("hex");
-  return expected === params.signature;
+  return timingSafeEqualHex(expected, params.signature);
 }
 
 export function verifyRazorpayWebhookSignature(
@@ -50,7 +61,7 @@ export function verifyRazorpayWebhookSignature(
     .createHmac("sha256", secret)
     .update(body)
     .digest("hex");
-  return expected === signature;
+  return timingSafeEqualHex(expected, signature);
 }
 
 export function getRazorpayKeyId(): string {

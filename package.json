@@ -11,17 +11,23 @@
     "seed": "npx tsx scripts/seed-supabase.ts",
     "smoke": "node scripts/smoke.mjs",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts",
-    "create-admin": "npx tsx scripts/create-admin.ts"
+    "create-admin": "npx tsx scripts/create-admin.ts",
+    "promote-admin": "npx tsx scripts/promote-user-to-admin.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@heroui/react": "^3.2.5",
     "@heroui/styles": "^3.2.5",
+    "@sentry/nextjs": "^10.75.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@tiptap/extension-highlight": "^3.31.3",
     "@tiptap/extension-placeholder": "^3.31.3",
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
+    "@vercel/analytics": "^2.0.1",
     "isomorphic-dompurify": "^3.19.0",
     "lucide-react": "^1.45.0",
     "next": "16.3.5",
@@ -31,19 +37,23 @@
     "react-icons": "^5.7.0",
     "recharts": "^3.10.1",
     "resend": "^6.28.1",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.5.2",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

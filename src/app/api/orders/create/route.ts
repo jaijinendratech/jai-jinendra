@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/lib/orders/create-order";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getRazorpayKeyId } from "@/lib/payments/razorpay";
+import {
+  createOrderBodySchema,
+  zodErrorMessage,
+} from "@/lib/validation/schemas";
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -22,22 +26,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
-    const paymentMethod = body.paymentMethod === "cod" ? "cod" : "razorpay";
+    const raw = await request.json();
+    const body = createOrderBodySchema.parse(raw);
 
     const result = await createOrder({
       userId: user.id,
-      paymentMethod,
+      paymentMethod: body.paymentMethod,
       notes: body.notes,
       address: {
-        name: String(body.name ?? ""),
-        phone: String(body.phone ?? ""),
-        email: String(body.email ?? ""),
-        line1: String(body.line1 ?? ""),
-        line2: body.line2 ? String(body.line2) : undefined,
-        city: String(body.city ?? ""),
-        state: String(body.state ?? ""),
-        pincode: String(body.pincode ?? ""),
+        name: body.name,
+        phone: body.phone,
+        email: body.email,
+        line1: body.line1,
+        line2: body.line2 ?? undefined,
+        city: body.city,
+        state: body.state,
+        pincode: body.pincode,
       },
     });
 
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Order creation failed" },
+      { error: zodErrorMessage(err) },
       { status: 400 },
     );
   }

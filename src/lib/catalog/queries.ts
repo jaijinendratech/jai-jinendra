@@ -81,6 +81,10 @@ const productSelect = `
   product_images ( storage_path, alt, sort_order )
 `;
 
+/**
+ * When Supabase is configured: DB only (empty on error — never mock).
+ * When offline: static catalogue for local demos.
+ */
 export async function getPublishedProducts(): Promise<Product[]> {
   if (!isSupabaseConfigured()) return catalogueProducts;
 
@@ -91,11 +95,13 @@ export async function getPublishedProducts(): Promise<Product[]> {
     .eq("published", true)
     .order("name");
 
-  if (error || !data?.length) return catalogueProducts;
+  if (error || !data?.length) return [];
   return (data as unknown as DbProductRow[]).map(mapDbProduct);
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+export async function getProductBySlug(
+  slug: string,
+): Promise<Product | undefined> {
   if (!isSupabaseConfigured()) return mockGetBySlug(slug);
 
   const supabase = await createClient();
@@ -106,32 +112,69 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
     .eq("published", true)
     .maybeSingle();
 
-  if (error || !data) return mockGetBySlug(slug);
+  if (error || !data) return undefined;
   return mapDbProduct(data as unknown as DbProductRow);
 }
 
-export async function getProductsByCategory(category: string): Promise<Product[]> {
+export async function getProductsByCategory(
+  category: string,
+): Promise<Product[]> {
   if (!isSupabaseConfigured()) return mockGetByCategory(category);
 
-  const products = await getPublishedProducts();
-  if (category === "all") return products;
-  if (category === "combos") {
-    return products.filter(
-      (p) => p.category === "tea-time" || p.category === "combos",
-    );
+  const supabase = await createClient();
+
+  if (category === "all") {
+    return getPublishedProducts();
   }
-  return products.filter((p) => p.category === category);
+
+  const categorySlugs =
+    category === "combos" ? ["tea-time", "combos"] : [category];
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `
+      id, slug, name, description, long_description, spice_note, dietary,
+      badge, tagline, rating, review_count,
+      categories!inner ( slug ),
+      product_variants ( id, label, sku, price_paise, stock_qty ),
+      product_images ( storage_path, alt, sort_order )
+    `,
+    )
+    .eq("published", true)
+    .in("categories.slug", categorySlugs)
+    .order("name");
+
+  if (error || !data?.length) return [];
+  return (data as unknown as DbProductRow[]).map(mapDbProduct);
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
-  const products = await getPublishedProducts();
-  const q = query.trim().toLowerCase();
-  if (!q) return products;
-  return products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q),
-  );
+  if (!isSupabaseConfigured()) {
+    const products = catalogueProducts;
+    const q = query.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q),
+    );
+  }
+
+  const q = query.trim();
+  if (!q) return getPublishedProducts();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(productSelect)
+    .eq("published", true)
+    .or(`name.ilike.%${q}%,description.ilike.%${q}%`)
+    .order("name")
+    .limit(50);
+
+  if (error || !data?.length) return [];
+  return (data as unknown as DbProductRow[]).map(mapDbProduct);
 }
 
 export async function getVariantSku(productSlug: string, variantId: string) {
@@ -142,9 +185,9 @@ export async function getRelatedProducts(
   product: Product,
   limit = 4,
 ): Promise<Product[]> {
-  const products = await getPublishedProducts();
+  const products = await getProductsByCategory(product.category);
   return products
-    .filter((item) => item.id !== product.id && item.category === product.category)
+    .filter((item) => item.id !== product.id)
     .slice(0, limit);
 }
 
@@ -171,4 +214,47 @@ export async function getAllVariantSkus(): Promise<Map<string, string>> {
     map.set(`${slug}:${variantKey}`, row.sku);
   }
   return map;
+}
+
+/** Lightweight index for search UI (id/name/slug + price). */
+export async function getProductSearchIndex(): Promise<
+  { id: string; name: string; slug: string; price: number; description: string }[]
+> {
+  if (!isSupabaseConfigured()) {
+    return catalogueProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      price: p.price,
+      description: p.description,
+    }));
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, name, slug, description, product_variants ( price_paise )",
+    )
+    .eq("published", true)
+    .order("name");
+
+  if (error || !data) return [];
+
+  return data.map((row) => {
+    const variants = ((row.product_variants ?? []) as unknown as {
+      price_paise: number;
+    }[]);
+    const minPaise =
+      variants.length > 0
+        ? Math.min(...variants.map((v) => v.price_paise))
+        : 0;
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description ?? "",
+      price: minPaise / 100,
+    };
+  });
 }
