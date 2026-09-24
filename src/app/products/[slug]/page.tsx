@@ -77,11 +77,6 @@ export default async function ProductPage({ params }: Props) {
       availability: "https://schema.org/InStock",
       url: `${siteConfig.url}/products/${product.slug}`,
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviewCount,
-    },
   };
 
   return (

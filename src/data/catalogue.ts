@@ -139,7 +139,6 @@ export const sortOptions = [
   { id: "fresh", label: "Fresh Batches Today" },
   { id: "price-asc", label: "Price: Low to High" },
   { id: "price-desc", label: "Price: High to Low" },
-  { id: "rating", label: "Customer Rating (4.8+)" },
 ] as const;
 
 export const catalogueProducts: MockCatalogProduct[] = [

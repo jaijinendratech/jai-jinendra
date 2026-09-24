@@ -12,7 +12,25 @@ import {
   AdminTablePagination,
   useAdminTablePagination,
 } from "@/components/admin/AdminTablePagination";
+import { isSyntheticPhoneEmail } from "@/lib/customers";
 import { CustomerDetailPanel } from "./CustomerDetailPanel";
+
+function CustomerContactCell({ customer }: { customer: AdminCustomer }) {
+  if (isSyntheticPhoneEmail(customer.email)) {
+    return (
+      <>
+        <p className="font-medium">{customer.phone || "—"}</p>
+        <p className="text-xs text-on-surface-variant">Phone login</p>
+      </>
+    );
+  }
+  return (
+    <>
+      <p>{customer.email || "—"}</p>
+      <p className="text-xs text-on-surface-variant">{customer.phone || "—"}</p>
+    </>
+  );
+}
 
 export function CustomersTable({
   customers,
@@ -117,22 +135,23 @@ export function CustomersTable({
         />
       ) : (
         <>
-        <AdminTableShell>
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Customer</th>
-                <th className="px-4 py-3 font-semibold">Contact</th>
-                <th className="px-4 py-3 font-semibold">Orders</th>
-                <th className="px-4 py-3 font-semibold">Spent</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/15">
-              {pageItems.map((c) => (
+          <AdminTableShell>
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Customer</th>
+                  <th className="px-4 py-3 font-semibold">Contact</th>
+                  <th className="px-4 py-3 font-semibold">Orders</th>
+                  <th className="px-4 py-3 font-semibold">Spent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/15">
+                {pageItems.map((c) => (
                 <tr
                   key={c.id}
                   role="button"
                   tabIndex={0}
+                  data-customer-id={c.id}
                   className="cursor-pointer hover:bg-surface-container-low/50"
                   onClick={() => void openCustomer(c.id)}
                   onKeyDown={(e) => {
@@ -142,36 +161,34 @@ export function CustomersTable({
                     }
                   }}
                 >
-                  <td className="px-4 py-3 font-semibold text-primary">
-                    {c.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p>{c.email || "—"}</p>
-                    <p className="text-xs text-on-surface-variant">
-                      {c.phone || "—"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">{c.orderCount}</td>
-                  <td className="px-4 py-3 price font-semibold">
-                    {formatINR(c.spent)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </AdminTableShell>
-        <AdminTablePagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          from={from}
-          to={to}
-          onPageChange={setPage}
-        />
+                    <td className="px-4 py-3 font-semibold text-primary">
+                      {c.name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <CustomerContactCell customer={c} />
+                    </td>
+                    <td className="px-4 py-3">{c.orderCount}</td>
+                    <td className="px-4 py-3 price font-semibold">
+                      {formatINR(c.spent)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </AdminTableShell>
+          <AdminTablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            from={from}
+            to={to}
+            onPageChange={setPage}
+          />
         </>
       )}
 
       <AdminDrawer
+        size="xl"
         isOpen={openId !== null}
         onOpenChange={(open) => {
           if (!open) closeCustomer();
@@ -182,7 +199,11 @@ export function CustomersTable({
         }
       >
         {loading ? (
-          <p className="py-8 text-sm text-on-surface-variant">
+          <p
+            className="py-8 text-sm text-on-surface-variant"
+            aria-busy="true"
+            aria-live="polite"
+          >
             Loading customer…
           </p>
         ) : loadError ? (

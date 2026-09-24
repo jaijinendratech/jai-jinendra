@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import type { AdminProductDetail } from "@/lib/admin/queries";
 import type { AdminSubcategoryRow } from "@/lib/admin/queries";
 import {
@@ -212,9 +213,7 @@ export function ProductForm({
   const [tagline, setTagline] = useState(product?.tagline ?? "");
   const [taglineTouched, setTaglineTouched] = useState(Boolean(product?.tagline));
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
-  const [tab, setTab] = useState<"details" | "variants" | "images" | "seo">(
-    "details",
-  );
+  const [tab, setTab] = useState<"details" | "variants" | "images">("details");
   const [formError, setFormError] = useState<string | null>(null);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [showAddVariant, setShowAddVariant] = useState(false);
@@ -242,6 +241,7 @@ export function ProductForm({
       const result = await saveProductAction(formData);
       if (result && "productId" in result && result.productId) {
         router.refresh();
+        toast.success(result.created ? "Product created" : "Product saved");
         if (result.created && onCreated) {
           onCreated(result.productId);
           return;
@@ -251,6 +251,9 @@ export function ProductForm({
     } catch (error) {
       if (isNextRedirectError(error)) throw error;
       setFormError(
+        error instanceof Error ? error.message : "Could not save product.",
+      );
+      toast.danger(
         error instanceof Error ? error.message : "Could not save product.",
       );
     }
@@ -264,10 +267,14 @@ export function ProductForm({
     try {
       await action(formData);
       router.refresh();
+      toast.success("Changes saved");
       onModalRefresh?.();
     } catch (error) {
       if (isNextRedirectError(error)) throw error;
       setFormError(
+        error instanceof Error ? error.message : "Could not save changes.",
+      );
+      toast.danger(
         error instanceof Error ? error.message : "Could not save changes.",
       );
     }
@@ -317,7 +324,6 @@ export function ProductForm({
             { id: "details" as const, label: "Details", locked: false },
             { id: "variants" as const, label: "Variants", locked: isNew },
             { id: "images" as const, label: "Images", locked: isNew },
-            { id: "seo" as const, label: "SEO", locked: isNew },
           ] as const
         ).map((t) => (
           <button
@@ -509,6 +515,14 @@ export function ProductForm({
             </AdminFieldGrid>
           </AdminCard>
 
+          {/* Preserve existing SEO columns (SEO tab removed from UI). */}
+          <input type="hidden" name="seoTitle" value={product?.seoTitle ?? ""} />
+          <input
+            type="hidden"
+            name="seoDescription"
+            value={product?.seoDescription ?? ""}
+          />
+
           <div className="flex flex-wrap gap-3">
             <AdminFormSubmitButton
               label={isNew ? "Add product" : "Save product"}
@@ -517,57 +531,6 @@ export function ProductForm({
               disabled={!supabase && isNew}
             />
           </div>
-        </form>
-      ) : null}
-
-      {tab === "seo" && product ? (
-        <form action={handleSaveProduct} className="space-y-6">
-          <input type="hidden" name="id" value={product.id} />
-          {isModal ? <input type="hidden" name="returnTo" value="modal" /> : null}
-          <input type="hidden" name="name" value={product.name} />
-          <input type="hidden" name="slug" value={product.slug} />
-          <input type="hidden" name="categoryId" value={product.categoryId ?? ""} />
-          <input type="hidden" name="subcategoryId" value={product.subcategoryId ?? ""} />
-          <input type="hidden" name="description" value={product.description} />
-          <input type="hidden" name="longDescription" value={product.longDescription ?? ""} />
-          <input type="hidden" name="spiceNote" value={product.spiceNote ?? ""} />
-          <input type="hidden" name="dietary" value={product.dietary.join(",")} />
-          <input type="hidden" name="badge" value={product.badge ?? ""} />
-          <input type="hidden" name="tagline" value={product.tagline ?? ""} />
-          <input type="hidden" name="origin" value={product.origin ?? ""} />
-          <input type="hidden" name="shelfLife" value={product.shelfLife ?? ""} />
-          <input type="hidden" name="ingredients" value={product.ingredients.join(",")} />
-          {product.published ? <input type="hidden" name="published" value="on" /> : null}
-          {product.featured ? <input type="hidden" name="featured" value="on" /> : null}
-          {product.bestseller ? <input type="hidden" name="bestseller" value="on" /> : null}
-          {product.newArrival ? <input type="hidden" name="newArrival" value="on" /> : null}
-          {product.seasonal ? <input type="hidden" name="seasonal" value="on" /> : null}
-
-          <AdminCard title="Search engine optimization">
-            <AdminFieldGrid>
-              <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
-                SEO title
-                <input
-                  name="seoTitle"
-                  defaultValue={product.seoTitle ?? ""}
-                  maxLength={120}
-                  className={fieldClassName()}
-                  placeholder="Overrides PDP title when set"
-                />
-              </label>
-              <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
-                SEO description
-                <textarea
-                  name="seoDescription"
-                  defaultValue={product.seoDescription ?? ""}
-                  maxLength={320}
-                  rows={3}
-                  className={fieldClassName()}
-                />
-              </label>
-            </AdminFieldGrid>
-          </AdminCard>
-          <AdminFormSubmitButton label="Save SEO" pendingLabel="Saving…" icon="save" />
         </form>
       ) : null}
 

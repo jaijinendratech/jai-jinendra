@@ -9,15 +9,18 @@ import {
 } from "@/components/admin/ui";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import { MediaUploader } from "@/components/admin/MediaUploader";
+import { PageHeroCarousel } from "@/components/shared/PageHeroCarousel";
 
 type Slide = { id: string; src: string; alt: string };
 
 export function CarouselEditor({
   initial,
   jsonFieldName = "slidesJson",
+  previewLabel = "Carousel preview",
 }: {
   initial: Slide[];
   jsonFieldName?: string;
+  previewLabel?: string;
 }) {
   const [slides, setSlides] = useState(initial);
 
@@ -27,9 +30,32 @@ export function CarouselEditor({
     setSlides(next);
   }
 
+  const previewSlides = slides.filter((s) => Boolean(s.src));
+
   return (
     <div className="space-y-4">
       <input type="hidden" name={jsonFieldName} value={JSON.stringify(slides)} />
+
+      <div className="overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-low">
+        <p className="border-b border-outline-variant/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-primary">
+          Live preview
+        </p>
+        {previewSlides.length ? (
+          <div className="pointer-events-none select-none [&_section]:py-2 md:[&_section]:py-3">
+            <PageHeroCarousel
+              slides={previewSlides}
+              label={previewLabel}
+              showNavButtons={false}
+              compactMobile
+            />
+          </div>
+        ) : (
+          <p className="px-4 py-10 text-center text-sm text-on-surface-variant">
+            Add a slide image to see the carousel preview.
+          </p>
+        )}
+      </div>
+
       {slides.map((slide, index) => (
         <div
           key={`${slide.id}-${index}`}

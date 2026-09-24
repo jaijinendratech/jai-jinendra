@@ -6,10 +6,16 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { EnquiryStatus, OrderStatus } from "@/types/database";
+import type { OrderStatus } from "@/types/database";
 import { slugify } from "@/lib/admin/slug";
 import {
+  adminCategorySchema,
+  adminCouponSchema,
+  adminCustomerProfileSchema,
+  adminEnquiryStatusSchema,
+  adminOrderShippingSchema,
   adminOrderStatusSchema,
+  adminOutletSchema,
   adminPaymentStatusSchema,
   adminProductSchema,
   adminSubcategorySchema,
@@ -18,6 +24,9 @@ import {
   heroSlideSchema,
   zodErrorMessage,
 } from "@/lib/validation/schemas";
+import { isSyntheticPhoneEmail } from "@/lib/customers";
+import { normalizeCouponCode } from "@/lib/coupons";
+import type { CouponType } from "@/types/database";
 
 function revalidateAdmin(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
@@ -174,13 +183,18 @@ async function uniqueComboSku(
 
 export async function updateOrderStatusAction(formData: FormData) {
   await requireAdmin();
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to update order status.");
+  }
 
   const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) throw new Error("Missing order id.");
   const statusParsed = adminOrderStatusSchema.safeParse(
     String(formData.get("status") ?? ""),
   );
-  if (!orderId || !statusParsed.success) return;
+  if (!statusParsed.success) {
+    throw new Error(zodErrorMessage(statusParsed.error) || "Invalid order status.");
+  }
 
   const admin = createAdminClient();
   await admin
@@ -197,13 +211,20 @@ export async function updateOrderStatusAction(formData: FormData) {
 
 export async function updateOrderPaymentStatusAction(formData: FormData) {
   await requireAdmin();
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to update payment status.");
+  }
 
   const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) throw new Error("Missing order id.");
   const statusParsed = adminPaymentStatusSchema.safeParse(
     String(formData.get("status") ?? ""),
   );
-  if (!orderId || !statusParsed.success) return;
+  if (!statusParsed.success) {
+    throw new Error(
+      zodErrorMessage(statusParsed.error) || "Invalid payment status.",
+    );
+  }
 
   const admin = createAdminClient();
   await admin
@@ -220,22 +241,35 @@ export async function updateOrderPaymentStatusAction(formData: FormData) {
 
 export async function updateOrderShippingAction(formData: FormData) {
   await requireAdmin();
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to update shipping.");
+  }
 
-  const orderId = String(formData.get("orderId") ?? "");
+  const parsed = adminOrderShippingSchema.safeParse({
+    orderId: String(formData.get("orderId") ?? ""),
+    courierName: String(formData.get("courierName") ?? ""),
+    awbCode: String(formData.get("awbCode") ?? ""),
+    shipmentId: String(formData.get("shipmentId") ?? ""),
+    shippingStatus: String(formData.get("shippingStatus") ?? ""),
+    trackingUrl: String(formData.get("trackingUrl") ?? ""),
+  });
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
   const admin = createAdminClient();
   await admin
     .from("orders")
     .update({
-      courier_name: String(formData.get("courierName") ?? "") || null,
-      awb_code: String(formData.get("awbCode") ?? "") || null,
-      shipment_id: String(formData.get("shipmentId") ?? "") || null,
-      tracking_url: String(formData.get("trackingUrl") ?? "") || null,
-      shipping_status: String(formData.get("shippingStatus") ?? "") || null,
+      courier_name: parsed.data.courierName || null,
+      awb_code: parsed.data.awbCode || null,
+      shipment_id: parsed.data.shipmentId || null,
+      tracking_url: parsed.data.trackingUrl || null,
+      shipping_status: parsed.data.shippingStatus || null,
     })
-    .eq("id", orderId);
+    .eq("id", parsed.data.orderId);
 
-  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`);
+  revalidateAdmin("/admin/orders", `/admin/orders/${parsed.data.orderId}`);
 }
 
 /** Create Shiprocket shipment for a paid/COD order (admin-triggered). */
@@ -862,21 +896,28 @@ export async function saveCategoryAction(formData: FormData) {
   }
 
   const id = String(formData.get("id") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  if (!title) {
-    throw new Error("Title is required.");
+  const parsed = adminCategorySchema.safeParse({
+    title: String(formData.get("title") ?? ""),
+    subtitle: String(formData.get("subtitle") ?? "") || null,
+    imageUrl: String(formData.get("imageUrl") ?? "") || null,
+    sortOrder: Number(formData.get("sortOrder") ?? 0),
+    published: formData.get("published") === "on",
+    featured: formData.get("featured") === "on",
+  });
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
   }
 
-  const slug = await uniqueCategorySlug(title, id || undefined);
+  const slug = await uniqueCategorySlug(parsed.data.title, id || undefined);
 
   const payload = {
     slug,
-    title,
-    subtitle: String(formData.get("subtitle") ?? "") || null,
-    image_url: String(formData.get("imageUrl") ?? "") || null,
-    sort_order: Number(formData.get("sortOrder") ?? 0),
-    published: formData.get("published") === "on",
-    featured: formData.get("featured") === "on",
+    title: parsed.data.title,
+    subtitle: parsed.data.subtitle,
+    image_url: parsed.data.imageUrl,
+    sort_order: parsed.data.sortOrder,
+    published: parsed.data.published,
+    featured: parsed.data.featured,
     updated_at: new Date().toISOString(),
   };
 
@@ -889,7 +930,7 @@ export async function saveCategoryAction(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
-  revalidateAdmin("/admin/categories", "/admin");
+  revalidateAdmin("/admin/categories", "/admin", "/");
 }
 
 export async function deleteCategoryAction(formData: FormData) {
@@ -930,7 +971,7 @@ export async function setCategoryFeaturedAction(formData: FormData) {
   const featured = formData.get("featured") === "true";
   const admin = createAdminClient();
   await admin.from("categories").update({ featured }).eq("id", id);
-  revalidateAdmin("/admin/categories", "/admin");
+  revalidateAdmin("/admin/categories", "/admin", "/");
 }
 
 export async function saveSubcategoryAction(formData: FormData) {
@@ -1279,39 +1320,78 @@ export async function saveCarouselSlidesAction(formData: FormData) {
 
 export async function updateEnquiryStatusAction(formData: FormData) {
   await requireAdmin();
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to update enquiry status.");
+  }
 
   const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "new") as EnquiryStatus;
+  if (!id) throw new Error("Missing enquiry id.");
+  const statusParsed = adminEnquiryStatusSchema.safeParse(
+    String(formData.get("status") ?? ""),
+  );
+  if (!statusParsed.success) {
+    throw new Error(
+      zodErrorMessage(statusParsed.error) || "Invalid enquiry status.",
+    );
+  }
 
   const admin = createAdminClient();
-  await admin.from("enquiries").update({ status }).eq("id", id);
+  await admin.from("enquiries").update({ status: statusParsed.data }).eq("id", id);
   revalidateAdmin("/admin/enquiries", "/admin");
 }
 
 export async function updateCustomerProfileAction(formData: FormData) {
   await requireAdmin();
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to update customer profiles.");
+  }
 
-  const id = String(formData.get("id") ?? "");
+  const parsed = adminCustomerProfileSchema.safeParse({
+    id: String(formData.get("id") ?? ""),
+    fullName: String(formData.get("fullName") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+  });
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("role")
-    .eq("id", id)
+    .select("role, email, phone")
+    .eq("id", parsed.data.id)
     .maybeSingle();
 
-  if (!profile || profile.role === "admin") return;
+  if (!profile) {
+    throw new Error("Customer not found.");
+  }
+  if (profile.role === "admin") {
+    throw new Error("Cannot edit admin users.");
+  }
 
-  await admin
+  const wasSynthetic = isSyntheticPhoneEmail(profile.email);
+  if (wasSynthetic && !parsed.data.phone.trim()) {
+    throw new Error("Phone is required for phone-login accounts.");
+  }
+
+  let nextEmail: string | null = parsed.data.email.trim() || null;
+  if (wasSynthetic && !nextEmail) {
+    // Keep the auth placeholder so phone OTP login still works.
+    nextEmail = profile.email;
+  }
+
+  const { error } = await admin
     .from("profiles")
     .update({
-      full_name: String(formData.get("fullName") ?? "").trim() || null,
-      email: String(formData.get("email") ?? "").trim() || null,
-      phone: String(formData.get("phone") ?? "").trim() || null,
+      full_name: parsed.data.fullName.trim() || null,
+      email: nextEmail,
+      phone: parsed.data.phone.trim() || null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", parsed.data.id);
+
+  if (error) throw new Error(error.message);
 
   revalidateAdmin("/admin/customers");
 }
@@ -1323,15 +1403,40 @@ export async function saveOutletAction(formData: FormData) {
   }
 
   const id = String(formData.get("id") ?? "");
-  const payload = {
+  const latRaw = String(formData.get("lat") ?? "").trim();
+  const lngRaw = String(formData.get("lng") ?? "").trim();
+  const lat = latRaw === "" ? null : Number(latRaw);
+  const lng = lngRaw === "" ? null : Number(lngRaw);
+  if (latRaw !== "" && !Number.isFinite(lat)) {
+    throw new Error("Latitude must be a number.");
+  }
+  if (lngRaw !== "" && !Number.isFinite(lng)) {
+    throw new Error("Longitude must be a number.");
+  }
+
+  const parsed = adminOutletSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     address: String(formData.get("address") ?? ""),
     phone: String(formData.get("phone") ?? "") || null,
     hours: String(formData.get("hours") ?? "") || null,
-    lat: formData.get("lat") ? Number(formData.get("lat")) : null,
-    lng: formData.get("lng") ? Number(formData.get("lng")) : null,
-    sort_order: Number(formData.get("sortOrder") ?? 0),
+    lat,
+    lng,
+    sortOrder: Number(formData.get("sortOrder") ?? 0),
     published: formData.get("published") === "on",
+  });
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
+  const payload = {
+    name: parsed.data.name,
+    address: parsed.data.address,
+    phone: parsed.data.phone,
+    hours: parsed.data.hours,
+    lat: parsed.data.lat,
+    lng: parsed.data.lng,
+    sort_order: parsed.data.sortOrder,
+    published: parsed.data.published,
   };
 
   const admin = createAdminClient();
@@ -1363,6 +1468,103 @@ export async function setOutletPublishedAction(formData: FormData) {
   const admin = createAdminClient();
   await admin.from("outlets").update({ published }).eq("id", id);
   revalidateAdmin("/admin/outlets", "/admin");
+}
+
+function parseOptionalDateTime(raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("Invalid date/time");
+  }
+  return d.toISOString();
+}
+
+export async function saveCouponAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    redirect("/admin/coupons?notice=supabase-required");
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const type = String(formData.get("type") ?? "percent") as CouponType;
+  const valueRaw = Number(formData.get("value") ?? 0);
+  const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
+  const maxDiscountRaw = String(formData.get("maxDiscountRupees") ?? "").trim();
+
+  const parsed = adminCouponSchema.parse({
+    code: String(formData.get("code") ?? ""),
+    type,
+    value: valueRaw,
+    minOrderRupees: Number(formData.get("minOrderRupees") ?? 0) || 0,
+    maxDiscountRupees: maxDiscountRaw ? Number(maxDiscountRaw) : null,
+    active: formData.get("active") === "on",
+    startsAt: String(formData.get("startsAt") ?? "") || null,
+    expiresAt: String(formData.get("expiresAt") ?? "") || null,
+    usageLimit: usageLimitRaw ? Number(usageLimitRaw) : null,
+  });
+
+  const valuePaiseOrPercent =
+    parsed.type === "fixed"
+      ? Math.round(parsed.value * 100)
+      : Math.round(parsed.value);
+
+  const payload = {
+    code: normalizeCouponCode(parsed.code),
+    type: parsed.type,
+    value: valuePaiseOrPercent,
+    min_order_paise: Math.round(parsed.minOrderRupees * 100),
+    max_discount_paise:
+      parsed.type === "percent" && parsed.maxDiscountRupees
+        ? Math.round(parsed.maxDiscountRupees * 100)
+        : null,
+    active: parsed.active,
+    starts_at: parseOptionalDateTime(parsed.startsAt ?? ""),
+    expires_at: parseOptionalDateTime(parsed.expiresAt ?? ""),
+    usage_limit: parsed.usageLimit ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const admin = createAdminClient();
+  if (id) {
+    const { error } = await admin.from("coupons").update(payload).eq("id", id);
+    if (error) {
+      if (error.code === "23505") throw new Error("A coupon with this code already exists.");
+      throw new Error(error.message);
+    }
+  } else {
+    const { error } = await admin.from("coupons").insert(payload);
+    if (error) {
+      if (error.code === "23505") throw new Error("A coupon with this code already exists.");
+      throw new Error(error.message);
+    }
+  }
+
+  revalidateAdmin("/admin/coupons");
+}
+
+export async function deleteCouponAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const admin = createAdminClient();
+  await admin.from("coupons").delete().eq("id", id);
+  revalidateAdmin("/admin/coupons");
+}
+
+export async function setCouponActiveAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const id = String(formData.get("id") ?? "");
+  const active = formData.get("active") === "true";
+  const admin = createAdminClient();
+  await admin
+    .from("coupons")
+    .update({ active, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  revalidateAdmin("/admin/coupons");
 }
 
 export async function saveMediaAssetAction(formData: FormData) {

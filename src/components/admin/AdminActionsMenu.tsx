@@ -11,6 +11,7 @@ import { AdminIcon } from "@/components/admin/admin-icons";
 import {
   deleteCategoryAction,
   deleteComboAction,
+  deleteCouponAction,
   deleteMediaAssetAction,
   deleteOutletAction,
   deleteProductAction,
@@ -27,6 +28,7 @@ export const adminFormActions = {
   deleteCategory: deleteCategoryAction,
   deleteSubcategory: deleteSubcategoryAction,
   deleteOutlet: deleteOutletAction,
+  deleteCoupon: deleteCouponAction,
   deleteCombo: deleteComboAction,
   deleteMedia: deleteMediaAssetAction,
   deleteVariant: deleteVariantAction,

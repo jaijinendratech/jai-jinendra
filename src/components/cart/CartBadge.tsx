@@ -1,30 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart/use-cart";
-import { formatINR } from "@/lib/format";
 
 export function CartBadge() {
   const { cart, loading } = useCart();
+  const count = cart.itemCount;
+  const label =
+    count > 0
+      ? `Cart, ${count} item${count === 1 ? "" : "s"}`
+      : "Cart, empty";
 
   return (
     <Link
       href="/cart"
-      aria-label="Cart"
-      className="group inline-flex h-auto items-center gap-2 rounded-full border border-primary/20 bg-surface-container-lowest/80 px-3.5 py-2 text-on-surface shadow-sm transition hover:border-primary-container hover:bg-primary-container hover:text-white"
+      aria-label={label}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-surface-container-high hover:text-primary"
     >
-      <ShoppingBag className="h-4 w-4 text-primary transition group-hover:text-white" />
-      <span className="hidden text-[12px] font-bold uppercase tracking-wide sm:inline">
-        Cart{" "}
-        <span className="text-primary group-hover:text-primary-fixed">
-          ({loading ? "…" : cart.itemCount})
-        </span>{" "}
-        •{" "}
-        <span className="price">
-          {loading ? "…" : formatINR(cart.totalPaise / 100)}
+      <ShoppingBag className="h-5 w-5" aria-hidden />
+      {loading && count === 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+          <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden />
         </span>
-      </span>
+      ) : count > 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      ) : null}
     </Link>
   );
 }

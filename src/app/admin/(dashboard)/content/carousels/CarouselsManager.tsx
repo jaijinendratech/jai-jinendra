@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import { saveCarouselSlidesAction } from "@/lib/admin/actions";
 import type { CarouselPageKey } from "@/lib/admin/queries";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 import { CarouselEditor } from "./CarouselEditor";
 
 type Slide = { id: string; src: string; alt: string };
@@ -22,6 +25,8 @@ export function CarouselsManager({
   slidesByPage: Record<CarouselPageKey, Slide[]>;
 }) {
   const [active, setActive] = useState<CarouselPageKey>("home");
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   return (
     <div className="space-y-4">
@@ -46,7 +51,22 @@ export function CarouselsManager({
         tab.key === active ? (
           <form
             key={tab.key}
-            action={saveCarouselSlidesAction}
+            action={(formData) => {
+              startTransition(async () => {
+                try {
+                  await saveCarouselSlidesAction(formData);
+                  router.refresh();
+                  toast.success("Carousel saved");
+                } catch (err) {
+                  if (isNextRedirectError(err)) throw err;
+                  toast.danger(
+                    err instanceof Error
+                      ? err.message
+                      : "Could not save carousel",
+                  );
+                }
+              });
+            }}
             className="space-y-4 rounded-xl border border-outline-variant/25 bg-white p-6 shadow-sm"
           >
             <input type="hidden" name="pageKey" value={tab.key} />
@@ -59,13 +79,15 @@ export function CarouselsManager({
             <CarouselEditor
               key={tab.key}
               initial={slidesByPage[tab.key]}
+              previewLabel={tab.label}
             />
             <AdminIconButton
               type="submit"
-              label={`Save ${tab.label.toLowerCase()}`}
+              label={pending ? "Saving…" : `Save ${tab.label.toLowerCase()}`}
               icon="save"
               variant="primary"
               showLabel
+              disabled={pending}
             />
           </form>
         ) : null,

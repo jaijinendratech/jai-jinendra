@@ -18,7 +18,7 @@ import {
   fieldClassName,
   labelClassName,
 } from "@/components/admin/ui";
-import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { AdminFormSubmitButton } from "@/components/admin/AdminIconButton";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
   ORDER_STATUSES,
@@ -200,12 +200,11 @@ export default async function AdminOrderDetailPage({
                   Creates a Shiprocket order for this address and assigns an AWB when
                   a courier is available. Requires a valid Shiprocket API user in env.
                 </p>
-                <AdminIconButton
-                  type="submit"
+                <AdminFormSubmitButton
                   label="Create Shiprocket shipment"
+                  pendingLabel="Creating…"
                   icon="truck"
                   variant="primary"
-                  showLabel
                 />
               </form>
             ) : null}
@@ -259,12 +258,11 @@ export default async function AdminOrderDetailPage({
                   />
                 </label>
                 <div className={adminFieldFullClassName()}>
-                  <AdminIconButton
-                    type="submit"
+                  <AdminFormSubmitButton
                     label="Save shipping"
+                    pendingLabel="Saving…"
                     icon="save"
                     variant="primary"
-                    showLabel
                   />
                 </div>
               </AdminFieldGrid>

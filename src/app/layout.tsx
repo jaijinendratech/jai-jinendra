@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { AppToastProvider } from "@/components/shared/AppToastProvider";
+import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
 import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
+import { getSpecialAttentionCategories } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -82,6 +86,7 @@ export default async function RootLayout({
   const pathname = headerList.get("x-jj-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin");
   const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
+  const specialAttention = isAdmin ? [] : await getSpecialAttentionCategories();
 
   return (
     <html
@@ -90,12 +95,19 @@ export default async function RootLayout({
       className={`${playfair.variable} ${jakarta.variable} h-full scroll-smooth`}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-on-surface antialiased">
+        <AppToastProvider />
+        <Suspense fallback={null}>
+          <SearchParamToasts />
+        </Suspense>
         {isAdmin ? (
           <div className="flex-1">{children}</div>
         ) : (
           <>
             <AnnouncementBar />
-            <SiteHeader searchProducts={searchProducts} />
+            <SiteHeader
+              searchProducts={searchProducts}
+              specialAttention={specialAttention}
+            />
             <div className="flex-1">{children}</div>
             <SiteFooter />
           </>

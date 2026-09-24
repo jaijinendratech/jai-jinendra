@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
+  categoryHref,
   categoryQuerySlugs,
   dbSlugToCategoryId,
   normalizeCategoryRef,
@@ -423,7 +424,8 @@ export async function getProductSearchIndex(): Promise<
     }));
   }
 
-  const supabase = await createClient();
+  // Use service-role client — this runs inside unstable_cache (no request cookies).
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
     .select(
@@ -451,4 +453,35 @@ export async function getProductSearchIndex(): Promise<
       price: minPaise / 100,
     };
   });
+}
+
+export type SpecialAttentionCategory = {
+  id: string;
+  title: string;
+  slug: string;
+  href: string;
+};
+
+/** Featured categories for storefront navbar + CTA (no cookies — safe in layout). */
+export async function getSpecialAttentionCategories(): Promise<
+  SpecialAttentionCategory[]
+> {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("categories")
+    .select("id, title, slug")
+    .eq("published", true)
+    .eq("featured", true)
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data.map((c) => ({
+    id: c.id,
+    title: c.title,
+    slug: c.slug,
+    href: categoryHref(c.slug),
+  }));
 }

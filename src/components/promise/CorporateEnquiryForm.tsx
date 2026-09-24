@@ -1,14 +1,47 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { toast } from "@heroui/react";
 import { siteConfig } from "@/data/home";
 
 export function CorporateEnquiryForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    setSending(true);
+    try {
+      const res = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "corporate",
+          payload: {
+            name: String(data.get("name") ?? ""),
+            email: String(data.get("email") ?? ""),
+            phone: String(data.get("phone") ?? ""),
+            company: String(data.get("company") ?? ""),
+            quantity: String(data.get("quantity") ?? ""),
+            message: String(data.get("notes") ?? ""),
+          },
+        }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not send enquiry");
+      setSubmitted(true);
+      toast.success("Enquiry sent", {
+        description: "We'll get back within one business day.",
+      });
+    } catch (err) {
+      toast.danger(
+        err instanceof Error ? err.message : "Could not send enquiry",
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   if (submitted) {
@@ -28,7 +61,7 @@ export function CorporateEnquiryForm() {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => void handleSubmit(e)}
       className="space-y-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm"
     >
       <div>
@@ -102,9 +135,10 @@ export function CorporateEnquiryForm() {
       </label>
       <button
         type="submit"
-        className="w-full rounded-lg bg-primary-container px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary sm:w-auto"
+        disabled={sending}
+        className="w-full rounded-lg bg-primary-container px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary disabled:opacity-60 sm:w-auto"
       >
-        Submit enquiry
+        {sending ? "Sending…" : "Submit enquiry"}
       </button>
     </form>
   );

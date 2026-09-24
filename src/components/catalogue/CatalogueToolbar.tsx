@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, LayoutGrid, Rows3 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortOptions } from "@/data/catalogue";
 
 export function CatalogueToolbar({
@@ -16,13 +16,12 @@ export function CatalogueToolbar({
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-sm text-on-surface-variant">
           <span className="md:hidden">
-            <strong className="font-semibold text-on-surface">{shown}</strong> of {total}
+            <strong className="font-semibold text-on-surface">{shown}</strong>{" "}
+            of {total}
           </span>
           <span className="hidden md:inline">
             Showing{" "}
-            <strong className="font-semibold text-on-surface">
-              1–{shown}
-            </strong>{" "}
+            <strong className="font-semibold text-on-surface">1–{shown}</strong>{" "}
             of {total} authentic recipes
           </span>
         </p>
@@ -51,14 +50,14 @@ export function CatalogueToolbar({
           </select>
         </label>
 
-        <div className="hidden overflow-hidden rounded-lg border border-outline-variant/60 bg-surface-container-lowest sm:flex">
+        {/* <div className="hidden overflow-hidden rounded-lg border border-outline-variant/60 bg-surface-container-lowest sm:flex">
           <span className="bg-surface-container p-1.5 text-primary" title="Grid view">
             <LayoutGrid className="h-5 w-5" aria-hidden />
           </span>
           <span className="p-1.5 text-outline" title="List view">
             <Rows3 className="h-5 w-5" aria-hidden />
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -83,7 +82,10 @@ export function CataloguePagination({
           <span>{progress}% Loaded</span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
 

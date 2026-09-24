@@ -27,6 +27,13 @@ export const addressSchema = z.object({
 export const createOrderBodySchema = z.object({
   paymentMethod: z.enum(["razorpay", "cod"]).default("razorpay"),
   notes: z.string().trim().max(500).optional(),
+  couponCode: z
+    .string()
+    .trim()
+    .max(40)
+    .optional()
+    .nullable()
+    .transform((v) => (v ? v.toUpperCase() : undefined)),
   name: z.string().trim().min(1).max(120),
   phone: phoneSchema,
   email: z.string().trim().email().max(200),
@@ -36,6 +43,39 @@ export const createOrderBodySchema = z.object({
   state: z.string().trim().min(1).max(100),
   pincode: pincodeSchema,
 });
+
+export const applyCouponBodySchema = z.object({
+  code: z.string().trim().min(1).max(40),
+  subtotalPaise: z.number().int().min(0).optional(),
+});
+
+export const adminCouponSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .min(2)
+      .max(40)
+      .regex(/^[A-Za-z0-9_-]+$/, "Code may only use letters, numbers, _ and -"),
+    type: z.enum(["percent", "fixed"]),
+    /** percent: 1–100; fixed: rupees (converted to paise in action) */
+    value: z.number().positive(),
+    minOrderRupees: z.number().min(0).default(0),
+    maxDiscountRupees: z.number().positive().nullable().optional(),
+    active: z.boolean(),
+    startsAt: z.string().optional().nullable(),
+    expiresAt: z.string().optional().nullable(),
+    usageLimit: z.number().int().positive().nullable().optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.type === "percent" && (v.value < 1 || v.value > 100)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Percent must be between 1 and 100",
+        path: ["value"],
+      });
+    }
+  });
 
 export const cartLineSchema = z.object({
   sku: z.string().trim().min(1).max(100).optional(),
@@ -106,6 +146,81 @@ export const profileUpdateSchema = z.object({
   fullName: z.string().trim().max(120).optional(),
   email: z.string().trim().email().max(200).optional().or(z.literal("")),
   phone: z.string().trim().max(20).optional(),
+});
+
+/** Admin customer profile edit — Indian phone + optional real email. */
+export const adminCustomerProfileSchema = z.object({
+  id: z.string().uuid("Invalid customer id."),
+  fullName: z
+    .string()
+    .trim()
+    .max(120, "Name must be 120 characters or fewer."),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => {
+      if (!v) return true;
+      const digits = v.replace(/\D/g, "");
+      return (
+        /^[6-9]\d{9}$/.test(digits) || /^91[6-9]\d{9}$/.test(digits)
+      );
+    }, "Enter a valid 10-digit Indian mobile (+91 optional)."),
+  email: z
+    .string()
+    .trim()
+    .max(200, "Email must be 200 characters or fewer.")
+    .refine(
+      (v) => !v || z.string().email().safeParse(v).success,
+      "Enter a valid email or leave blank.",
+    )
+    .refine(
+      (v) =>
+        !v ||
+        !v.toLowerCase().endsWith("@phone.customers.local"),
+      "Cannot save a phone-login placeholder as email. Enter a real email or leave blank.",
+    ),
+});
+
+export const adminCategorySchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(120),
+  subtitle: z.string().trim().max(200).optional().nullable(),
+  imageUrl: z.string().trim().max(500).optional().nullable(),
+  sortOrder: z.number().int().min(0).default(0),
+  published: z.boolean(),
+  featured: z.boolean(),
+});
+
+export const adminEnquiryStatusSchema = z.enum([
+  "new",
+  "in_progress",
+  "closed",
+]);
+
+export const adminOutletSchema = z.object({
+  name: z.string().trim().min(1, "Name is required.").max(120),
+  address: z.string().trim().min(1, "Address is required.").max(500),
+  phone: z.string().trim().max(20).optional().nullable(),
+  hours: z.string().trim().max(200).optional().nullable(),
+  lat: z.number().finite().nullable(),
+  lng: z.number().finite().nullable(),
+  sortOrder: z.number().int().min(0).default(0),
+  published: z.boolean(),
+});
+
+export const adminOrderShippingSchema = z.object({
+  orderId: z.string().min(1, "Missing order id."),
+  courierName: z.string().trim().max(120),
+  awbCode: z.string().trim().max(80),
+  shipmentId: z.string().trim().max(80),
+  shippingStatus: z.string().trim().max(80),
+  trackingUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(
+      (v) => !v || /^https?:\/\//i.test(v),
+      "Tracking URL must start with http:// or https://",
+    ),
 });
 
 export const accountAddressSchema = z.object({
@@ -204,10 +319,22 @@ export function parseOrThrow<T>(
 }
 
 export function zodErrorMessage(err: unknown): string {
-  if (err && typeof err === "object" && "issues" in err) {
-    const issues = (err as z.ZodError).issues;
-    return issues.map((i) => i.message).join("; ") || "Validation failed";
+  if (err instanceof z.ZodError) {
+    return err.issues.map((i) => i.message).join("; ") || "Validation failed";
   }
-  if (err instanceof Error) return err.message;
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === "object") {
+    const maybe = err as {
+      error?: { description?: string; reason?: string };
+      description?: string;
+      message?: string;
+    };
+    const razorpay =
+      maybe.error?.description ||
+      maybe.error?.reason ||
+      maybe.description ||
+      maybe.message;
+    if (typeof razorpay === "string" && razorpay.trim()) return razorpay;
+  }
   return "Validation failed";
 }

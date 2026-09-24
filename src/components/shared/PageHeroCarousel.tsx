@@ -4,6 +4,10 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import type { ExperienceSlide } from "@/data/experience-pages";
+import {
+  HERO_BANNER_FRAME_CLASS,
+  HERO_BANNER_IMAGE_CLASS,
+} from "@/lib/hero-banner";
 
 export function PageHeroCarousel({
   slides,
@@ -15,7 +19,7 @@ export function PageHeroCarousel({
   label: string;
   /** When false, hides prev/next arrows (dots and auto-advance remain). */
   showNavButtons?: boolean;
-  /** Tighter mobile aspect + shorter overlay copy. */
+  /** Tighter section padding on experience / admin previews. */
   compactMobile?: boolean;
 }) {
   const [index, setIndex] = useState(0);
@@ -41,7 +45,7 @@ export function PageHeroCarousel({
 
   return (
     <section
-      className="w-full bg-surface py-3 md:py-6"
+      className={`w-full bg-surface ${compactMobile ? "py-2 md:py-4" : "py-3 md:py-6"}`}
       aria-roledescription="carousel"
       aria-labelledby={headingId}
     >
@@ -49,35 +53,36 @@ export function PageHeroCarousel({
         {label}
       </h2>
 
-      <div className="relative mx-auto w-[95%] overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-[0_10px_24px_-4px_rgba(136,19,55,0.06)]">
-        <div
-          className={`relative w-full ${
-            compactMobile
-              ? "aspect-16/10 min-h-44 md:aspect-21/9 md:min-h-72 lg:min-h-90"
-              : "aspect-16/10 min-h-48 md:aspect-21/9 md:min-h-72 lg:min-h-90"
-          }`}
-        >
-          {slides.map((slide, i) => (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out motion-reduce:transition-none ${
-                i === index ? "z-10 opacity-100" : "z-0 opacity-0"
-              }`}
-              aria-hidden={i !== index}
-            >
-              <Image
-                src={slide.src}
-                alt={slide.alt}
-                fill
-                priority={i === 0}
-                sizes="95vw"
-                className="object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-linear-to-r from-on-surface/70 via-on-surface/35 to-transparent" />
-            </div>
-          ))}
+      <div className="relative mx-auto w-[95%] overflow-hidden rounded-xl border border-outline-variant/30 bg-surface shadow-[0_10px_24px_-4px_rgba(136,19,55,0.06)]">
+        <div className={HERO_BANNER_FRAME_CLASS}>
+          {slides.map((slide, i) => {
+            const hasOverlayCopy = Boolean(
+              slide.eyebrow || slide.title || slide.subtitle,
+            );
+            return (
+              <div
+                key={slide.id}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out motion-reduce:transition-none ${
+                  i === index ? "z-10 opacity-100" : "z-0 opacity-0"
+                }`}
+                aria-hidden={i !== index}
+              >
+                <Image
+                  src={slide.src}
+                  alt={slide.alt}
+                  fill
+                  priority={i === 0}
+                  sizes="95vw"
+                  className={HERO_BANNER_IMAGE_CLASS}
+                />
+                {hasOverlayCopy ? (
+                  <div className="absolute inset-0 bg-linear-to-r from-on-surface/70 via-on-surface/35 to-transparent" />
+                ) : null}
+              </div>
+            );
+          })}
 
-          {active ? (
+          {active && (active.eyebrow || active.title || active.subtitle) ? (
             <div className="absolute inset-y-0 left-0 z-20 flex max-w-xl flex-col justify-end p-4 text-white md:justify-center md:p-10 lg:p-12">
               {active.eyebrow ? (
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary-fixed md:text-xs">

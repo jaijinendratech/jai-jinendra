@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getCartSummary } from "@/lib/cart/cart-service";
 import { isValidPincode } from "@/lib/shipping";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -7,6 +6,7 @@ import {
   checkoutValidateBodySchema,
   zodErrorMessage,
 } from "@/lib/validation/schemas";
+import { getCustomerSessionUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -16,13 +16,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCustomerSessionUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Login required" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Customer login required" },
+      { status: 401 },
+    );
   }
 
   try {

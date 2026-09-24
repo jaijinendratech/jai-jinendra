@@ -38,37 +38,14 @@ export const comboBuilderMeta = {
 
 export const comboBuilderHeroSlides: ExperienceSlide[] = [
   {
-    id: "heritage-box",
-    src: images.sig0,
-    alt: "Luxurious Indian festive gift hamper with brass platters of namkeens and mithai",
-    eyebrow: "Bespoke Festive Gifting",
-    title: "Create Your Custom Heritage Box",
-    subtitle:
-      "Mix freshly fried namkeens, pure ghee mithai, and teatime snacks in one premium gift box.",
+    id: "combo-builder",
+    src: images.bannerComboBuilder,
+    alt: "Build Your Combo Pack - Mix Sweet + Savory - Jai Jinendra Namkeens",
   },
   {
-    id: "savory-tray",
-    src: images.hero1,
-    alt: "Premium Indian namkeens and snacks arranged in elegant brass bowls",
-    eyebrow: "Savory First",
-    title: "Bhujia, Sev & Mathri",
-    subtitle: "Build a crunch-forward tray sealed the same day for lasting crispness.",
-  },
-  {
-    id: "sweet-savory",
-    src: images.sig2,
-    alt: "Chai-nashta snack hamper with kraft canisters of sweets and savories",
-    eyebrow: "Family Bundle",
-    title: "Compose a Chai-Nashta Box",
-    subtitle: "Everyday rituals sorted — mix, match, and seal fresh from our Rajasthan kitchen.",
-  },
-  {
-    id: "festive-mix",
-    src: images.banner,
-    alt: "Festive sweets and gift boxes arranged for celebration",
-    eyebrow: "Festive Mixing",
-    title: "Sweet + Savory Celebrations",
-    subtitle: "Ideal for Diwali trays, hostess gifts, and thoughtful corporate hampers.",
+    id: "chai-nashta",
+    src: images.bannerComboChai,
+    alt: "Chai-Nashta Combo - Everyday Rituals, Gift-Ready - Jai Jinendra Namkeens",
   },
 ];
 

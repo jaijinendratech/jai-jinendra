@@ -2,23 +2,60 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Star } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, toast } from "@heroui/react";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
+import { useWishlist } from "@/lib/wishlist/use-wishlist";
+import { useCart } from "@/lib/cart/use-cart";
 
 export function ProductCard({
   product,
   href,
+  priority = false,
 }: {
   product: Product;
   href?: string;
+  /** Eager-load image for above-the-fold cards. */
+  priority?: boolean;
 }) {
   const [activeVariant, setActiveVariant] = useState(product.variants[0]?.id);
+  const [adding, setAdding] = useState(false);
   const productHref = href ?? `/products/${product.slug}`;
-  const activePrice =
-    product.variants.find((v) => v.id === activeVariant)?.price ?? product.price;
+  const activeVariantData = product.variants.find((v) => v.id === activeVariant);
+  const activePrice = activeVariantData?.price ?? product.price;
+  const { has, toggle, hydrated } = useWishlist();
+  const { updateItem } = useCart();
+  const favourited = hydrated && has(product.id);
+
+  function onToggleFavourite(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const nowOn = toggle(product.id);
+    if (nowOn) toast.success("Added to favourites", { description: product.name });
+    else toast("Removed from favourites", { description: product.name });
+  }
+
+  async function onAddToCart() {
+    const variant = activeVariantData ?? product.variants[0];
+    if (!variant) {
+      toast.danger("No variant available");
+      return;
+    }
+    setAdding(true);
+    try {
+      const sku = variant.sku ?? `${product.slug}-${variant.id}`;
+      await updateItem({ sku, qty: 1 });
+      toast.success("Added to cart", { description: product.name });
+    } catch (err) {
+      toast.danger(
+        err instanceof Error ? err.message : "Could not add to cart",
+      );
+    } finally {
+      setAdding(false);
+    }
+  }
 
   return (
     <article className="culinary-lift flex flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
@@ -33,6 +70,8 @@ export function ProductCard({
             src={product.image}
             alt={product.imageAlt ?? product.name}
             fill
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
             sizes="(max-width:640px) 50vw, (max-width:1024px) 50vw, 25vw"
             className="object-cover object-center transition-transform duration-300 hover:scale-105"
           />
@@ -40,32 +79,28 @@ export function ProductCard({
         </Link>
         <button
           type="button"
-          aria-label={`Add ${product.name} to wishlist`}
-          className="absolute right-2 top-2 z-10 hidden h-8 w-8 items-center justify-center rounded-full bg-white/90 text-on-surface-variant shadow-sm transition hover:text-primary sm:right-2.5 sm:top-2.5 md:flex"
+          aria-label={
+            favourited
+              ? `Remove ${product.name} from favourites`
+              : `Add ${product.name} to favourites`
+          }
+          aria-pressed={favourited}
+          onClick={onToggleFavourite}
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-on-surface-variant shadow-sm transition hover:text-primary sm:right-2.5 sm:top-2.5"
         >
-          <Heart className="h-4 w-4" />
+          <Heart
+            className={`h-4 w-4 ${favourited ? "fill-primary text-primary" : ""}`}
+          />
         </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-2.5 sm:gap-2 sm:p-3.5">
-        <div className="flex items-center justify-between gap-1.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <span className="veg-mark shrink-0 scale-90 sm:scale-100" aria-hidden>
-              <span className="veg-mark-dot" />
-            </span>
-            <span className="truncate text-[9px] font-bold uppercase tracking-wider text-secondary sm:text-[10px]">
-              {product.tagline ?? "Pure Veg"}
-            </span>
-          </div>
-          <span className="flex shrink-0 items-center gap-0.5 text-[10px] font-bold text-tertiary-container sm:text-xs">
-            <Star
-              className="h-3 w-3 fill-amber-rating text-amber-rating sm:h-3.5 sm:w-3.5"
-              aria-hidden
-            />
-            <span className="numeric">{product.rating.toFixed(1)}</span>
-            <span className="numeric hidden font-normal text-on-surface-variant md:inline">
-              ({product.reviewCount.toLocaleString("en-IN")})
-            </span>
+        <div className="flex items-center gap-1.5">
+          <span className="veg-mark shrink-0 scale-90 sm:scale-100" aria-hidden>
+            <span className="veg-mark-dot" />
+          </span>
+          <span className="truncate text-[9px] font-bold uppercase tracking-wider text-secondary sm:text-[10px]">
+            {product.tagline ?? "Pure Veg"}
           </span>
         </div>
 
@@ -120,8 +155,19 @@ export function ProductCard({
             ) : null}
           </div>
 
-          <Button className="h-8 min-h-8 shrink-0 rounded-lg bg-primary-container px-2.5 text-xs font-semibold text-white hover:bg-primary sm:h-9 sm:min-h-9 sm:px-3 sm:text-sm">
-            Add
+          <Button
+            isDisabled={adding || !product.variants.length}
+            onPress={() => void onAddToCart()}
+            className="h-8 min-h-8 shrink-0 rounded-lg bg-primary-container px-2.5 text-xs font-semibold text-white hover:bg-primary sm:h-9 sm:min-h-9 sm:px-3 sm:text-sm"
+          >
+            {adding ? (
+              <Loader2
+                className="h-4 w-4 animate-spin"
+                aria-label="Adding to cart"
+              />
+            ) : (
+              "Add"
+            )}
           </Button>
         </div>
       </div>

@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import {
   LuLayoutDashboard,
   LuPackage,
@@ -11,6 +12,7 @@ import {
   LuWarehouse,
   LuShoppingBag,
   LuUsers,
+  LuTicket,
   LuFileText,
   LuImages,
   LuImage,
@@ -18,13 +20,12 @@ import {
   LuStore,
   LuSettings,
   LuLogOut,
-  LuMenu,
-  LuX,
 } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import { logoutAdminAction } from "@/lib/auth";
 import { adminNav } from "@/data/admin-mock";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { siteConfig } from "@/data/home";
 
 const groupLabels = {
   overview: "Overview",
@@ -42,6 +43,7 @@ const navIcons: Record<string, IconType> = {
   "/admin/inventory": LuWarehouse,
   "/admin/orders": LuShoppingBag,
   "/admin/customers": LuUsers,
+  "/admin/coupons": LuTicket,
   "/admin/content/home": LuFileText,
   "/admin/content/carousels": LuImages,
   "/admin/media": LuImage,
@@ -56,6 +58,7 @@ const PREFETCH_HREFS = [
   "/admin/products",
   "/admin/orders",
   "/admin/customers",
+  "/admin/coupons",
   "/admin/categories",
   "/admin/inventory",
   "/admin/combos",
@@ -67,7 +70,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
     for (const href of PREFETCH_HREFS) {
@@ -90,17 +92,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           open ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-outline-variant/20 px-5">
-          <LuLayoutDashboard className="h-5 w-5 text-primary" aria-hidden />
-          <div>
-            <p className="text-sm font-bold text-primary">Jai Jinendra</p>
-            <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">
-              Admin
-            </p>
-          </div>
+        <div className="flex h-20 shrink-0 items-center border-b border-outline-variant/20 px-4">
+          <Link href="/admin" className="flex min-w-0 items-center">
+            <Image
+              src={siteConfig.logo.src}
+              alt={siteConfig.logo.alt}
+              width={siteConfig.logo.width}
+              height={siteConfig.logo.height}
+              className="h-14 w-auto max-w-full shrink-0 object-contain object-left"
+              priority
+            />
+          </Link>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto p-4" aria-label="Admin">
+        <nav
+          className="flex-1 space-y-5 overflow-y-auto p-4"
+          aria-label="Admin"
+        >
           {groups.map(({ group, label, items }) => (
             <div key={group}>
               <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-outline">
@@ -159,9 +167,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         cancelLabel="Stay signed in"
         danger
         onConfirm={() => {
-          startTransition(() => {
-            void logoutAdminAction();
-          });
+          void logoutAdminAction();
         }}
       />
 
@@ -175,17 +181,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       ) : null}
 
       <div className="flex min-h-dvh min-w-0 flex-col lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-outline-variant/30 bg-white/95 px-4 backdrop-blur md:px-6">
+        {/* <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-outline-variant/30 bg-white/95 px-4 backdrop-blur md:px-6">
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-outline-variant/40 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? <LuX className="h-4 w-4" /> : <LuMenu className="h-4 w-4" />}
+            {open ? (
+              <LuX className="h-4 w-4" />
+            ) : (
+              <LuMenu className="h-4 w-4" />
+            )}
           </button>
-          <p className="text-sm text-on-surface-variant">Store operations console</p>
-        </header>
+          <p className="text-sm text-on-surface-variant">
+            Store operations console
+          </p>
+        </header> */}
         <div className="flex-1 p-4 md:p-6">{children}</div>
       </div>
     </div>

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/lib/orders/create-order";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getRazorpayKeyId } from "@/lib/payments/razorpay";
@@ -7,6 +6,7 @@ import {
   createOrderBodySchema,
   zodErrorMessage,
 } from "@/lib/validation/schemas";
+import { getCustomerSessionUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -16,13 +16,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCustomerSessionUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Login required" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Customer login required" },
+      { status: 401 },
+    );
   }
 
   try {
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       userId: user.id,
       paymentMethod: body.paymentMethod,
       notes: body.notes,
+      couponCode: body.couponCode,
       address: {
         name: body.name,
         phone: body.phone,
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
         orderNumber: result.order.order_number,
         status: result.order.status,
         totalPaise: result.order.total_paise,
+        discountPaise: result.order.discount_paise,
+        couponCode: result.order.coupon_code,
       },
       razorpay: result.razorpay
         ? {
@@ -62,9 +65,8 @@ export async function POST(request: Request) {
         : null,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: zodErrorMessage(err) },
-      { status: 400 },
-    );
+    const message = zodErrorMessage(err);
+    console.error("[orders/create]", message, err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

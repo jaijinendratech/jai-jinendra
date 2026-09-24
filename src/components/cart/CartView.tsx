@@ -1,31 +1,74 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
+import { Alert, toast } from "@heroui/react";
 import { useCart } from "@/lib/cart/use-cart";
 import { formatINR } from "@/lib/format";
+import { signOutAction } from "@/lib/auth";
 
-export function CartView() {
+const ADMIN_CHECKOUT_NOTICE =
+  "You're logged in as admin. Please sign out and log in as a customer to complete your purchase.";
+
+type CartViewProps = {
+  /** Soft-guard: admin still hits server redirect if they navigate to /checkout. */
+  isAdmin?: boolean;
+  /** From `?notice=` — latched so the banner survives SearchParamToasts URL cleanup. */
+  notice?: string;
+};
+
+function AdminCustomerNoticeAlert() {
+  return (
+    <Alert
+      status="warning"
+      className="mb-5"
+      data-testid="admin-customer-notice"
+    >
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Title>Customer account required</Alert.Title>
+        <Alert.Description>{ADMIN_CHECKOUT_NOTICE}</Alert.Description>
+      </Alert.Content>
+    </Alert>
+  );
+}
+
+export function CartView({ isAdmin = false, notice }: CartViewProps) {
   const { cart, loading, updateItem } = useCart();
+  // Latch on first paint so the banner stays after SearchParamToasts cleans the URL.
+  const [showAdminNotice] = useState(
+    () => notice === "admin_customer_required",
+  );
 
   if (loading) {
-    return <p className="text-sm text-on-surface-variant">Loading cart…</p>;
+    return (
+      <div>
+        {showAdminNotice ? <AdminCustomerNoticeAlert /> : null}
+        <p className="text-sm text-on-surface-variant">Loading cart…</p>
+      </div>
+    );
   }
 
   if (cart.items.length === 0) {
     return (
-      <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-8 text-center">
-        <p className="text-on-surface-variant">Your cart is empty.</p>
-        <Link href="/catalogue" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
-          <span className="md:hidden">Shop Now</span>
-          <span className="hidden md:inline">Browse catalogue</span>
-        </Link>
+      <div>
+        {showAdminNotice ? <AdminCustomerNoticeAlert /> : null}
+        <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-8 text-center">
+          <p className="text-on-surface-variant">Your cart is empty.</p>
+          <Link href="/catalogue" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+            <span className="md:hidden">Shop Now</span>
+            <span className="hidden md:inline">Browse catalogue</span>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
+    <div>
+      {showAdminNotice ? <AdminCustomerNoticeAlert /> : null}
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="space-y-4 lg:col-span-8">
         {cart.warnings.length > 0 ? (
@@ -104,17 +147,50 @@ export function CartView() {
             <dd className="price font-bold text-on-surface">{formatINR(cart.totalPaise / 100)}</dd>
           </div>
         </dl>
-        <Link
-          href="/checkout"
-          className="mt-5 block w-full rounded-lg bg-primary-container py-3 text-center text-sm font-semibold text-white hover:bg-primary"
-        >
-          <span className="md:hidden">Checkout</span>
-          <span className="hidden md:inline">Proceed to Checkout</span>
-        </Link>
-        <p className="mt-3 text-center text-[11px] text-on-surface-variant">
-          Free pan-India delivery on orders above ₹999
-        </p>
+        {isAdmin ? (
+          <div className="mt-5 space-y-3">
+            <button
+              type="button"
+              className="block w-full rounded-lg bg-primary-container py-3 text-center text-sm font-semibold text-white hover:bg-primary"
+              onClick={() => toast.warning(ADMIN_CHECKOUT_NOTICE)}
+            >
+              <span className="md:hidden">Checkout</span>
+              <span className="hidden md:inline">Proceed to Checkout</span>
+            </button>
+            <div className="space-y-1 text-center text-[11px] text-on-surface-variant">
+              <p>Admin sessions cannot purchase.</p>
+              <div>
+                <form action={signOutAction} className="inline">
+                  <button type="submit" className="font-semibold text-primary underline">
+                    Sign out
+                  </button>
+                </form>
+                <span>
+                  , then{" "}
+                  <Link href="/login?next=/checkout" className="font-semibold text-primary underline">
+                    log in as a customer
+                  </Link>
+                  .
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <Link
+              href="/checkout"
+              className="mt-5 block w-full rounded-lg bg-primary-container py-3 text-center text-sm font-semibold text-white hover:bg-primary"
+            >
+              <span className="md:hidden">Checkout</span>
+              <span className="hidden md:inline">Proceed to Checkout</span>
+            </Link>
+            <p className="mt-3 text-center text-[11px] text-on-surface-variant">
+              Free pan-India delivery on orders above ₹999
+            </p>
+          </>
+        )}
       </aside>
+    </div>
     </div>
   );
 }

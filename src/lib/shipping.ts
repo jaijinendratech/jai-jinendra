@@ -13,11 +13,21 @@ export function calculateShippingPaise(subtotalPaise: number): number {
   return FLAT_SHIPPING_PAISE;
 }
 
-export function calculateOrderTotals(subtotalPaise: number) {
+export function calculateOrderTotals(
+  subtotalPaise: number,
+  discountPaise = 0,
+) {
+  const safeDiscount = Math.min(
+    Math.max(0, discountPaise),
+    Math.max(0, subtotalPaise),
+  );
+  const discountedSubtotal = Math.max(0, subtotalPaise - safeDiscount);
+  // Free-shipping threshold is evaluated on pre-discount subtotal (common retail UX).
   const shippingPaise = calculateShippingPaise(subtotalPaise);
   return {
     subtotalPaise,
+    discountPaise: safeDiscount,
     shippingPaise,
-    totalPaise: subtotalPaise + shippingPaise,
+    totalPaise: discountedSubtotal + shippingPaise,
   };
 }

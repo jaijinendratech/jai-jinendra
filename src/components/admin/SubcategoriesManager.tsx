@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import {
   deleteSubcategoryAction,
   saveSubcategoryAction,
@@ -50,10 +51,14 @@ function SubcategoryForm({
         try {
           await saveSubcategoryAction(formData);
           router.refresh();
+          toast.success(subcategory ? "Subcategory updated" : "Subcategory created");
           onSaved?.();
         } catch (err) {
           if (isNextRedirectError(err)) throw err;
-          setError(err instanceof Error ? err.message : "Could not save subcategory.");
+          const message =
+            err instanceof Error ? err.message : "Could not save subcategory.";
+          setError(message);
+          toast.danger(message);
         }
       }}
     >

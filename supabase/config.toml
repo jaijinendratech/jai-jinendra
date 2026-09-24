@@ -255,7 +255,9 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# App uses AUTH_FIXED_OTP for phone login until Twilio (or another SMS provider) is wired.
+# Keep enable_signup true so real SMS can be flipped on later without a config fight.
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
@@ -263,7 +265,8 @@ template = "Your code is {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
 max_frequency = "5s"
 
-# Use pre-defined map of phone number to OTP for testing.
+# Use pre-defined map of phone number to OTP for testing (local Supabase only).
+# Prefer AUTH_FIXED_OTP in the Next.js app for “one code for every number”.
 # [auth.sms.test_otp]
 # 4152127777 = "123456"
 

@@ -215,3 +215,30 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* HeroUI toast: hug message length, capped + mobile-safe */
+.jj-toast-region.toast-region,
+.toast-region.jj-toast-region {
+  /* Room for the longest toast; individual toasts stay content-sized */
+  width: min(20rem, calc(100vw - 2rem)) !important;
+  min-width: 0 !important;
+  max-width: min(20rem, calc(100vw - 2rem));
+}
+
+.jj-toast-region .toast {
+  /* Don't stretch to the full region — size to copy */
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  width: max-content;
+  max-width: 100%;
+}
+
+.jj-toast-region .toast__content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.jj-toast-region .toast__title,
+.jj-toast-region .toast__description {
+  overflow-wrap: anywhere;
+}

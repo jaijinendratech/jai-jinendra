@@ -11,6 +11,8 @@
     "seed": "npx tsx scripts/seed-supabase.ts",
     "smoke": "node scripts/smoke.mjs",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts",
+    "seed:carousels": "npx tsx scripts/seed-carousel-banners.ts",
+    "seed:descriptions": "npx tsx scripts/seed-product-descriptions.ts",
     "import:catalog": "npx tsx scripts/import-catalog.ts",
     "seed:taxonomy": "npx tsx scripts/seed-canonical-taxonomy.ts",
     "create-admin": "npx tsx scripts/create-admin.ts",
@@ -22,7 +24,6 @@
   "dependencies": {
     "@heroui/react": "^3.2.5",
     "@heroui/styles": "^3.2.5",
-    "@sentry/nextjs": "^10.75.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@tiptap/extension-highlight": "^3.31.3",
@@ -56,7 +57,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "xlsx": "^0.18.5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "xlsx": "^0.18.5"
   }
 }

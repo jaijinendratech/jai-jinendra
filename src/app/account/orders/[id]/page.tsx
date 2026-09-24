@@ -26,8 +26,10 @@ type OrderDetailRow = {
   payment_status: string;
   payment_method: string;
   subtotal_paise: number;
+  discount_paise: number;
   shipping_paise: number;
   total_paise: number;
+  coupon_code: string | null;
   created_at: string;
   tracking_url: string | null;
   awb_code: string | null;
@@ -61,7 +63,7 @@ export default async function AccountOrderDetailPage({
   const { data } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, payment_status, payment_method, subtotal_paise, shipping_paise, total_paise, created_at, tracking_url, awb_code, courier_name, shipping_status, address_snapshot, order_items(id, name_snapshot, sku_snapshot, qty, unit_price_paise)",
+      "id, order_number, status, payment_status, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, coupon_code, created_at, tracking_url, awb_code, courier_name, shipping_status, address_snapshot, order_items(id, name_snapshot, sku_snapshot, qty, unit_price_paise)",
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -109,6 +111,17 @@ export default async function AccountOrderDetailPage({
                 {formatINR(order.subtotal_paise / 100)}
               </dd>
             </div>
+            {order.discount_paise > 0 ? (
+              <div className="flex justify-between gap-3">
+                <dt className="text-on-surface-variant">
+                  Discount
+                  {order.coupon_code ? ` (${order.coupon_code})` : ""}
+                </dt>
+                <dd className="price font-semibold text-secondary">
+                  −{formatINR(order.discount_paise / 100)}
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between gap-3">
               <dt className="text-on-surface-variant">Shipping</dt>
               <dd className="price font-semibold">

@@ -13,13 +13,12 @@ import {
 import {
   AdminCard,
   AdminFieldGrid,
-  AdminTableShell,
   StatusBadge,
   adminFieldFullClassName,
   fieldClassName,
   labelClassName,
 } from "@/components/admin/ui";
-import { AdminIconButton } from "@/components/admin/AdminIconButton";
+import { AdminFormSubmitButton } from "@/components/admin/AdminIconButton";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
   ORDER_STATUSES,
@@ -33,6 +32,7 @@ import {
   AdminTablePagination,
   useAdminTablePagination,
 } from "@/components/admin/AdminTablePagination";
+import { isSyntheticPhoneEmail } from "@/lib/customers";
 
 export function CustomerDetailPanel({
   customer,
@@ -49,6 +49,7 @@ export function CustomerDetailPanel({
   const [error, setError] = useState<string | null>(null);
   const { pageItems, page, setPage, totalPages, total, from, to } =
     useAdminTablePagination(orders);
+  const phoneAccount = isSyntheticPhoneEmail(customer.email);
 
   return (
     <div className="space-y-5">
@@ -68,53 +69,70 @@ export function CustomerDetailPanel({
             }
           }}
         >
-          <AdminFieldGrid>
+          <AdminFieldGrid className="sm:grid-cols-1">
             <input type="hidden" name="id" value={customer.id} />
-            <label className={labelClassName()}>
+            {phoneAccount ? (
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide text-on-surface-variant ${adminFieldFullClassName()}`}
+              >
+                <span className="inline-flex rounded-md bg-surface-container-high px-2 py-0.5 text-[11px] text-on-surface">
+                  Phone account
+                </span>
+              </p>
+            ) : null}
+            <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
               Name
               <input
                 name="fullName"
                 defaultValue={customer.name === "—" ? "" : customer.name}
                 className={fieldClassName()}
                 disabled={!supabase}
+                maxLength={120}
               />
             </label>
-            <label className={labelClassName()}>
-              Email
+            <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
+              {phoneAccount ? "Real email (optional)" : "Email"}
               <input
                 name="email"
                 type="email"
-                defaultValue={customer.email}
+                defaultValue={phoneAccount ? "" : customer.email}
+                placeholder={phoneAccount ? "customer@example.com" : undefined}
                 className={fieldClassName()}
                 disabled={!supabase}
               />
             </label>
             <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
-              Phone
+              Phone{phoneAccount ? " (required)" : ""}
               <input
                 name="phone"
                 defaultValue={customer.phone}
                 className={fieldClassName()}
                 disabled={!supabase}
+                required={phoneAccount}
+                placeholder="+91 98765 43210"
               />
             </label>
             {error ? (
-              <p className={`text-sm text-red-700 ${adminFieldFullClassName()}`} role="alert">
+              <p
+                className={`text-sm text-red-700 ${adminFieldFullClassName()}`}
+                role="alert"
+              >
                 {error}
               </p>
             ) : null}
             {supabase ? (
               <div className={adminFieldFullClassName()}>
-                <AdminIconButton
-                  type="submit"
+                <AdminFormSubmitButton
                   label="Save profile"
+                  pendingLabel="Saving…"
                   icon="save"
                   variant="primary"
-                  showLabel
                 />
               </div>
             ) : (
-              <p className={`text-sm text-on-surface-variant ${adminFieldFullClassName()}`}>
+              <p
+                className={`text-sm text-on-surface-variant ${adminFieldFullClassName()}`}
+              >
                 Connect Supabase to edit this profile.
               </p>
             )}
@@ -129,89 +147,78 @@ export function CustomerDetailPanel({
           </p>
         ) : (
           <>
-            <AdminTableShell>
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-outline-variant/20 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Order</th>
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Total</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Payment</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/15">
-                  {pageItems.map((order) => (
-                    <tr
-                      key={order.dbId}
-                      className="hover:bg-surface-container-low/50"
+            <ul className="divide-y divide-outline-variant/15">
+              {pageItems.map((order) => (
+                <li key={order.dbId} className="min-w-0 space-y-2 py-3 first:pt-0">
+                  <div className="flex min-w-0 items-baseline justify-between gap-3">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="min-w-0 break-all font-semibold text-primary hover:underline"
                     >
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="font-semibold text-primary hover:underline"
-                        >
-                          {order.id}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-on-surface-variant">
-                        {new Date(order.placedAt).toLocaleString("en-IN")}
-                      </td>
-                      <td className="px-4 py-3 price font-semibold">
-                        {formatINR(order.total)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {supabase ? (
-                          <AdminStatusSelect
-                            action={updateOrderStatusAction}
-                            fields={{ orderId: order.dbId }}
-                            value={order.status}
-                            kind="order"
-                            options={ORDER_STATUSES.map((s) => ({
-                              value: s,
-                              label: ORDER_STATUS_LABELS[s],
-                            }))}
-                          />
-                        ) : (
-                          <StatusBadge
-                            kind="order"
-                            value={order.status}
-                            label={
-                              ORDER_STATUS_LABELS[order.status as OrderStatus] ??
-                              order.status
-                            }
-                          />
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {supabase ? (
-                          <AdminStatusSelect
-                            action={updateOrderPaymentStatusAction}
-                            fields={{ orderId: order.dbId }}
-                            value={order.paymentStatus}
-                            kind="payment"
-                            options={PAYMENT_STATUSES.map((s) => ({
-                              value: s,
-                              label: PAYMENT_STATUS_LABELS[s],
-                            }))}
-                          />
-                        ) : (
-                          <StatusBadge
-                            kind="payment"
-                            value={order.paymentStatus}
-                            label={
-                              PAYMENT_STATUS_LABELS[
-                                order.paymentStatus as PaymentStatus
-                              ] ?? order.paymentStatus
-                            }
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </AdminTableShell>
+                      {order.id}
+                    </Link>
+                    <span className="price shrink-0 font-semibold">
+                      {formatINR(order.total)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant">
+                    {new Date(order.placedAt).toLocaleString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {supabase ? (
+                      <>
+                        <AdminStatusSelect
+                          action={updateOrderStatusAction}
+                          fields={{ orderId: order.dbId }}
+                          value={order.status}
+                          kind="order"
+                          options={ORDER_STATUSES.map((s) => ({
+                            value: s,
+                            label: ORDER_STATUS_LABELS[s],
+                          }))}
+                        />
+                        <AdminStatusSelect
+                          action={updateOrderPaymentStatusAction}
+                          fields={{ orderId: order.dbId }}
+                          value={order.paymentStatus}
+                          kind="payment"
+                          options={PAYMENT_STATUSES.map((s) => ({
+                            value: s,
+                            label: PAYMENT_STATUS_LABELS[s],
+                          }))}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <StatusBadge
+                          kind="order"
+                          value={order.status}
+                          label={
+                            ORDER_STATUS_LABELS[order.status as OrderStatus] ??
+                            order.status
+                          }
+                        />
+                        <StatusBadge
+                          kind="payment"
+                          value={order.paymentStatus}
+                          label={
+                            PAYMENT_STATUS_LABELS[
+                              order.paymentStatus as PaymentStatus
+                            ] ?? order.paymentStatus
+                          }
+                        />
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
             <AdminTablePagination
               page={page}
               totalPages={totalPages}

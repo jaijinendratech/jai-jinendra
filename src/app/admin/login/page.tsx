@@ -31,7 +31,9 @@ export default async function AdminLoginPage({
             className="h-12 w-auto object-contain"
             priority
           />
-          <h1 className="mt-4 text-xl font-bold text-on-surface">Admin sign in</h1>
+          <h1 className="mt-4 text-xl font-bold text-on-surface">
+            Admin sign in
+          </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
             Supabase Auth — admin role required.
           </p>
@@ -75,12 +77,6 @@ export default async function AdminLoginPage({
             Sign in
           </button>
         </form>
-
-        <p className="mt-4 text-center text-[11px] text-on-surface-variant">
-          With Supabase configured, run{" "}
-          <code className="rounded bg-surface-container-high px-1">npm run create-admin</code>{" "}
-          once to provision this account.
-        </p>
       </div>
     </main>
   );

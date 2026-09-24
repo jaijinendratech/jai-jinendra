@@ -1379,6 +1379,30 @@ export async function getAdminOutlets() {
   }));
 }
 
+export async function getAdminCoupons() {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("coupons")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    code: c.code,
+    type: c.type,
+    value: c.value,
+    minOrderPaise: c.min_order_paise,
+    maxDiscountPaise: c.max_discount_paise,
+    active: c.active,
+    startsAt: c.starts_at,
+    expiresAt: c.expires_at,
+    usageLimit: c.usage_limit,
+    usedCount: c.used_count,
+  }));
+}
+
 export async function getAdminCombos() {
   if (!isSupabaseConfigured()) {
     const pool = catalogueProducts.filter((p) =>

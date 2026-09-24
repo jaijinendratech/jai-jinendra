@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import { saveOutletAction, setOutletPublishedAction } from "@/lib/admin/actions";
 import {
   AdminFieldGrid,
@@ -56,12 +57,14 @@ function OutletFormFields({
         try {
           await saveOutletAction(formData);
           router.refresh();
+          toast.success(outlet ? "Outlet updated" : "Outlet created");
           onSaved?.();
         } catch (err) {
           if (isNextRedirectError(err)) throw err;
-          setError(
-            err instanceof Error ? err.message : "Could not save outlet.",
-          );
+          const message =
+            err instanceof Error ? err.message : "Could not save outlet.";
+          setError(message);
+          toast.danger(message);
         }
       }}
     >

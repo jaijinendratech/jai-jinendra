@@ -1,4 +1,4 @@
-import { requireUser, getProfile } from "@/lib/auth";
+import { requireCustomer, getProfile } from "@/lib/auth";
 import { AccountNav } from "@/components/account/AccountNav";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 
@@ -7,7 +7,7 @@ export default async function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser("/login?next=/account");
+  const user = await requireCustomer("/login?next=/account");
   const profile = await getProfile(user.id);
   const greeting =
     profile?.full_name?.split(" ")[0] ||

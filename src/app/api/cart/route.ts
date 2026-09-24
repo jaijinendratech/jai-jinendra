@@ -9,6 +9,7 @@ export async function GET() {
       items: [],
       itemCount: 0,
       subtotalPaise: 0,
+      discountPaise: 0,
       shippingPaise: 0,
       totalPaise: 0,
       warnings: ["Database not configured — cart unavailable"],

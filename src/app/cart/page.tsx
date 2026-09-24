@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { CartView } from "@/components/cart/CartView";
+import { getProfileRole, getSessionUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Your Cart",
@@ -10,7 +11,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function CartPage() {
+export default async function CartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const user = await getSessionUser();
+  const role = user ? await getProfileRole(user.id) : null;
+  const { notice } = await searchParams;
+
   return (
     <main className="container-jj py-6 md:py-10">
       <Breadcrumbs
@@ -39,7 +48,7 @@ export default function CartPage() {
         </Link>
       </div>
 
-      <CartView />
+      <CartView isAdmin={role === "admin"} notice={notice} />
     </main>
   );
 }

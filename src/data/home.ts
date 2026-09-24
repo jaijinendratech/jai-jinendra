@@ -59,13 +59,13 @@ export const navLinks: NavLink[] = [
 export const heroSlides = [
   {
     id: "diwali",
-    src: images.hero0,
+    src: images.bannerHomeDiwali,
     alt: "Celebrate the Joy of Diwali - Authentic Indian Festive Treats - Jai Jinendra Namkeens",
   },
   {
     id: "namkeen",
-    src: images.hero1,
-    alt: "Crisp. Savory. Authentic. Handcrafted Indian Snacks - Jai Jinendra Namkeens",
+    src: images.bannerHomeNamkeen,
+    alt: "Crisp. Savory. Authentic. Handcrafted Rajasthani Namkeens - Jai Jinendra Namkeens",
   },
 ] as const;
 

@@ -97,6 +97,8 @@ export type Category = {
   href: string;
   image: string;
   imageAlt: string;
+  /** Featured / special-attention — show star badge on cards & nav. */
+  specialAttention?: boolean;
 };
 
 export type SignatureCollection = {

@@ -1,8 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
+import { toast } from "@heroui/react";
 import { cn } from "@/lib/cn";
 import { statusBadgeClass, type StatusBadgeKind } from "@/lib/admin/status";
+import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
+import { useRouter } from "next/navigation";
 
 export type AdminStatusOption = { value: string; label: string };
 
@@ -19,6 +22,12 @@ export const PUBLISH_HIDDEN_OPTIONS: AdminStatusOption[] = [
 export const FEATURED_OPTIONS: AdminStatusOption[] = [
   { value: "true", label: "Featured" },
   { value: "false", label: "Standard" },
+];
+
+/** Category “special attention” — shown in storefront navbar + CTA. */
+export const SPECIAL_ATTENTION_OPTIONS: AdminStatusOption[] = [
+  { value: "true", label: "Special attention" },
+  { value: "false", label: "Normal" },
 ];
 
 export function AdminStatusSelect({
@@ -40,14 +49,31 @@ export function AdminStatusSelect({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [current, setCurrent] = useState(value);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   return (
     <form
       ref={formRef}
-      action={action}
       className="inline-flex"
       title="Change status"
       onClick={(e) => e.stopPropagation()}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(async () => {
+          try {
+            await action(fd);
+            toast.success("Status updated");
+            router.refresh();
+          } catch (err) {
+            if (isNextRedirectError(err)) throw err;
+            toast.danger(
+              err instanceof Error ? err.message : "Could not update status",
+            );
+          }
+        });
+      }}
     >
       {Object.entries(fields).map(([key, val]) => (
         <input key={key} type="hidden" name={key} value={val} />
@@ -55,11 +81,11 @@ export function AdminStatusSelect({
       <select
         name={name}
         value={current}
-        disabled={disabled}
+        disabled={disabled || pending}
         aria-label="Change status"
         onChange={(e) => {
           setCurrent(e.target.value);
-          formRef.current?.requestSubmit();
+          queueMicrotask(() => formRef.current?.requestSubmit());
         }}
         className={cn(
           statusBadgeClass(kind, current),

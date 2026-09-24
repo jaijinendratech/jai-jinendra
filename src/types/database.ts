@@ -7,6 +7,7 @@ export type Json =
   | Json[];
 
 export type UserRole = "customer" | "admin";
+export type CouponType = "percent" | "fixed";
 export type OrderStatus =
   | "pending_payment"
   | "cod_confirmed"
@@ -513,8 +514,11 @@ export type Database = {
           razorpay_order_id: string | null;
           razorpay_payment_id: string | null;
           subtotal_paise: number;
+          discount_paise: number;
           shipping_paise: number;
           total_paise: number;
+          coupon_id: string | null;
+          coupon_code: string | null;
           address_snapshot: Json;
           customer_email: string | null;
           customer_phone: string | null;
@@ -537,8 +541,11 @@ export type Database = {
           razorpay_order_id?: string | null;
           razorpay_payment_id?: string | null;
           subtotal_paise: number;
+          discount_paise?: number;
           shipping_paise?: number;
           total_paise: number;
+          coupon_id?: string | null;
+          coupon_code?: string | null;
           address_snapshot: Json;
           customer_email?: string | null;
           customer_phone?: string | null;
@@ -561,8 +568,11 @@ export type Database = {
           razorpay_order_id?: string | null;
           razorpay_payment_id?: string | null;
           subtotal_paise?: number;
+          discount_paise?: number;
           shipping_paise?: number;
           total_paise?: number;
+          coupon_id?: string | null;
+          coupon_code?: string | null;
           address_snapshot?: Json;
           customer_email?: string | null;
           customer_phone?: string | null;
@@ -715,6 +725,54 @@ export type Database = {
           phone?: string | null;
           sort_order?: number;
           published?: boolean;
+        };
+        Relationships: [];
+      };
+      coupons: {
+        Row: {
+          id: string;
+          code: string;
+          type: CouponType;
+          value: number;
+          min_order_paise: number;
+          max_discount_paise: number | null;
+          active: boolean;
+          starts_at: string | null;
+          expires_at: string | null;
+          usage_limit: number | null;
+          used_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          type: CouponType;
+          value: number;
+          min_order_paise?: number;
+          max_discount_paise?: number | null;
+          active?: boolean;
+          starts_at?: string | null;
+          expires_at?: string | null;
+          usage_limit?: number | null;
+          used_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          type?: CouponType;
+          value?: number;
+          min_order_paise?: number;
+          max_discount_paise?: number | null;
+          active?: boolean;
+          starts_at?: string | null;
+          expires_at?: string | null;
+          usage_limit?: number | null;
+          used_count?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -890,9 +948,17 @@ export type Database = {
         Args: Record<string, never>;
         Returns: Json;
       };
+      redeem_coupon: {
+        Args: {
+          p_coupon_id: string;
+          p_subtotal_paise: number;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;
+      coupon_type: CouponType;
       order_status: OrderStatus;
       payment_status: PaymentStatus;
       payment_method: PaymentMethod;

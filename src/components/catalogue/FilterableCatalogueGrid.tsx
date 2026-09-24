@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { ProductCard } from "@/components/products/ProductCard";
+import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { CatalogueGiftBanner } from "@/components/catalogue/CatalogueGiftBanner";
 import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { CataloguePagination } from "@/components/catalogue/CatalogueToolbar";
@@ -41,10 +41,6 @@ export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
     });
   }, [products, purity, spice, price]);
 
-  const mid = Math.min(6, filtered.length);
-  const firstBatch = filtered.slice(0, mid);
-  const secondBatch = filtered.slice(mid);
-
   return (
     <section className="space-y-8 lg:col-span-9">
       {(purity || spice || price) && filtered.length !== products.length ? (
@@ -53,20 +49,6 @@ export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
-        {firstBatch.map((product) => (
-          <ProductCard key={product.id} product={product} href={`/products/${product.slug}`} />
-        ))}
-      </div>
-
-      <CatalogueGiftBanner />
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
-        {secondBatch.map((product) => (
-          <ProductCard key={product.id} product={product} href={`/products/${product.slug}`} />
-        ))}
-      </div>
-
       {filtered.length === 0 ? (
         <p className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-8 text-center text-sm text-on-surface-variant">
           No products match these filters.{" "}
@@ -74,10 +56,22 @@ export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
             Clear filters
           </a>
         </p>
-      ) : null}
+      ) : (
+        <LazyProductGrid
+          products={filtered}
+          initialCount={8}
+          pageSize={8}
+          priorityCount={4}
+          midAfter={6}
+          midSlot={<CatalogueGiftBanner />}
+        />
+      )}
 
       <CatalogueQualityStrip />
-      <CataloguePagination shown={filtered.length} total={catalogueMeta.totalCount} />
+      <CataloguePagination
+        shown={Math.min(filtered.length, filtered.length)}
+        total={catalogueMeta.totalCount}
+      />
     </section>
   );
 }

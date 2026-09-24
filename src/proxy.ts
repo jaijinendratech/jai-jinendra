@@ -8,6 +8,15 @@ function devAdminSession(request: NextRequest): boolean {
   return request.cookies.get(ADMIN_SESSION_COOKIE)?.value === "1";
 }
 
+function isCustomerGatePath(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/checkout")
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
@@ -34,19 +43,29 @@ export async function proxy(request: NextRequest) {
 
   const { supabase, user, supabaseResponse } = await updateSession(request);
 
+  let role: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    role = profile?.role ?? null;
+  }
+
+  // Admins may browse the catalogue but not customer auth surfaces.
+  // Send them back to cart with a clear notice (not a silent /admin dump).
+  if (role === "admin" && isCustomerGatePath(pathname)) {
+    const noticeUrl = new URL("/cart", request.url);
+    noticeUrl.searchParams.set("notice", "admin_customer_required");
+    return NextResponse.redirect(noticeUrl);
+  }
+
   // Admin routes
   if (pathname.startsWith("/admin")) {
     if (pathname.startsWith("/admin/login")) {
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (profile?.role === "admin") {
-          return NextResponse.redirect(new URL("/admin", request.url));
-        }
+      if (role === "admin") {
+        return NextResponse.redirect(new URL("/admin", request.url));
       }
       supabaseResponse.headers.set("x-jj-pathname", pathname);
       return supabaseResponse;
@@ -58,31 +77,25 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profile?.role !== "admin") {
+    if (role !== "admin") {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("error", "unauthorized");
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // Checkout requires auth
-  if (pathname.startsWith("/checkout") && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Account requires auth
-  if (pathname.startsWith("/account") && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Checkout / account require a customer session
+  if (pathname.startsWith("/checkout") || pathname.startsWith("/account")) {
+    if (!user) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (role !== "customer") {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   supabaseResponse.headers.set("x-jj-pathname", pathname);

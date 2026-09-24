@@ -20,12 +20,28 @@ export async function createRazorpayOrder(params: {
   }
 
   const client = getRazorpayClient();
-  return client.orders.create({
-    amount: params.amountPaise,
-    currency: "INR",
-    receipt: params.receipt,
-    notes: params.notes,
-  });
+  try {
+    return await client.orders.create({
+      amount: params.amountPaise,
+      currency: "INR",
+      receipt: params.receipt,
+      notes: params.notes,
+    });
+  } catch (err) {
+    const description =
+      err &&
+      typeof err === "object" &&
+      "error" in err &&
+      err.error &&
+      typeof err.error === "object" &&
+      "description" in err.error
+        ? String((err.error as { description?: string }).description ?? "")
+        : "";
+    throw new Error(
+      description.trim() ||
+        (err instanceof Error ? err.message : "Razorpay order creation failed"),
+    );
+  }
 }
 
 function timingSafeEqualHex(expected: string, received: string): boolean {

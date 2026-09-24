@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import { formatINR } from "@/lib/format";
 import {
   saveComboAction,
@@ -64,12 +65,14 @@ function ComboFormFields({
         try {
           await saveComboAction(formData);
           router.refresh();
+          toast.success(combo ? "Combo updated" : "Combo created");
           onSaved?.();
         } catch (err) {
           if (isNextRedirectError(err)) throw err;
-          setError(
-            err instanceof Error ? err.message : "Could not save combo.",
-          );
+          const message =
+            err instanceof Error ? err.message : "Could not save combo.";
+          setError(message);
+          toast.danger(message);
         }
       }}
     >

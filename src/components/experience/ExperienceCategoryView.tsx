@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ProductCard } from "@/components/products/ProductCard";
+import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { PageHeroCarousel } from "@/components/shared/PageHeroCarousel";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
@@ -64,15 +64,13 @@ export function ExperienceCategoryView({
           </div>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  href={`/products/${product.slug}`}
-                />
-              ))}
-            </div>
+            <LazyProductGrid
+              products={products}
+              initialCount={8}
+              pageSize={8}
+              priorityCount={4}
+              className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
+            />
           ) : (
             <p className="rounded-lg border border-dashed border-outline-variant/40 bg-surface-container-low p-6 text-sm text-on-surface-variant md:p-8">
               Products for this collection are being refreshed. Browse the{" "}

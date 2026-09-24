@@ -1,6 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCartSummary, clearCart, clearCartForUser } from "@/lib/cart/cart-service";
 import { calculateOrderTotals } from "@/lib/shipping";
+import {
+  redeemCouponForOrder,
+  validateCouponCode,
+} from "@/lib/coupons";
 import { createRazorpayOrder } from "@/lib/payments/razorpay";
 import { sendOrderConfirmationEmail } from "@/lib/email/resend";
 import type { Database, Json } from "@/types/database";
@@ -54,10 +58,32 @@ export async function createOrder(params: {
   address: AddressInput;
   paymentMethod: "razorpay" | "cod";
   notes?: string;
+  couponCode?: string;
 }) {
   const { cart } = await validateCheckout(params.userId, params.address);
   const admin = createAdminClient();
-  const totals = calculateOrderTotals(cart.subtotalPaise);
+
+  let couponId: string | null = null;
+  let couponCode: string | null = null;
+  let discountPaise = 0;
+
+  if (params.couponCode?.trim()) {
+    const preview = await validateCouponCode(
+      params.couponCode,
+      cart.subtotalPaise,
+    );
+    if (!preview.ok) {
+      throw new Error(preview.error);
+    }
+    discountPaise = await redeemCouponForOrder(
+      preview.coupon.id,
+      cart.subtotalPaise,
+    );
+    couponId = preview.coupon.id;
+    couponCode = preview.coupon.code;
+  }
+
+  const totals = calculateOrderTotals(cart.subtotalPaise, discountPaise);
 
   const addressSnapshot: Json = {
     ...params.address,
@@ -81,8 +107,11 @@ export async function createOrder(params: {
         payment_method: params.paymentMethod,
         payment_status: paymentStatus,
         subtotal_paise: totals.subtotalPaise,
+        discount_paise: totals.discountPaise,
         shipping_paise: totals.shippingPaise,
         total_paise: totals.totalPaise,
+        coupon_id: couponId,
+        coupon_code: couponCode,
         address_snapshot: addressSnapshot,
         customer_email: params.address.email,
         customer_phone: params.address.phone,

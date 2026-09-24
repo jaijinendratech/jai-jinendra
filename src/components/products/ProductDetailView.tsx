@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Minus, Plus, ShieldCheck, Star, Truck } from "lucide-react";
+import { ChevronDown, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
-import { ProductCard } from "@/components/products/ProductCard";
+import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { SafeHtml } from "@/components/shared/SafeHtml";
 import { useCart } from "@/lib/cart/use-cart";
+import { toast } from "@heroui/react";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
 
@@ -89,10 +90,14 @@ export function ProductDetailView({
       const sku =
         activeVariantData?.sku ?? `${product.slug}-${activeVariant}`;
       await updateItem({ sku, qty: quantity });
+      toast.success("Added to cart", { description: product.name });
       if (redirectToCheckout) router.push("/checkout");
       else router.push("/cart");
     } catch (err) {
-      setCartError(err instanceof Error ? err.message : "Could not add to cart");
+      const message =
+        err instanceof Error ? err.message : "Could not add to cart";
+      setCartError(message);
+      toast.danger(message);
     } finally {
       setAdding(false);
     }
@@ -149,18 +154,6 @@ export function ProductDetailView({
             </span>
             <span className="label-sm uppercase tracking-widest text-secondary">
               {product.tagline ?? "100% Shuddh Pure Veg"}
-            </span>
-            <span className="ml-auto inline-flex items-center gap-1 text-sm font-bold text-tertiary-container">
-              <Star className="h-4 w-4 fill-amber-rating text-amber-rating" aria-hidden />
-              {product.rating.toFixed(1)}
-              <span className="font-normal text-on-surface-variant">
-                <span className="md:hidden">
-                  ({product.reviewCount.toLocaleString("en-IN")})
-                </span>
-                <span className="hidden md:inline">
-                  ({product.reviewCount.toLocaleString("en-IN")} reviews)
-                </span>
-              </span>
             </span>
           </div>
 
@@ -225,9 +218,6 @@ export function ProductDetailView({
                     }`}
                   >
                     {variant.label}
-                    {variant.stockQty === 0 ? (
-                      <span className="ml-2 text-[10px] uppercase text-error">OOS</span>
-                    ) : null}
                     {variant.price ? (
                       <span className="price ml-2 hidden font-semibold opacity-80 sm:inline">
                         {formatINR(variant.price)}
@@ -236,6 +226,15 @@ export function ProductDetailView({
                   </button>
                 ))}
               </div>
+              {activeVariantData?.stockQty === 0 ? (
+                <p
+                  className="mt-2 text-sm font-semibold text-error"
+                  role="status"
+                  aria-live="polite"
+                >
+                  Out of stock
+                </p>
+              ) : null}
             </div>
           ) : null}
 
@@ -390,11 +389,13 @@ export function ProductDetailView({
               <span className="hidden md:inline">View collection</span>
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-            {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
-            ))}
-          </div>
+          <LazyProductGrid
+            products={related}
+            initialCount={4}
+            pageSize={4}
+            priorityCount={0}
+            className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4"
+          />
         </section>
       ) : null}
 

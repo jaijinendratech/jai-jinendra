@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ShieldCheck, SlidersHorizontal } from "lucide-react";
-import type {
-  CatalogueFilterOption,
-  PriceRangeOption,
-} from "@/types/catalog";
+import { SlidersHorizontal } from "lucide-react";
+import type { CatalogueFilterOption, PriceRangeOption } from "@/types/catalog";
 
 function buildFilterHref(
   pathname: string,
@@ -27,7 +24,6 @@ export function CatalogueFilters({
   spice,
   prices,
   activeCategory,
-  warranty,
 }: {
   specialty: CatalogueFilterOption[];
   purity: CatalogueFilterOption[];
@@ -47,15 +43,22 @@ export function CatalogueFilters({
       <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-5 w-5 text-primary" aria-hidden />
-          <h2 className="text-lg font-semibold text-on-surface">Refine Flavors</h2>
+          <h2 className="text-lg font-semibold text-on-surface">
+            Refine Flavors
+          </h2>
         </div>
-        <Link href={pathname} className="text-xs font-semibold text-primary hover:underline">
+        <Link
+          href={pathname}
+          className="text-xs font-semibold text-primary hover:underline"
+        >
           Clear All
         </Link>
       </div>
 
       <div className="space-y-3 border-b border-outline-variant/20 pb-4">
-        <h3 className="text-sm font-bold text-on-surface">Specialty Category</h3>
+        <h3 className="text-sm font-bold text-on-surface">
+          Specialty Category
+        </h3>
         <ul className="space-y-2 text-sm">
           {specialty.map((item) => {
             const checked = activeCategory === item.id;
@@ -93,7 +96,9 @@ export function CatalogueFilters({
       </div>
 
       <div className="space-y-3 border-b border-outline-variant/20 pb-4">
-        <h3 className="text-sm font-bold text-on-surface">Purity & Preparation</h3>
+        <h3 className="text-sm font-bold text-on-surface">
+          Purity & Preparation
+        </h3>
         <ul className="space-y-2 text-xs">
           {purity.map((item) => {
             const checked = activePurity === item.id;
@@ -187,13 +192,20 @@ export function CatalogueFilters({
         </div>
       </div>
 
-      <div className="flex items-start gap-3 rounded-lg border border-outline-variant/40 bg-surface-container-low p-4">
-        <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-secondary" aria-hidden />
+      {/* <div className="flex items-start gap-3 rounded-lg border border-outline-variant/40 bg-surface-container-low p-4">
+        <ShieldCheck
+          className="mt-0.5 h-6 w-6 shrink-0 text-secondary"
+          aria-hidden
+        />
         <div>
-          <h4 className="text-xs font-bold text-on-surface">{warranty.title}</h4>
-          <p className="mt-0.5 text-xs leading-5 text-on-surface-variant">{warranty.body}</p>
+          <h4 className="text-xs font-bold text-on-surface">
+            {warranty.title}
+          </h4>
+          <p className="mt-0.5 text-xs leading-5 text-on-surface-variant">
+            {warranty.body}
+          </p>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 }

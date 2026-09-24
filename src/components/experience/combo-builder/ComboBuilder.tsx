@@ -4,6 +4,7 @@ import Image from "next/image";
 import {
   ArrowRight,
   Check,
+  Loader2,
   Minus,
   Plus,
   Search,
@@ -12,7 +13,7 @@ import {
   UtensilsCrossed,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
@@ -70,11 +71,41 @@ export function ComboBuilder({ products }: { products: Product[] }) {
   const [qty, setQty] = useState<QtyMap>(() => ({ ...comboBuilderDefaultQty }));
   const [activeFilter, setActiveFilter] = useState<ComboFilterId>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const listKey = `${activeFilter}|${searchQuery}|${products.length}`;
+  const [visibleState, setVisibleState] = useState({
+    key: listKey,
+    count: 12,
+  });
+  const visibleCount =
+    visibleState.key === listKey ? visibleState.count : 12;
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const filteredProducts = useMemo(
     () => filterProducts(products, activeFilter, searchQuery),
     [products, activeFilter, searchQuery],
   );
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || visibleCount >= filteredProducts.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setVisibleState((prev) => {
+          const current = prev.key === listKey ? prev.count : 12;
+          return {
+            key: listKey,
+            count: Math.min(current + 12, filteredProducts.length),
+          };
+        });
+      },
+      { rootMargin: "240px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [visibleCount, filteredProducts.length, listKey]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const selectedItems = useMemo(
     () =>
@@ -257,9 +288,9 @@ export function ComboBuilder({ products }: { products: Product[] }) {
             </div>
           </section>
 
-          {/* Product grid */}
+          {/* Product grid — progressive reveal */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
-            {filteredProducts.map((product) => {
+            {visibleProducts.map((product, index) => {
               const count = qty[product.id] ?? 0;
               const inBox = count > 0;
               const canAdd = filledSlots < selectedBox.slots;
@@ -287,6 +318,8 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                       src={product.image}
                       alt={product.imageAlt ?? product.name}
                       fill
+                      priority={index < 4}
+                      loading={index < 4 ? "eager" : "lazy"}
                       sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -363,6 +396,21 @@ export function ComboBuilder({ products }: { products: Product[] }) {
               );
             })}
           </div>
+
+          {visibleCount < filteredProducts.length ? (
+            <div
+              ref={loadMoreRef}
+              className="mt-6 flex flex-col items-center gap-2"
+            >
+              <Loader2
+                className="h-5 w-5 animate-spin text-primary"
+                aria-label="Loading more products"
+              />
+              <p className="text-xs text-on-surface-variant">
+                Showing {visibleCount} of {filteredProducts.length}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {/* Right sticky sidebar */}

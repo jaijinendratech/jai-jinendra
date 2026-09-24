@@ -3,6 +3,21 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Category } from "@/types/catalog";
 
+function SpecialStar({ size = "md" }: { size?: "sm" | "md" }) {
+  const dim = size === "sm" ? "h-5 w-5" : "h-7 w-7 md:h-8 md:w-8";
+  return (
+    <Image
+      src="/images/special-star.png"
+      alt=""
+      width={64}
+      height={64}
+      unoptimized
+      className={`pointer-events-none absolute right-1.5 top-1.5 z-10 ${dim} object-contain drop-shadow-sm`}
+      aria-hidden
+    />
+  );
+}
+
 export function CategorySection({ categories }: { categories: Category[] }) {
   return (
     <section id="categories" className="bg-surface py-8 md:py-20">
@@ -39,7 +54,7 @@ export function CategorySection({ categories }: { categories: Category[] }) {
             <Link
               key={category.id}
               href={category.href}
-              className="culinary-lift group block w-[42vw] max-w-40 shrink-0 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-2"
+              className="culinary-lift group relative block w-[42vw] max-w-40 shrink-0 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-2"
             >
               <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-surface-container-low">
                 <Image
@@ -49,6 +64,7 @@ export function CategorySection({ categories }: { categories: Category[] }) {
                   sizes="42vw"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {category.specialAttention ? <SpecialStar size="sm" /> : null}
               </div>
               <h3 className="truncate text-sm font-semibold text-on-surface transition-colors group-hover:text-primary">
                 {category.mobileTitle ?? category.title}
@@ -74,6 +90,7 @@ export function CategorySection({ categories }: { categories: Category[] }) {
                   sizes="(max-width:1024px) 33vw, 16vw"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {category.specialAttention ? <SpecialStar /> : null}
               </div>
               <h3 className="text-base font-semibold text-on-surface transition-colors group-hover:text-primary">
                 {category.title}

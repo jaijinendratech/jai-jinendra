@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ProductCard } from "@/components/products/ProductCard";
+import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { productFilters } from "@/data/home";
 import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
@@ -61,15 +61,13 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-4 lg:gap-7">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              href={`/products/${product.slug}`}
-            />
-          ))}
-        </div>
+        <LazyProductGrid
+          products={products}
+          initialCount={8}
+          pageSize={8}
+          priorityCount={4}
+          className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-4 lg:gap-7"
+        />
       </div>
     </section>
   );

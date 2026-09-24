@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@heroui/react";
 import {
   saveCategoryAction,
   setCategoryFeaturedAction,
@@ -23,7 +24,7 @@ import { MediaUploader } from "@/components/admin/MediaUploader";
 import { AdminModal } from "@/components/admin/AdminModal";
 import {
   AdminStatusSelect,
-  FEATURED_OPTIONS,
+  SPECIAL_ATTENTION_OPTIONS,
   PUBLISH_HIDDEN_OPTIONS,
 } from "@/components/admin/AdminStatusSelect";
 import {
@@ -61,12 +62,14 @@ function CategoryFormFields({
         try {
           await saveCategoryAction(formData);
           router.refresh();
+          toast.success(category ? "Category updated" : "Category created");
           onSaved?.();
         } catch (err) {
           if (isNextRedirectError(err)) throw err;
-          setError(
-            err instanceof Error ? err.message : "Could not save category.",
-          );
+          const message =
+            err instanceof Error ? err.message : "Could not save category.";
+          setError(message);
+          toast.danger(message);
         }
       }}
     >
@@ -127,7 +130,10 @@ function CategoryFormFields({
               name="featured"
               defaultChecked={category?.featured ?? false}
             />
-            Featured
+            Special attention
+            <span className="font-normal text-on-surface-variant">
+              (shows in storefront navbar)
+            </span>
           </label>
         </div>
         {error ? (
@@ -213,14 +219,14 @@ export function CategoriesManager({
                         fields={{ id: c.id }}
                         name="featured"
                         value={String(c.featured)}
-                        options={FEATURED_OPTIONS}
+                        options={SPECIAL_ATTENTION_OPTIONS}
                         kind="featured"
                       />
                     </div>
                   ) : (
                     <span className="text-xs font-semibold">
                       {c.published ? "Published" : "Hidden"}
-                      {c.featured ? " · Featured" : ""}
+                      {c.featured ? " · Special attention" : ""}
                     </span>
                   )}
                 </td>

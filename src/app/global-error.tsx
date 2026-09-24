@@ -1,21 +1,17 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
-import { useEffect } from "react";
-
 export default function GlobalError({
   error,
 }: {
   error: Error & { digest?: string };
 }) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
-
   return (
     <html lang="en">
       <body>
         <h2>Something went wrong</h2>
+        {error.digest ? (
+          <p style={{ fontSize: 12, opacity: 0.7 }}>Ref: {error.digest}</p>
+        ) : null}
       </body>
     </html>
   );

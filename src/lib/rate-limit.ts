@@ -1,7 +1,5 @@
 /**
- * Fixed-window rate limiter.
- * Uses Upstash Redis when UPSTASH_REDIS_REST_URL + TOKEN are set;
- * otherwise in-memory (best-effort per instance).
+ * Fixed-window in-memory rate limiter (best-effort per instance).
  */
 
 type WindowState = { count: number; resetAt: number };
@@ -26,50 +24,12 @@ function memoryLimit(
   return { success: true, remaining: limit - cur.count };
 }
 
-async function upstashLimit(
-  key: string,
-  limit: number,
-  windowMs: number,
-): Promise<{ success: boolean; remaining: number } | null> {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-
-  const windowSec = Math.max(1, Math.ceil(windowMs / 1000));
-  const redisKey = `rl:${key}`;
-
-  try {
-    const incr = await fetch(`${url}/pipeline`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([
-        ["INCR", redisKey],
-        ["EXPIRE", redisKey, windowSec, "NX"],
-      ]),
-    });
-    if (!incr.ok) return null;
-    const results = (await incr.json()) as { result: number }[];
-    const count = Number(results?.[0]?.result ?? 0);
-    return {
-      success: count <= limit,
-      remaining: Math.max(0, limit - count),
-    };
-  } catch {
-    return null;
-  }
-}
-
 export async function rateLimit(params: {
   key: string;
   limit: number;
   windowMs?: number;
 }): Promise<{ success: boolean; remaining: number }> {
   const windowMs = params.windowMs ?? 60_000;
-  const remote = await upstashLimit(params.key, params.limit, windowMs);
-  if (remote) return remote;
   return memoryLimit(params.key, params.limit, windowMs);
 }
 
