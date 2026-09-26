@@ -1345,6 +1345,22 @@ export async function getAdminEnquiries() {
   });
 }
 
+export async function getAdminSubscribers() {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("subscribers")
+    .select("id, email, created_at")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    email: row.email,
+    createdAt: row.created_at,
+  }));
+}
+
 export async function getAdminOutlets() {
   if (!isSupabaseConfigured()) {
     return flagshipOutlets.map((o, i) => ({

@@ -668,6 +668,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      subscribers: {
+        Row: {
+          id: string;
+          email: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       content_blocks: {
         Row: {
           id: string;

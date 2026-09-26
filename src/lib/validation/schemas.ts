@@ -142,6 +142,16 @@ export const enquiryBodySchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+/** Welcome Offer signup. Email is stored lowercased. */
+export const subscribeBodySchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email()
+    .max(200)
+    .transform((value) => value.toLowerCase()),
+});
+
 export const profileUpdateSchema = z.object({
   fullName: z.string().trim().max(120).optional(),
   email: z.string().trim().email().max(200).optional().or(z.literal("")),
