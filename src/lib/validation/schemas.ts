@@ -298,6 +298,15 @@ export const adminProductSchema = z.object({
   seasonal: z.boolean().optional(),
 });
 
+/** Ordered product gallery; index 0 is the primary image. No count limit. */
+export const adminProductImagesSchema = z.array(
+  z.object({
+    id: z.string().uuid().optional(),
+    path: z.string().trim().min(1).max(1000),
+    alt: z.string().max(300).nullable().optional(),
+  }),
+);
+
 export const adminVariantSchema = z.object({
   label: z.string().trim().min(1).max(80),
   pricePaise: z.number().int().positive(),
