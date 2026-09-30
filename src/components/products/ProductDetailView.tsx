@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
 import { LazyProductGrid } from "@/components/products/LazyProductGrid";
+import { ProductGallery } from "@/components/products/ProductGallery";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { SafeHtml } from "@/components/shared/SafeHtml";
 import { useCart } from "@/lib/cart/use-cart";
@@ -127,24 +127,14 @@ export function ProductDetailView({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-12 lg:gap-10">
-        <div className="lg:col-span-6">
-          <div className="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low lg:sticky lg:top-28">
-            <div className="relative aspect-square w-full">
-              {product.badge ? (
-                <span className="absolute left-3 top-3 z-10 rounded bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white md:left-4 md:top-4 md:px-2.5 md:py-1">
-                  {product.badge}
-                </span>
-              ) : null}
-              <Image
-                src={product.image}
-                alt={product.imageAlt ?? product.name}
-                fill
-                priority
-                sizes="(max-width:1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-          </div>
+        <div className="min-w-0 lg:col-span-6">
+          <ProductGallery
+            key={product.id}
+            images={product.images}
+            image={product.image}
+            alt={product.imageAlt ?? product.name}
+            badge={product.badge}
+          />
         </div>
 
         <div className="lg:col-span-6">

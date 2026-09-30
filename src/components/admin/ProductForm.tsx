@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
 import type { AdminProductDetail } from "@/lib/admin/queries";
@@ -8,7 +8,7 @@ import type { AdminSubcategoryRow } from "@/lib/admin/queries";
 import {
   saveProductAction,
   saveVariantAction,
-  saveProductImageAction,
+  saveProductImagesAction,
 } from "@/lib/admin/actions";
 import {
   AdminCard,
@@ -25,7 +25,10 @@ import {
 import { AdminActionsMenu } from "@/components/admin/AdminActionsMenu";
 import { ChipInput } from "@/components/admin/ChipInput";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { MediaUploader } from "@/components/admin/MediaUploader";
+import {
+  MediaUploader,
+  type MediaItem,
+} from "@/components/admin/MediaUploader";
 import { SlugField } from "@/components/admin/SlugField";
 import { suggestTagline } from "@/lib/admin/slug";
 import { variantPresetsForCategory } from "@/lib/catalog/variant-presets";
@@ -37,6 +40,60 @@ import type { SellingUnit } from "@/types/catalog";
 type CategoryOption = { id: string; title: string; slug?: string };
 
 const SELLING_UNITS: SellingUnit[] = ["g", "kg", "pack", "pc", "other"];
+
+/**
+ * Multi-image picker for the product gallery. Posts the ordered list as JSON
+ * in `images`; first item is the primary image. No count limit.
+ */
+function ProductImagesField({
+  defaultImages = [],
+  onDirtyChange,
+}: {
+  defaultImages?: AdminProductDetail["images"];
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
+  const initial = useMemo<MediaItem[]>(
+    () =>
+      defaultImages.map((img) => ({
+        id: img.id,
+        path: img.storagePath,
+        url: img.storagePath,
+        alt: img.alt ?? undefined,
+      })),
+    [defaultImages],
+  );
+  const [items, setItems] = useState<MediaItem[]>(initial);
+
+  const payload = JSON.stringify(
+    items.map((item) => ({
+      id: item.id,
+      path: item.url || item.path,
+      // Uploads default alt to the file name; storefront falls back to product name.
+      alt: item.id ? (item.alt ?? null) : null,
+    })),
+  );
+
+  return (
+    <div>
+      <input type="hidden" name="images" value={payload} />
+      <MediaUploader
+        name="imageUploads"
+        folder="products"
+        label="Product images"
+        multiple
+        defaultItems={initial}
+        onChange={(next) => {
+          setItems(next);
+          onDirtyChange?.(true);
+        }}
+      />
+      <p className="mt-2 text-xs text-on-surface-variant">
+        Select several images at once. The first image is the main product
+        image — use the star to make any image first.
+      </p>
+    </div>
+  );
+}
 
 function VariantEditor({
   productId,
@@ -210,13 +267,16 @@ export function ProductForm({
   const isNew = !product;
   const isModal = layout === "modal";
   const [name, setName] = useState(product?.name ?? "");
-  const [tagline, setTagline] = useState(product?.tagline ?? "");
+  const [taglineInput, setTagline] = useState(product?.tagline ?? "");
   const [taglineTouched, setTaglineTouched] = useState(Boolean(product?.tagline));
+  // Suggest a tagline from the name until the admin edits it.
+  const tagline = taglineTouched ? taglineInput : suggestTagline(name);
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [tab, setTab] = useState<"details" | "variants" | "images">("details");
   const [formError, setFormError] = useState<string | null>(null);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [showAddVariant, setShowAddVariant] = useState(false);
+  const [imagesDirty, setImagesDirty] = useState(false);
   const [presetDraft, setPresetDraft] = useState<
     ReturnType<typeof variantPresetsForCategory>
   >([]);
@@ -230,10 +290,6 @@ export function ProductForm({
     () => subcategories.filter((s) => s.categoryId === categoryId),
     [subcategories, categoryId],
   );
-
-  useEffect(() => {
-    if (!taglineTouched) setTagline(suggestTagline(name));
-  }, [name, taglineTouched]);
 
   async function handleSaveProduct(formData: FormData) {
     setFormError(null);
@@ -269,6 +325,7 @@ export function ProductForm({
       router.refresh();
       toast.success("Changes saved");
       onModalRefresh?.();
+      return true;
     } catch (error) {
       if (isNextRedirectError(error)) throw error;
       setFormError(
@@ -277,6 +334,7 @@ export function ProductForm({
       toast.danger(
         error instanceof Error ? error.message : "Could not save changes.",
       );
+      return false;
     }
   }
 
@@ -480,6 +538,12 @@ export function ProductForm({
             </AdminFieldGrid>
           </AdminCard>
 
+          {isNew && supabase ? (
+            <AdminCard title="Product images">
+              <ProductImagesField />
+            </AdminCard>
+          ) : null}
+
           <AdminCard title="Food attributes">
             <AdminFieldGrid>
               <label className={labelClassName()}>
@@ -668,65 +732,28 @@ export function ProductForm({
 
       {tab === "images" && product ? (
         <AdminCard title="Product images">
-          <ul className="mb-4 grid gap-2 sm:grid-cols-2">
-            {product.images.map((img, index) => (
-              <li
-                key={img.id}
-                className="flex items-center gap-3 rounded-lg border border-outline-variant/20 p-2"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.storagePath}
-                  alt={img.alt ?? ""}
-                  className="h-16 w-16 rounded-md object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold">
-                    {img.alt || `Image ${index + 1}`}
-                  </p>
-                  {index === 0 ? (
-                    <p className="text-[10px] font-semibold text-primary">Primary</p>
-                  ) : null}
-                </div>
-                {supabase ? (
-                  <AdminActionsMenu
-                    ariaLabel="Image actions"
-                    items={[
-                      {
-                        id: "remove",
-                        type: "form",
-                        label: "Remove image",
-                        icon: "trash",
-                        actionKey: "deleteProductImage",
-                        fields: { id: img.id, productId: product.id },
-                        confirmMessage: "Remove this image?",
-                        danger: true,
-                      },
-                    ]}
-                  />
-                ) : null}
-              </li>
-            ))}
-            {!product.images.length ? (
-              <li className="col-span-full py-4 text-sm text-on-surface-variant">
-                No images yet — upload below.
-              </li>
-            ) : null}
-          </ul>
-
           {supabase ? (
             <form
-              action={(fd) => handleNestedAction(saveProductImageAction, fd)}
-              className="space-y-3"
+              action={async (fd) => {
+                if (await handleNestedAction(saveProductImagesAction, fd)) {
+                  setImagesDirty(false);
+                }
+              }}
+              className="space-y-4"
             >
               <input type="hidden" name="productId" value={product.id} />
-              <MediaUploader name="storagePath" folder="products" label="Upload image" />
-              <label className={labelClassName()}>
-                Alt text
-                <input name="alt" className={fieldClassName()} />
-              </label>
-              <input type="hidden" name="sortOrder" value={product.images.length} />
-              <AdminFormSubmitButton label="Attach image" pendingLabel="Attaching…" icon="plus" />
+              <ProductImagesField
+                // Remount after save so newly inserted rows pick up their ids.
+                key={product.images.map((img) => img.id).join(",")}
+                defaultImages={product.images}
+                onDirtyChange={setImagesDirty}
+              />
+              <AdminFormSubmitButton
+                label="Save images"
+                pendingLabel="Saving…"
+                icon="save"
+                disabled={!imagesDirty}
+              />
             </form>
           ) : (
             <p className="text-sm text-on-surface-variant">Connect Supabase to upload images.</p>

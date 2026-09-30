@@ -39,7 +39,8 @@ export function MediaUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<MediaItem[]>(defaultItems);
   const [error, setError] = useState<string | null>(null);
-  const [showPath, setShowPath] = useState(false);
+  // Paste-path toggle is currently hidden (see commented button below).
+  const [showPath] = useState(false);
   const [pathDraft, setPathDraft] = useState("");
   const [pending, startTransition] = useTransition();
 

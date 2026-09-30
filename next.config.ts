@@ -37,6 +37,11 @@ if (isProd) {
 const nextConfig: NextConfig = {
   // Playwright and some tools use 127.0.0.1 while `next dev` binds as localhost.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  experimental: {
+    // Proxy buffers request bodies; default 10MB would truncate 10MB image
+    // uploads (+ multipart overhead) to /api/admin/upload.
+    proxyClientMaxBodySize: "11mb",
+  },
   images: {
     remotePatterns: [
       {

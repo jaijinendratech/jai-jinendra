@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Pagination } from "@heroui/react";
 
 export const ADMIN_TABLE_PAGE_SIZE = 10;
@@ -9,17 +9,19 @@ export function useAdminTablePagination<T>(
   items: T[],
   pageSize: number = ADMIN_TABLE_PAGE_SIZE,
 ) {
-  const [page, setPage] = useState(1);
+  const [requestedPage, setPage] = useState(1);
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
 
-  useEffect(() => {
+  // Back to page 1 whenever the result set size or page size changes.
+  const resetKey = `${total}:${pageSize}`;
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
     setPage(1);
-  }, [total, pageSize]);
+  }
 
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+  const page = Math.min(requestedPage, totalPages);
 
   const pageItems = useMemo(() => {
     const start = (page - 1) * pageSize;

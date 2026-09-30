@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ProductDetailView } from "@/components/products/ProductDetailView";
 import {
   getProductBySlug,
-  getPublishedProducts,
   getRelatedProducts,
 } from "@/lib/catalog/queries";
 import { categoryHref, normalizeCategoryRef } from "@/lib/catalog/aliases";

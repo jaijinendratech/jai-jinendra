@@ -118,7 +118,6 @@ function mapDbProduct(row: DbProductRow): Product {
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(mapVariant);
 
-  const minVariant = variants[0];
   const minPrice =
     variants.length > 0
       ? Math.min(...variants.map((v) => v.price ?? 0))

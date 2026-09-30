@@ -6,7 +6,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-config";
 import { createClient } from "@/lib/supabase/server";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_WIDTH = 1600;
 
 async function assertAdmin(): Promise<boolean> {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
-      { error: "Image must be 5MB or smaller before optimization" },
+      { error: "Image must be 10MB or smaller before optimization" },
       { status: 400 },
     );
   }

@@ -17,6 +17,7 @@ import {
   adminOrderStatusSchema,
   adminOutletSchema,
   adminPaymentStatusSchema,
+  adminProductImagesSchema,
   adminProductSchema,
   adminSubcategorySchema,
   adminVariantSchema,
@@ -487,6 +488,19 @@ export async function saveProductAction(formData: FormData) {
       .select("id")
       .single();
     productId = data?.id ?? "";
+
+    // Images picked on the Add Product form (upload order = gallery order).
+    const images = parseProductImagesField(formData);
+    if (productId && images.length) {
+      await admin.from("product_images").insert(
+        images.map((img, index) => ({
+          product_id: productId,
+          storage_path: img.path,
+          alt: img.alt ?? null,
+          sort_order: index,
+        })),
+      );
+    }
   }
 
   revalidateAdmin("/admin/products", `/admin/products/${productId}`, "/admin");
@@ -857,6 +871,77 @@ export async function saveProductImageAction(formData: FormData) {
   }
 
   revalidateAdmin(`/admin/products/${productId}`);
+}
+
+function parseProductImagesField(formData: FormData) {
+  const raw = formData.get("images");
+  if (typeof raw !== "string" || !raw) return [];
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error("Invalid images payload");
+  }
+  const parsed = adminProductImagesSchema.safeParse(json);
+  if (!parsed.success) throw new Error(zodErrorMessage(parsed.error));
+  return parsed.data;
+}
+
+/**
+ * Replace a product's gallery with the submitted ordered list.
+ * Rows not in the list are removed; storage objects are left in place
+ * because duplicated products may share the same file.
+ */
+export async function saveProductImagesAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) return;
+
+  const productId = String(formData.get("productId") ?? "");
+  if (!z.string().uuid().safeParse(productId).success) {
+    throw new Error("Invalid product");
+  }
+  const images = parseProductImagesField(formData);
+
+  const admin = createAdminClient();
+  const { data: existing, error: loadError } = await admin
+    .from("product_images")
+    .select("id")
+    .eq("product_id", productId);
+  if (loadError) throw new Error(loadError.message);
+
+  const existingIds = new Set((existing ?? []).map((row) => row.id));
+  const keptIds = new Set(
+    images.flatMap((img) => (img.id && existingIds.has(img.id) ? [img.id] : [])),
+  );
+  const removedIds = [...existingIds].filter((id) => !keptIds.has(id));
+
+  if (removedIds.length) {
+    const { error } = await admin
+      .from("product_images")
+      .delete()
+      .in("id", removedIds);
+    if (error) throw new Error(error.message);
+  }
+
+  const results = await Promise.all(
+    images.map((img, index) =>
+      img.id && keptIds.has(img.id)
+        ? admin
+            .from("product_images")
+            .update({ sort_order: index })
+            .eq("id", img.id)
+        : admin.from("product_images").insert({
+            product_id: productId,
+            storage_path: img.path,
+            alt: img.alt ?? null,
+            sort_order: index,
+          }),
+    ),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
+
+  revalidateAdmin("/admin/products", `/admin/products/${productId}`);
 }
 
 export async function deleteProductImageAction(formData: FormData) {
