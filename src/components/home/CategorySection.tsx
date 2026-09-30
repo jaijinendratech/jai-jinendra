@@ -3,21 +3,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Category } from "@/types/catalog";
 
-function SpecialStar({ size = "md" }: { size?: "sm" | "md" }) {
-  const dim = size === "sm" ? "h-5 w-5" : "h-7 w-7 md:h-8 md:w-8";
-  return (
-    <Image
-      src="/images/special-star.png"
-      alt=""
-      width={64}
-      height={64}
-      unoptimized
-      className={`pointer-events-none absolute right-1.5 top-1.5 z-10 ${dim} object-contain drop-shadow-sm`}
-      aria-hidden
-    />
-  );
-}
-
 export function CategorySection({ categories }: { categories: Category[] }) {
   return (
     <section id="categories" className="bg-surface py-8 md:py-20">
@@ -32,9 +17,12 @@ export function CategorySection({ categories }: { categories: Category[] }) {
               <span className="hidden md:inline">EXPLORE OUR FAVOURITES</span>
             </h2>
             <p className="mt-1 text-sm text-on-surface-variant md:text-base">
-              <span className="md:hidden">Something delicious for every craving.</span>
+              <span className="md:hidden">
+                Something delicious for every craving.
+              </span>
               <span className="hidden md:inline">
-                Something delicious for every craving, tea time, and festive celebration.
+                Something delicious for every craving, tea time, and festive
+                celebration.
               </span>
             </p>
           </div>
@@ -48,54 +36,26 @@ export function CategorySection({ categories }: { categories: Category[] }) {
           </Link>
         </div>
 
-        {/* Mobile: horizontal scroll of visual cards */}
-        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Unified horizontal scroll for all devices */}
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-4 md:mx-0 md:gap-6 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {categories.map((category) => (
             <Link
               key={category.id}
               href={category.href}
-              className="culinary-lift group relative block w-[42vw] max-w-40 shrink-0 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-2"
+              className="group relative flex w-[22vw] max-w-25 shrink-0 flex-col items-center gap-2 md:w-[15vw] md:max-w-37.5 md:gap-3"
             >
-              <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-surface-container-low">
+              <div className="relative aspect-square w-full overflow-hidden rounded-full bg-surface-container-low shadow-sm transition-shadow duration-300 group-hover:shadow-md">
                 <Image
                   src={category.image}
                   alt={category.imageAlt}
                   fill
-                  sizes="42vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 22vw, 15vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                {category.specialAttention ? <SpecialStar size="sm" /> : null}
               </div>
-              <h3 className="truncate text-sm font-semibold text-on-surface transition-colors group-hover:text-primary">
+              <h3 className="text-center text-[11px] font-bold leading-tight text-on-surface transition-colors group-hover:text-primary sm:text-xs md:text-sm">
                 {category.mobileTitle ?? category.title}
               </h3>
-              <p className="text-[11px] text-on-surface-variant">{category.subtitle}</p>
-            </Link>
-          ))}
-        </div>
-
-        {/* Tablet/desktop grid */}
-        <div className="hidden grid-cols-2 gap-4 md:grid md:grid-cols-3 md:gap-5 lg:grid-cols-6">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={category.href}
-              className="culinary-lift group block rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-3"
-            >
-              <div className="relative mb-3 aspect-5/6 overflow-hidden rounded-lg bg-surface-container-low">
-                <Image
-                  src={category.image}
-                  alt={category.imageAlt}
-                  fill
-                  sizes="(max-width:1024px) 33vw, 16vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                {category.specialAttention ? <SpecialStar /> : null}
-              </div>
-              <h3 className="text-base font-semibold text-on-surface transition-colors group-hover:text-primary">
-                {category.title}
-              </h3>
-              <p className="text-xs text-on-surface-variant">{category.subtitle}</p>
             </Link>
           ))}
         </div>

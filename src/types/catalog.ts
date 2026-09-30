@@ -8,6 +8,7 @@ export type NavLink = {
 export type CategoryId =
   | "sweets"
   | "namkeen"
+  | "bakery"
   | "tea-time-bites"
   | "dry-cakes"
   | "cookies"

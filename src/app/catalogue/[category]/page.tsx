@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CataloguePageView } from "@/components/catalogue/CataloguePageView";
+import { hrefWithSub } from "@/components/catalogue/CategoryPillRow";
 import {
   catalogueMeta,
   cataloguePills,
   specialtyFilters,
 } from "@/data/catalogue";
-import { getProductsByCategory } from "@/lib/catalog/queries";
+import {
+  getCategoryListingProducts,
+  getStorefrontCategoryChildren,
+} from "@/lib/catalog/queries";
 import {
   CATEGORY_ROUTE_ALIASES,
   dbSlugToCategoryId,
+  isBakeryMemberSlug,
   resolveCategorySlug,
+  STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
 import { categories, siteConfig } from "@/data/home";
 import type { CategoryId } from "@/types/catalog";
@@ -19,9 +25,21 @@ export const revalidate = 60;
 
 type Props = {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+function readParam(value: string | string[] | undefined): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed : null;
+}
+
 function categoryTitle(resolvedSlug: string): string {
+  const storefront = STOREFRONT_CATALOGUE_SECTIONS.find(
+    (item) => item.slug === resolvedSlug,
+  );
+  if (storefront) return storefront.title;
+
   const categoryId = dbSlugToCategoryId(resolvedSlug);
   const fromHome = categories.find((item) => item.id === categoryId);
   if (fromHome) return fromHome.title;
@@ -48,21 +66,56 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CatalogueCategoryPage({ params }: Props) {
+export default async function CatalogueCategoryPage({
+  params,
+  searchParams,
+}: Props) {
   const { category: raw } = await params;
   const resolved = resolveCategorySlug(raw);
   if (!resolved) notFound();
 
-  const products = await getProductsByCategory(resolved);
-  if (products.length === 0) notFound();
+  const query = await searchParams;
+  const requestedSub = readParam(query.sub);
+  const children = await getStorefrontCategoryChildren(resolved);
+  const activeSub =
+    requestedSub &&
+    (children.some((child) => child.slug === requestedSub) ||
+      (resolved === "bakery" && isBakeryMemberSlug(requestedSub)))
+      ? requestedSub
+      : null;
+
+  const products = await getCategoryListingProducts(resolved, activeSub);
+  if (!activeSub && products.length === 0) notFound();
 
   const activeCategory = dbSlugToCategoryId(resolved) as CategoryId;
+  const title = categoryTitle(resolved);
+  const pathname = `/catalogue/${raw}`;
+  const childPills =
+    children.length === 0
+      ? []
+      : [
+          {
+            key: "all",
+            label: "All",
+            href: hrefWithSub(pathname, query, null),
+            active: !activeSub,
+          },
+          ...children.map((child) => ({
+            key: child.slug,
+            label: child.title,
+            href: hrefWithSub(pathname, query, child.slug),
+            active: activeSub === child.slug,
+          })),
+        ];
 
   return (
     <CataloguePageView
       products={products}
-      activeCategory={activeCategory === "combos" ? "tea-time-bites" : activeCategory}
-      categoryTitle={categoryTitle(resolved)}
+      activeCategory={
+        activeCategory === "combos" ? "tea-time-bites" : activeCategory
+      }
+      categoryTitle={title}
+      childPills={childPills}
     />
   );
 }

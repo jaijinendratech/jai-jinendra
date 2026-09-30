@@ -105,7 +105,7 @@ export function ProductCard({
         </div>
 
         <div className="min-w-0">
-          <h3 className="font-display line-clamp-2 text-sm font-semibold leading-snug text-on-surface sm:text-base md:truncate md:text-lg">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-on-surface sm:text-base md:truncate md:text-lg">
             <Link href={productHref} className="transition hover:text-primary">
               {product.name}
             </Link>
@@ -124,7 +124,7 @@ export function ProductCard({
                 onClick={() => setActiveVariant(variant.id)}
                 className={`rounded border px-2 py-0.5 text-[10px] font-bold leading-tight ${
                   activeVariant === variant.id
-                    ? "border-primary-container bg-primary-container text-white"
+                    ? "border-[#F4A06A] bg-[#F4A06A] text-white"
                     : "border-outline-variant/40 bg-white text-on-surface-variant hover:border-primary"
                 }`}
               >

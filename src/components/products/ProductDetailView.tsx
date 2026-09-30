@@ -157,7 +157,7 @@ export function ProductDetailView({
             </span>
           </div>
 
-          <h1 className="font-display mt-2 text-2xl font-semibold text-on-surface md:mt-3 md:text-4xl">
+          <h1 className="mt-2 text-2xl font-semibold text-on-surface md:mt-3 md:text-4xl">
             {product.name}
           </h1>
 
@@ -213,7 +213,7 @@ export function ProductDetailView({
                     onClick={() => setActiveVariant(variant.id)}
                     className={`rounded border px-3 py-2 text-xs font-bold ${
                       activeVariant === variant.id
-                        ? "border-primary-container bg-primary-container text-white"
+                        ? "border-[#F4A06A] bg-[#F4A06A] text-white"
                         : "border-outline-variant/40 bg-white text-on-surface-variant hover:border-primary"
                     }`}
                   >

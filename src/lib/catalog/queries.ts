@@ -2,16 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
+  BAKERY_MEMBER_SLUGS,
   categoryHref,
   categoryQuerySlugs,
   dbSlugToCategoryId,
+  isBakeryMemberSlug,
   normalizeCategoryRef,
+  productCategorySlug,
   resolveCategorySlug,
+  STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
 import {
   catalogueProducts,
   getProductBySlug as mockGetBySlug,
-  getProductsByCategory as mockGetByCategory,
 } from "@/data/catalogue";
 import type {
   Product,
@@ -211,6 +214,31 @@ const productSelect = `
 `;
 
 /**
+ * Embed filters only apply to parent rows when the relationship is inner.
+ * A plain `categories.slug` filter empties the embed, so every product falls
+ * through as namkeen and category pages 404.
+ */
+function productSelectFiltered(options: {
+  category?: boolean;
+  subcategory?: boolean;
+}): string {
+  let select = productSelect;
+  if (options.category) {
+    select = select.replace(
+      "categories ( slug, title )",
+      "categories!inner ( slug, title )",
+    );
+  }
+  if (options.subcategory) {
+    select = select.replace(
+      "subcategories ( slug, title )",
+      "subcategories!inner ( slug, title )",
+    );
+  }
+  return select;
+}
+
+/**
  * When Supabase is configured: DB only (empty on error — never mock).
  * When offline: static catalogue for local demos.
  */
@@ -289,39 +317,186 @@ export async function getProductBySlug(
 export async function getProductsByCategory(
   category: string,
 ): Promise<Product[]> {
-  if (!isSupabaseConfigured()) {
-    return mockGetByCategory(category).map((p) =>
-      mapMockProduct({
-        ...p,
-        category: { slug: String(p.category), title: String(p.category) },
-        variants: p.variants.map((v) => ({
-          id: v.variantId ?? v.id,
-          label: v.label,
-          sellingUnit: "other" as const,
-          quantityValue: null,
-          price: v.price ?? p.price,
-          sku: v.sku ?? `${p.slug}-${v.id}`,
-          stockQty: v.stockQty ?? 0,
-          available: true,
-          variantId: v.variantId ?? v.id,
-        })),
-      } as Product),
-    );
-  }
-
   const resolved = resolveCategorySlug(category) ?? category;
   const categorySlugs = categoryQuerySlugs(resolved);
+
+  if (!isSupabaseConfigured()) {
+    const allowed = new Set(categorySlugs);
+    return catalogueProducts
+      .filter((p) => allowed.has(String(p.category)))
+      .map((p) =>
+        mapMockProduct({
+          ...p,
+          category: { slug: String(p.category), title: String(p.category) },
+          variants: p.variants.map((v) => ({
+            id: v.variantId ?? v.id,
+            label: v.label,
+            sellingUnit: "other" as const,
+            quantityValue: null,
+            price: v.price ?? p.price,
+            sku: v.sku ?? `${p.slug}-${v.id}`,
+            stockQty: v.stockQty ?? 0,
+            available: true,
+            variantId: v.variantId ?? v.id,
+          })),
+        } as Product),
+      );
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelectFiltered({ category: true }))
     .eq("published", true)
     .in("categories.slug", categorySlugs)
     .order("name");
 
   if (error || !data?.length) return [];
-  return (data as unknown as DbProductRow[]).map(mapDbProduct);
+  const allowed = new Set(categorySlugs);
+  return (data as unknown as DbProductRow[])
+    .map(mapDbProduct)
+    .filter((product) => allowed.has(productCategorySlug(product)));
+}
+
+export type StorefrontChild = {
+  slug: string;
+  title: string;
+};
+
+export type CatalogueSection = {
+  slug: string;
+  title: string;
+  showBakeryMarks: boolean;
+  children: StorefrontChild[];
+  products: Product[];
+};
+
+type PublishedTaxonomy = {
+  titles: Map<string, string>;
+  childrenByCategorySlug: Map<string, StorefrontChild[]>;
+};
+
+/**
+ * Published category and subcategory titles.
+ * Empty when Supabase is unavailable — callers must not fall back to mock catalog data.
+ */
+async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const supabase = await createClient();
+  const [categoriesResult, subcategoriesResult] = await Promise.all([
+    supabase.from("categories").select("id, slug, title").eq("published", true),
+    supabase
+      .from("subcategories")
+      .select("category_id, slug, title, sort_order")
+      .eq("published", true)
+      .order("sort_order"),
+  ]);
+
+  if (
+    categoriesResult.error ||
+    !categoriesResult.data ||
+    subcategoriesResult.error ||
+    !subcategoriesResult.data
+  ) {
+    return null;
+  }
+
+  const idToSlug = new Map(
+    categoriesResult.data.map((category) => [category.id, category.slug]),
+  );
+  const titles = new Map(
+    categoriesResult.data.map((category) => [category.slug, category.title]),
+  );
+  const childrenByCategorySlug = new Map<string, StorefrontChild[]>();
+
+  for (const row of subcategoriesResult.data) {
+    const parentSlug = idToSlug.get(row.category_id);
+    if (!parentSlug) continue;
+    const list = childrenByCategorySlug.get(parentSlug) ?? [];
+    list.push({ slug: row.slug, title: row.title });
+    childrenByCategorySlug.set(parentSlug, list);
+  }
+
+  return { titles, childrenByCategorySlug };
+}
+
+function childrenForResolvedSlug(
+  resolvedSlug: string,
+  taxonomy: PublishedTaxonomy,
+): StorefrontChild[] {
+  if (resolvedSlug === "bakery") {
+    return BAKERY_MEMBER_SLUGS.flatMap((slug) => {
+      const title = taxonomy.titles.get(slug);
+      return title ? [{ slug, title }] : [];
+    });
+  }
+  return taxonomy.childrenByCategorySlug.get(resolvedSlug) ?? [];
+}
+
+/** Subcategory pills for a storefront category. Bakery children are sibling categories. */
+export async function getStorefrontCategoryChildren(
+  categorySlug: string,
+): Promise<StorefrontChild[]> {
+  const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
+  const taxonomy = await loadPublishedTaxonomy();
+  if (!taxonomy) return [];
+  return childrenForResolvedSlug(resolved, taxonomy);
+}
+
+/**
+ * Products for a category page, honoring `?sub=`.
+ * Bakery filters by member category slug; other categories use the subcategory relation.
+ */
+export async function getCategoryListingProducts(
+  categorySlug: string,
+  subcategorySlug: string | null,
+): Promise<Product[]> {
+  const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
+  if (
+    subcategorySlug &&
+    resolved === "bakery" &&
+    isBakeryMemberSlug(subcategorySlug)
+  ) {
+    return getProductsByCategory(subcategorySlug);
+  }
+  if (subcategorySlug && resolved !== "bakery") {
+    return getProductsBySubcategory(resolved, subcategorySlug);
+  }
+  return getProductsByCategory(resolved);
+}
+
+/** One block per parent category for /catalogue. Empty groups when Supabase is off. */
+export async function getCatalogueOverview(): Promise<CatalogueSection[]> {
+  if (!isSupabaseConfigured()) {
+    return STOREFRONT_CATALOGUE_SECTIONS.map((section) => ({
+      slug: section.slug,
+      title: section.title,
+      showBakeryMarks: section.slug === "bakery",
+      children: [],
+      products: [],
+    }));
+  }
+
+  const [taxonomy, products] = await Promise.all([
+    loadPublishedTaxonomy(),
+    getPublishedProducts(),
+  ]);
+
+  return STOREFRONT_CATALOGUE_SECTIONS.map((section) => {
+    const resolved = resolveCategorySlug(section.slug) ?? section.slug;
+    const allowed = new Set(categoryQuerySlugs(resolved));
+    const matched = products.filter((product) =>
+      allowed.has(productCategorySlug(product)),
+    );
+    return {
+      slug: section.slug,
+      title: section.title,
+      showBakeryMarks: section.slug === "bakery",
+      children: taxonomy ? childrenForResolvedSlug(resolved, taxonomy) : [],
+      products: matched.slice(0, 3),
+    };
+  });
 }
 
 export async function getProductsBySubcategory(
@@ -332,16 +507,29 @@ export async function getProductsBySubcategory(
 
   const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
   const supabase = await createClient();
+  const categorySlugs = categoryQuerySlugs(resolved);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelectFiltered({ category: true, subcategory: true }))
     .eq("published", true)
-    .eq("categories.slug", resolved)
+    .in("categories.slug", categorySlugs)
     .eq("subcategories.slug", subcategorySlug)
     .order("name");
 
   if (error || !data?.length) return [];
-  return (data as unknown as DbProductRow[]).map(mapDbProduct);
+  const allowedCategories = new Set(categoryQuerySlugs(resolved));
+  return (data as unknown as DbProductRow[])
+    .map(mapDbProduct)
+    .filter((product) => {
+      const subSlug =
+        product.subcategory && typeof product.subcategory === "object"
+          ? product.subcategory.slug
+          : null;
+      return (
+        allowedCategories.has(productCategorySlug(product)) &&
+        subSlug === subcategorySlug
+      );
+    });
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {

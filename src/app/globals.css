@@ -2,10 +2,11 @@
 @import "@heroui/styles";
 
 :root {
-  --color-primary: #640023;
-  --color-primary-container: #881337;
+  --color-primary: #b50a20;
+  --color-primary-container: #ef6113;
+  --color-primary-container-hover: #e25a12;
   --color-on-primary: #ffffff;
-  --color-on-primary-container: #ff93a6;
+  --color-on-primary-container: #ffffff;
   --color-primary-fixed: #ffd9dd;
   --color-primary-fixed-dim: #ffb2bd;
   --color-secondary: #006d30;
@@ -16,10 +17,10 @@
   --color-tertiary-container: #743200;
   --color-on-tertiary: #ffffff;
   --color-on-tertiary-container: #ff9a5e;
-  --color-background: #fff8f5;
+  --color-background: #fef7f5;
   --color-on-background: #1e1b19;
-  --color-surface: #fff8f5;
-  --color-surface-bright: #fff8f5;
+  --color-surface: #fef7f5;
+  --color-surface-bright: #fef7f5;
   --color-surface-dim: #e0d8d5;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #faf2ee;
@@ -46,6 +47,7 @@
 @theme inline {
   --color-primary: var(--color-primary);
   --color-primary-container: var(--color-primary-container);
+  --color-primary-container-hover: var(--color-primary-container-hover);
   --color-on-primary: var(--color-on-primary);
   --color-on-primary-container: var(--color-on-primary-container);
   --color-primary-fixed: var(--color-primary-fixed);
@@ -104,6 +106,16 @@
 
   --shadow-culinary:
     0 10px 24px -4px rgb(136 19 55 / 0.08), 0 4px 8px -2px rgb(28 25 23 / 0.04);
+}
+
+/* Saffron fills (#EF6113) use white labels. Hover stays a step darker with the same ink. */
+.bg-primary-container {
+  color: var(--color-on-primary-container);
+}
+
+.bg-primary-container:hover {
+  background-color: var(--color-primary-container-hover);
+  color: var(--color-on-primary-container);
 }
 
 @layer base {

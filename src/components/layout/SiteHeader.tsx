@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, User, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { navLinks, siteConfig } from "@/data/home";
 import { CartBadge } from "@/components/cart/CartBadge";
@@ -36,41 +36,43 @@ export function SiteHeader({
   specialAttention?: SpecialAttentionCategory[];
 }) {
   const [open, setOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const pill = isScrolled && !open;
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const links = useMemo(() => {
-    const staticKeys = new Map(
-      navLinks.map((link) => [navCategoryKey(link.href), link] as const),
-    );
-
     const attentionByKey = new Map(
       specialAttention.map((c) => [navCategoryKey(c.href), c] as const),
     );
 
-    const staticLinks = navLinks.map((link) => {
-      const key = navCategoryKey(link.href);
-      const special = attentionByKey.has(key);
-      return {
-        label: link.label,
-        href: link.href,
-        special,
-      };
-    });
-
-    const extraAttention = specialAttention
-      .filter((c) => !staticKeys.has(navCategoryKey(c.href)))
-      .map((c) => ({
-        label: c.title,
-        href: c.href,
-        special: true,
-      }));
-
-    return [...extraAttention, ...staticLinks];
+    return navLinks.map((link) => ({
+      label: link.label,
+      href: link.href,
+      special: attentionByKey.has(navCategoryKey(link.href)),
+    }));
   }, [specialAttention]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-outline-variant/30 bg-surface/90 shadow-[0_4px_20px_-4px_rgba(30,27,25,0.03)] backdrop-blur-md">
-      <div className="container-jj flex h-14 items-center justify-between gap-3 md:h-20 md:gap-4">
+    <header className="sticky top-0 z-50 w-full pointer-events-none">
+      <div
+        className={`pointer-events-auto mx-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          pill
+            ? "mt-3 max-w-5xl rounded-full border-[1.5px] border-on-surface bg-white/50 shadow-lg backdrop-blur-xl backdrop-saturate-150"
+            : "mt-0 w-full max-w-none rounded-none border-b border-outline-variant/30 bg-surface/90 shadow-[0_4px_20px_-4px_rgba(30,27,25,0.03)] backdrop-blur-md"
+        }`}
+      >
+      <div
+        className={`container-jj flex items-center justify-between gap-3 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          pill ? "h-12 md:h-14 md:gap-3" : "h-14 md:h-20 md:gap-4"
+        }`}
+      >
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3 tracking-tight"
@@ -80,7 +82,9 @@ export function SiteHeader({
             alt={siteConfig.logo.alt}
             width={siteConfig.logo.width}
             height={siteConfig.logo.height}
-            className="h-9 w-auto shrink-0 object-contain md:h-14"
+            className={`w-auto shrink-0 object-contain transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              pill ? "h-8 md:h-10" : "h-9 md:h-14"
+            }`}
             sizes="(max-width: 768px) 5rem, 7rem"
             priority
           />
@@ -144,11 +148,12 @@ export function SiteHeader({
           </button>
         </div>
       </div>
+      </div>
 
       {open ? (
         <div
           id="mobile-nav"
-          className="border-t border-outline-variant/30 bg-surface-container-lowest px-4 py-3 xl:hidden"
+          className="pointer-events-auto border-t border-outline-variant/30 bg-surface-container-lowest px-4 py-3 xl:hidden"
         >
           <nav className="flex flex-col gap-0.5" aria-label="Mobile">
             {links.map((link) => {

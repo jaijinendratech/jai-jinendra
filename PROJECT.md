@@ -15,7 +15,7 @@
 | Shipping | Pan-India at launch; flat rate ₹79, free on orders ≥ ₹999 |
 | Payments | Razorpay (UPI / cards / netbanking) + COD (non-gateway path) |
 | Customer auth | **Account required** before payment |
-| Login | Phone OTP (primary via Supabase Auth); email collected at checkout |
+| Login | Email/password and Google (Supabase Auth) until Jio DLT is available; delivery phone stays on checkout |
 | Inventory | Full stock tracking per SKU/variant; block checkout when OOS |
 | Notifications | Email only at launch (Resend) |
 | Categories | namkeens, kachoris, mithai, gifts, tea-time, dry-fruits, combos |
@@ -150,9 +150,9 @@ Frontend types live in [`src/types/catalog.ts`](src/types/catalog.ts). Supabase 
 | 0 — Ship blockers | Done in code | Unsafe create-order removed; ADMIN_PASSWORD required; role lock RLS; `requireAdmin` layout; open-redirect + timingSafeEqual |
 | 1 — Integrity | Done in code | Atomic inventory RPC; Zod on mutating APIs; no mock fallback when Supabase on; stronger order numbers |
 | 2 — Scale | Done in code | Cached search index; SQL KPIs; rate limits; security headers; Shiprocket token store; webhook dedupe |
-| 3 — Ops | Done in code | Vitest + Playwright scaffold + CI; Sentry + Vercel Analytics; structured payment logs |
+| 3 — Ops | Done in code | Vitest + Playwright scaffold + CI; Vercel Analytics; structured payment logs |
 
-**Manual before go-live:** apply migrations `004`–`006` on Supabase; set `ADMIN_PASSWORD` + Sentry/Upstash env on Vercel; confirm Production deploy READY and Razorpay webhook 2xx on `www.jaijinendrasweets.com`.
+**Manual before go-live:** apply migrations `004`–`006` on Supabase; set `ADMIN_PASSWORD` on Vercel; confirm Production deploy READY and Razorpay webhook 2xx on `www.jaijinendrasweets.com`.
 
 ---
 
@@ -180,6 +180,6 @@ Frontend types live in [`src/types/catalog.ts`](src/types/catalog.ts). Supabase 
 - [ ] Deployed on Vercel with all env vars; Production **READY**
 - [ ] Razorpay webhook URL live on production domain
 
-**Post-launch (Phase 2–3):** rate limits + Upstash, Sentry alerts on webhook 5xx, expand Playwright COD path, CSP report-only → enforce.
+**Post-launch (Phase 2–3):** expand Playwright COD path, CSP report-only → enforce, optional shared rate-limit store if multi-instance needs it.
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for phase breakdown.

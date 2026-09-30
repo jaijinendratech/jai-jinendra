@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { getFixedOtp } from "@/lib/auth-config";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
@@ -12,27 +11,23 @@ export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    step?: string;
-    phone?: string;
     next?: string;
     error?: string;
+    mode?: string;
+    notice?: string;
   }>;
 }) {
   const params = await searchParams;
-  const step = params.step === "verify" ? "verify" : "phone";
-  const phone = params.phone ?? "";
   const next = safeRedirectPath(params.next, "/account");
-  const error = params.error;
-  const fixedOtp = getFixedOtp();
+  const mode = params.mode === "signup" ? "signup" : "signin";
 
   return (
     <main className="container-jj flex min-h-[70vh] items-center justify-center py-12">
       <LoginForm
-        step={step}
-        phone={phone}
+        mode={mode}
         next={next}
-        error={error}
-        fixedOtp={fixedOtp}
+        error={params.error}
+        notice={params.notice}
       />
     </main>
   );

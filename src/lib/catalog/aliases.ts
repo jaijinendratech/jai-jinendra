@@ -20,12 +20,36 @@ export const CANONICAL_CATEGORY_SLUGS = [
 
 export type CanonicalCategorySlug = (typeof CANONICAL_CATEGORY_SLUGS)[number];
 
-/** URL / nav alias → DB category slug used in queries. */
+/**
+ * Sibling categories grouped under the storefront Bakery page.
+ * Bakery is not a database category.
+ */
+export const BAKERY_MEMBER_SLUGS = [
+  "tea-time-bites",
+  "dry-cakes",
+  "cookies",
+] as const;
+
+/** All-page parent blocks, in storefront order. */
+export const STOREFRONT_CATALOGUE_SECTIONS = [
+  { slug: "sweets", title: "Sweets" },
+  { slug: "namkeen", title: "Namkeen" },
+  { slug: "bakery", title: "Bakery" },
+  { slug: "gajak", title: "Gajak" },
+  { slug: "gifting", title: "Gifting" },
+] as const;
+
+export function isBakeryMemberSlug(slug: string): boolean {
+  return (BAKERY_MEMBER_SLUGS as readonly string[]).includes(slug);
+}
+
+/** URL / nav alias → query key. `bakery` groups sibling categories; it is not a DB row. */
 const ALIAS_TO_DB: Record<string, string> = {
   sweets: "sweets",
   mithai: "sweets",
   namkeen: "namkeen",
   namkeens: "namkeen",
+  bakery: "bakery",
   "tea-time-bites": "tea-time-bites",
   snacks: "tea-time-bites",
   "tea-time": "tea-time-bites",
@@ -44,6 +68,7 @@ const ALIAS_TO_DB: Record<string, string> = {
 const DB_TO_PREFERRED_URL: Record<string, string> = {
   sweets: "sweets",
   namkeen: "namkeen",
+  bakery: "bakery",
   "tea-time-bites": "tea-time-bites",
   "dry-cakes": "dry-cakes",
   cookies: "cookies",
@@ -75,6 +100,7 @@ export function dbSlugToCategoryId(dbSlug: string): CategoryId {
     mithai: "sweets",
     namkeen: "namkeen",
     namkeens: "namkeen",
+    bakery: "bakery",
     "tea-time-bites": "tea-time-bites",
     "tea-time": "tea-time-bites",
     snacks: "tea-time-bites",
@@ -113,6 +139,11 @@ export function normalizeCategoryRef(
 
 /** Slugs to query when filtering products for a resolved category. */
 export function categoryQuerySlugs(resolvedDbSlug: string): string[] {
+  if (resolvedDbSlug === "bakery") {
+    return [
+      ...new Set(BAKERY_MEMBER_SLUGS.flatMap((slug) => categoryQuerySlugs(slug))),
+    ];
+  }
   if (resolvedDbSlug === "combos") return ["tea-time-bites", "combos", "tea-time"];
   if (resolvedDbSlug === "sweets") return ["sweets", "mithai"];
   if (resolvedDbSlug === "namkeen") return ["namkeen", "namkeens"];
