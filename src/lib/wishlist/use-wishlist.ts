@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "jj-wishlist";
 
@@ -36,7 +36,14 @@ function subscribe(listener: Listener) {
   return () => listeners.delete(listener);
 }
 
+let storageLoaded = false;
+
 function getSnapshot() {
+  // Load localStorage once, on the first client read (after hydration).
+  if (!storageLoaded && typeof window !== "undefined") {
+    storageLoaded = true;
+    memoryIds = readStorage();
+  }
   return memoryIds;
 }
 
@@ -52,16 +59,16 @@ function ensureHydrated() {
   memoryIds = readStorage();
 }
 
-export function useWishlist() {
-  const [hydrated, setHydrated] = useState(false);
-  const ids = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+const noopSubscribe = () => () => {};
 
-  useEffect(() => {
-    ensureHydrated();
-    memoryIds = readStorage();
-    listeners.forEach((l) => l());
-    setHydrated(true);
-  }, []);
+export function useWishlist() {
+  // false during SSR + hydration, true once running on the client.
+  const hydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+  const ids = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const has = useCallback(
     (productId: string) => ids.includes(productId),

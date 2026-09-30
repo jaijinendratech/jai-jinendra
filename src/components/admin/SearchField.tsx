@@ -25,9 +25,12 @@ export function SearchField({
 }) {
   const [local, setLocal] = useState(value);
 
-  useEffect(() => {
+  // Follow parent resets (e.g. cleared filters).
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setLocal(value);
-  }, [value]);
+  }
 
   useEffect(() => {
     if (debounceMs <= 0) {

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { AdminProductDetail } from "@/lib/admin/queries";
 import { loadAdminProductAction } from "@/lib/admin/actions";
 import { AdminModal } from "@/components/admin/AdminModal";
@@ -54,23 +54,20 @@ export function ProductFormModal({
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [pending, startTransition] = useTransition();
-  const loadedIdRef = useRef<string | null>(null);
+
+  // Clear the previous product when switching to another one (or closing).
+  const [prevProductId, setPrevProductId] = useState(productId);
+  if (productId !== prevProductId) {
+    setPrevProductId(productId);
+    setProduct(null);
+    setError(null);
+  }
 
   useEffect(() => {
-    if (!productId) {
-      setProduct(null);
-      setError(null);
-      loadedIdRef.current = null;
-      return;
-    }
-    const idChanged = loadedIdRef.current !== productId;
-    if (idChanged) {
-      setProduct(null);
-      loadedIdRef.current = productId;
-    }
-    setError(null);
+    if (!productId) return;
     let cancelled = false;
     startTransition(async () => {
+      setError(null);
       try {
         const data = await loadAdminProductAction(productId);
         if (cancelled) return;

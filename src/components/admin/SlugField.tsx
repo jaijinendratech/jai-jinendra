@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LuPencil, LuLock } from "react-icons/lu";
 import { fieldClassName, labelClassName } from "@/components/admin/ui";
 import { slugify } from "@/lib/admin/slug";
@@ -15,11 +15,8 @@ export function SlugField({
   name?: string;
 }) {
   const [manual, setManual] = useState(Boolean(defaultSlug));
-  const [slug, setSlug] = useState(defaultSlug || slugify(nameValue));
-
-  useEffect(() => {
-    if (!manual) setSlug(slugify(nameValue));
-  }, [nameValue, manual]);
+  const [manualSlug, setManualSlug] = useState(defaultSlug);
+  const slug = manual ? manualSlug : slugify(nameValue);
 
   return (
     <label className={labelClassName()}>
@@ -28,7 +25,11 @@ export function SlugField({
         <button
           type="button"
           className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
-          onClick={() => setManual((v) => !v)}
+          onClick={() => {
+            // Start manual editing from the current auto slug.
+            if (!manual) setManualSlug(slug);
+            setManual((v) => !v);
+          }}
         >
           {manual ? (
             <>
@@ -46,7 +47,7 @@ export function SlugField({
         value={slug}
         onChange={(e) => {
           setManual(true);
-          setSlug(e.target.value);
+          setManualSlug(e.target.value);
         }}
         required
         className={`${fieldClassName()} ${!manual ? "bg-surface-container-low" : ""}`}

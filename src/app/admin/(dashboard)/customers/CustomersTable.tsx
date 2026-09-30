@@ -43,12 +43,46 @@ export function CustomersTable({
   const searchParams = useSearchParams();
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<{
-    customer: AdminCustomer;
-    orders: AdminOrderListItem[];
+  const [result, setResult] = useState<{
+    id: string;
+    detail?: { customer: AdminCustomer; orders: AdminOrderListItem[] };
+    error?: string;
   } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  // Result for a different (or no) customer means the current one is loading.
+  const current = openId && result?.id === openId ? result : null;
+  const detail = current?.detail ?? null;
+  const loadError = current?.error ?? null;
+  const loading = openId !== null && !current;
+
+  // Open the drawer for URL deep-links (?customer=<id>).
+  const fromQuery = searchParams.get("customer");
+  const [prevQuery, setPrevQuery] = useState<string | null>(null);
+  if (fromQuery !== prevQuery) {
+    setPrevQuery(fromQuery);
+    if (fromQuery && fromQuery !== openId) setOpenId(fromQuery);
+  }
+
+  useEffect(() => {
+    if (!openId) return;
+    let cancelled = false;
+    loadAdminCustomerAction(openId)
+      .then((data) => {
+        if (cancelled) return;
+        setResult(
+          data
+            ? { id: openId, detail: data }
+            : { id: openId, error: "Customer not found." },
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setResult({ id: openId, error: "Could not load customer." });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [openId, reloadToken]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -74,44 +108,29 @@ export function CustomersTable({
     [router, searchParams],
   );
 
+  const reloadCustomer = useCallback(() => {
+    setResult(null);
+    setReloadToken((n) => n + 1);
+  }, []);
+
   const openCustomer = useCallback(
-    async (id: string) => {
-      setOpenId(id);
-      setLoading(true);
-      setLoadError(null);
-      setDetail(null);
-      syncQuery(id);
-      try {
-        const data = await loadAdminCustomerAction(id);
-        if (!data) {
-          setLoadError("Customer not found.");
-          return;
-        }
-        setDetail(data);
-      } catch {
-        setLoadError("Could not load customer.");
-      } finally {
-        setLoading(false);
+    (id: string) => {
+      if (id === openId) {
+        reloadCustomer();
+        return;
       }
+      setOpenId(id);
+      setResult(null);
+      syncQuery(id);
     },
-    [syncQuery],
+    [openId, reloadCustomer, syncQuery],
   );
 
   const closeCustomer = useCallback(() => {
     setOpenId(null);
-    setDetail(null);
-    setLoadError(null);
+    setResult(null);
     syncQuery(null);
   }, [syncQuery]);
-
-  useEffect(() => {
-    const fromQuery = searchParams.get("customer");
-    if (fromQuery && fromQuery !== openId) {
-      void openCustomer(fromQuery);
-    }
-    // Only react to URL deep-links, not every openId change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   return (
     <div className="space-y-4">
@@ -215,9 +234,7 @@ export function CustomersTable({
             customer={detail.customer}
             orders={detail.orders}
             supabase={supabase}
-            onSaved={() => {
-              if (openId) void openCustomer(openId);
-            }}
+            onSaved={reloadCustomer}
           />
         ) : null}
       </AdminDrawer>

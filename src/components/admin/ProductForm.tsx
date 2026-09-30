@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
 import type { AdminProductDetail } from "@/lib/admin/queries";
@@ -267,8 +267,10 @@ export function ProductForm({
   const isNew = !product;
   const isModal = layout === "modal";
   const [name, setName] = useState(product?.name ?? "");
-  const [tagline, setTagline] = useState(product?.tagline ?? "");
+  const [taglineInput, setTagline] = useState(product?.tagline ?? "");
   const [taglineTouched, setTaglineTouched] = useState(Boolean(product?.tagline));
+  // Suggest a tagline from the name until the admin edits it.
+  const tagline = taglineTouched ? taglineInput : suggestTagline(name);
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [tab, setTab] = useState<"details" | "variants" | "images">("details");
   const [formError, setFormError] = useState<string | null>(null);
@@ -288,10 +290,6 @@ export function ProductForm({
     () => subcategories.filter((s) => s.categoryId === categoryId),
     [subcategories, categoryId],
   );
-
-  useEffect(() => {
-    if (!taglineTouched) setTagline(suggestTagline(name));
-  }, [name, taglineTouched]);
 
   async function handleSaveProduct(formData: FormData) {
     setFormError(null);

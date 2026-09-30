@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useCart } from "@/lib/cart/use-cart";
@@ -214,9 +215,9 @@ export function CheckoutForm() {
     return (
       <p className="text-sm text-on-surface-variant">
         Your cart is empty.{" "}
-        <a href="/catalogue" className="text-primary hover:underline">
+        <Link href="/catalogue" className="text-primary hover:underline">
           Shop catalogue
-        </a>
+        </Link>
       </p>
     );
   }
