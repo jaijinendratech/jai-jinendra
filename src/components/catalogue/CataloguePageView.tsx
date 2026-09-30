@@ -1,37 +1,35 @@
 import { Suspense } from "react";
 import { CatalogueFilters } from "@/components/catalogue/CatalogueFilters";
-import { CatalogueHero } from "@/components/catalogue/CatalogueHero";
 import {
   CategoryPillRow,
   type CategoryPill,
 } from "@/components/catalogue/CategoryPillRow";
 import { CatalogueSections } from "@/components/catalogue/CatalogueSections";
-import { CatalogueToolbar } from "@/components/catalogue/CatalogueToolbar";
 import { FilterableCatalogueGrid } from "@/components/catalogue/FilterableCatalogueGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import {
-  catalogueMeta,
-  cataloguePills,
-  priceRanges,
-  purityFilters,
-  specialtyFilters,
-  spiceFilters,
-} from "@/data/catalogue";
-import type { CatalogueSection } from "@/lib/catalog/queries";
+import { priceRanges } from "@/data/catalogue";
+import type {
+  CatalogueSection,
+  CatalogueSpecialtyFilter,
+} from "@/lib/catalog/queries";
 import type { CategoryId, Product } from "@/types/catalog";
 
 export function CataloguePageView({
   products = [],
   activeCategory,
+  activeCategorySlug = "",
   categoryTitle,
   childPills = [],
   sections,
+  specialty = [],
 }: {
   products?: Product[];
   activeCategory: CategoryId | "all";
+  activeCategorySlug?: string;
   categoryTitle?: string;
   childPills?: CategoryPill[];
   sections?: CatalogueSection[];
+  specialty?: CatalogueSpecialtyFilter[];
 }) {
   const overview = Boolean(sections);
 
@@ -47,7 +45,7 @@ export function CataloguePageView({
         ]}
       />
 
-      <CatalogueHero
+      {/* <CatalogueHero
         title={categoryTitle ? categoryTitle : catalogueMeta.title}
         eyebrow={catalogueMeta.eyebrow}
         description={catalogueMeta.description}
@@ -57,7 +55,7 @@ export function CataloguePageView({
         pills={cataloguePills}
         activeCategory={activeCategory}
         showBakeryMarks={activeCategory === "bakery"}
-      />
+      /> */}
 
       {overview && sections ? (
         <CatalogueSections sections={sections} />
@@ -68,26 +66,30 @@ export function CataloguePageView({
             pills={childPills}
             className="mb-6"
           />
-
+          {/* 
           <CatalogueToolbar
             shown={products.length}
             total={catalogueMeta.totalCount}
             freshnessNote={catalogueMeta.freshnessNote}
-          />
+          /> */}
 
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
             <Suspense fallback={null}>
               <CatalogueFilters
-                specialty={specialtyFilters}
-                purity={purityFilters}
-                spice={spiceFilters}
+                specialty={specialty}
+                products={products}
                 prices={priceRanges}
-                activeCategory={activeCategory}
-                warranty={catalogueMeta.warranty}
+                activeSlug={activeCategorySlug || String(activeCategory)}
               />
             </Suspense>
 
-            <Suspense fallback={<p className="lg:col-span-9 text-sm text-on-surface-variant">Loading…</p>}>
+            <Suspense
+              fallback={
+                <p className="lg:col-span-9 text-sm text-on-surface-variant">
+                  Loading…
+                </p>
+              }
+            >
               <FilterableCatalogueGrid products={products} />
             </Suspense>
           </div>

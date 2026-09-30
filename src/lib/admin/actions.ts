@@ -8,6 +8,8 @@ import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import type { OrderStatus } from "@/types/database";
 import { slugify } from "@/lib/admin/slug";
+import { tagFlags } from "@/lib/catalog/tags";
+import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
 import {
   adminCategorySchema,
   adminCouponSchema,
@@ -17,6 +19,7 @@ import {
   adminOrderStatusSchema,
   adminOutletSchema,
   adminPaymentStatusSchema,
+  adminProductAttributeInputSchema,
   adminProductImagesSchema,
   adminProductSchema,
   adminSubcategorySchema,
@@ -41,6 +44,141 @@ function parseList(raw: string): string[] {
     .split(/[,\n]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+async function syncProductAttributes(
+  admin: ReturnType<typeof createAdminClient>,
+  productId: string,
+  raw: FormDataEntryValue | null,
+) {
+  if (raw == null || String(raw).trim() === "") return;
+
+  let json: unknown;
+  try {
+    json = JSON.parse(String(raw));
+  } catch {
+    throw new Error("Attributes could not be read. Try again.");
+  }
+
+  const parsed = z.array(adminProductAttributeInputSchema).safeParse(json);
+  if (!parsed.success) {
+    throw new Error(zodErrorMessage(parsed.error));
+  }
+
+  const kept = new Set<string>();
+  const detailSchema = await productDetailSchemaReady(admin);
+
+  for (const item of parsed.data) {
+    const dataType = item.dataType;
+    if (dataType === "select" && !item.valueText) {
+      throw new Error(`Choose a value for ${item.label}.`);
+    }
+    if (dataType === "select" && !item.attributeId && !item.options?.length) {
+      throw new Error(`Add at least one choice for ${item.label}.`);
+    }
+
+    let attributeId = item.attributeId ?? "";
+    if (!attributeId) {
+      const key = slugify(item.label) || "attribute";
+      const { data: existing } = await admin
+        .from("attribute_definitions")
+        .select("id, data_type")
+        .eq("key", key)
+        .maybeSingle();
+      if (existing) {
+        if (existing.data_type !== dataType) {
+          throw new Error(
+            `“${item.label}” already exists as a different kind of attribute.`,
+          );
+        }
+        attributeId = existing.id;
+      } else {
+        const { data: created, error } = await admin
+          .from("attribute_definitions")
+          .insert({
+            key,
+            label: item.label,
+            data_type: dataType,
+            options: dataType === "select" ? (item.options ?? []) : null,
+            ...(detailSchema
+              ? {
+                  filterable: Boolean(item.filterable),
+                  filter_group: item.filterGroup?.trim() || null,
+                }
+              : {}),
+            active: true,
+          })
+          .select("id")
+          .single();
+        if (error || !created) {
+          throw new Error(error?.message || "Could not create attribute.");
+        }
+        attributeId = created.id;
+      }
+    }
+
+    if (detailSchema) {
+      const { error: flagError } = await admin
+        .from("attribute_definitions")
+        .update({
+          filterable: Boolean(item.filterable),
+          filter_group: item.filterGroup?.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", attributeId);
+      if (flagError) throw new Error(flagError.message);
+    }
+
+    const { error: valueError } = await admin.from("product_attribute_values").upsert(
+      {
+        product_id: productId,
+        attribute_id: attributeId,
+        value_boolean: dataType === "boolean" ? Boolean(item.valueBoolean) : null,
+        value_text: dataType === "select" ? item.valueText ?? null : null,
+        value_number: null,
+        value_json: null,
+      },
+      { onConflict: "product_id,attribute_id" },
+    );
+    if (valueError) throw new Error(valueError.message);
+    kept.add(attributeId);
+  }
+
+  const { data: existingValues } = await admin
+    .from("product_attribute_values")
+    .select("id, attribute_id")
+    .eq("product_id", productId);
+
+  const existingIds = [
+    ...new Set((existingValues ?? []).map((row) => row.attribute_id)),
+  ];
+  const { data: definitions } = existingIds.length
+    ? await admin
+        .from("attribute_definitions")
+        .select("id, data_type")
+        .in("id", existingIds)
+    : { data: [] };
+  const editable = new Set(
+    (definitions ?? [])
+      .filter(
+        (definition) =>
+          definition.data_type === "boolean" || definition.data_type === "select",
+      )
+      .map((definition) => definition.id),
+  );
+
+  const removeIds = (existingValues ?? [])
+    .filter(
+      (row) => editable.has(row.attribute_id) && !kept.has(row.attribute_id),
+    )
+    .map((row) => row.id);
+  if (removeIds.length) {
+    const { error } = await admin
+      .from("product_attribute_values")
+      .delete()
+      .in("id", removeIds);
+    if (error) throw new Error(error.message);
+  }
 }
 
 function moneyToPaise(raw: FormDataEntryValue | null): number {
@@ -419,18 +557,17 @@ export async function saveProductAction(formData: FormData) {
       sanitizeAdminHtml(String(formData.get("longDescription") ?? "")) || null,
     spiceNote: String(formData.get("spiceNote") ?? "") || null,
     dietary: parseList(String(formData.get("dietary") ?? "")),
-    badge: String(formData.get("badge") ?? "") || null,
     tagline: String(formData.get("tagline") ?? "") || null,
     seoTitle: String(formData.get("seoTitle") ?? "") || null,
     seoDescription: String(formData.get("seoDescription") ?? "") || null,
     origin: String(formData.get("origin") ?? "") || null,
     shelfLife: String(formData.get("shelfLife") ?? "") || null,
     ingredients: parseList(String(formData.get("ingredients") ?? "")),
+    shippingTitle: String(formData.get("shippingTitle") ?? "") || null,
+    shippingNote: String(formData.get("shippingNote") ?? "") || null,
+    highlights: parseList(String(formData.get("highlights") ?? "")),
+    tags: parseList(String(formData.get("tags") ?? "")),
     published: formData.get("published") === "on",
-    featured: formData.get("featured") === "on",
-    bestseller: formData.get("bestseller") === "on",
-    newArrival: formData.get("newArrival") === "on",
-    seasonal: formData.get("seasonal") === "on",
   });
 
   if (!parsed.success) {
@@ -453,6 +590,7 @@ export async function saveProductAction(formData: FormData) {
     ? sanitizeAdminHtml(parsed.data.longDescription)
     : null;
 
+  const detailSchema = await productDetailSchemaReady(admin);
   const payload = {
     slug,
     name: parsed.data.name,
@@ -462,31 +600,39 @@ export async function saveProductAction(formData: FormData) {
     subcategory_id: parsed.data.subcategoryId ?? null,
     spice_note: parsed.data.spiceNote,
     dietary: parsed.data.dietary,
-    badge: parsed.data.badge,
     tagline: parsed.data.tagline,
     seo_title: parsed.data.seoTitle,
     seo_description: parsed.data.seoDescription,
     origin: parsed.data.origin,
     shelf_life: parsed.data.shelfLife,
     ingredients: parsed.data.ingredients,
+    ...(detailSchema
+      ? {
+          shipping_title: parsed.data.shippingTitle ?? null,
+          shipping_note: parsed.data.shippingNote ?? null,
+          highlights: parsed.data.highlights.length
+            ? parsed.data.highlights
+            : null,
+          tags: parsed.data.tags,
+        }
+      : {}),
     published: parsed.data.published,
-    featured: parsed.data.featured,
-    bestseller: parsed.data.bestseller,
-    new_arrival: parsed.data.newArrival,
-    seasonal: parsed.data.seasonal ?? false,
+    ...tagFlags(parsed.data.tags),
     updated_at: new Date().toISOString(),
   };
 
   let productId = id;
 
   if (id) {
-    await admin.from("products").update(payload).eq("id", id);
+    const { error } = await admin.from("products").update(payload).eq("id", id);
+    if (error) throw new Error(error.message);
   } else {
-    const { data } = await admin
+    const { data, error } = await admin
       .from("products")
       .insert(payload)
       .select("id")
       .single();
+    if (error) throw new Error(error.message);
     productId = data?.id ?? "";
 
     // Images picked on the Add Product form (upload order = gallery order).
@@ -503,7 +649,17 @@ export async function saveProductAction(formData: FormData) {
     }
   }
 
-  revalidateAdmin("/admin/products", `/admin/products/${productId}`, "/admin");
+  if (productId) {
+    await syncProductAttributes(admin, productId, formData.get("attributes"));
+  }
+
+  revalidateAdmin(
+    "/admin/products",
+    `/admin/products/${productId}`,
+    "/admin",
+    "/catalogue",
+    `/products/${slug}`,
+  );
 
   const returnTo = String(formData.get("returnTo") ?? "");
   if (returnTo === "modal") {
@@ -564,7 +720,9 @@ export async function duplicateProductAction(formData: FormData) {
   const admin = createAdminClient();
   const { data: raw } = await admin
     .from("products")
-    .select("*, product_variants(*), product_images(*)")
+    .select(
+      "*, product_variants(*), product_images(*), product_attribute_values(attribute_id, value_text, value_number, value_boolean, value_json)",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -585,6 +743,12 @@ export async function duplicateProductAction(formData: FormData) {
     origin: string | null;
     shelf_life: string | null;
     ingredients: string[] | null;
+    shipping_title: string | null;
+    shipping_note: string | null;
+    highlights: string[] | null;
+    tags: string[] | null;
+    seasonal: boolean;
+    featured: boolean;
     product_variants: {
       label: string;
       sku: string;
@@ -600,6 +764,13 @@ export async function duplicateProductAction(formData: FormData) {
       storage_path: string;
       alt: string | null;
       sort_order: number;
+    }[] | null;
+    product_attribute_values: {
+      attribute_id: string;
+      value_text: string | null;
+      value_number: number | null;
+      value_boolean: boolean | null;
+      value_json: unknown;
     }[] | null;
   };
 
@@ -624,9 +795,20 @@ export async function duplicateProductAction(formData: FormData) {
       featured: false,
       bestseller: product.bestseller,
       new_arrival: product.new_arrival,
+      seasonal: product.seasonal,
       origin: product.origin,
       shelf_life: product.shelf_life,
       ingredients: product.ingredients,
+      ...(product.shipping_title !== undefined || product.tags
+        ? {
+            shipping_title: product.shipping_title,
+            shipping_note: product.shipping_note,
+            highlights: product.highlights,
+            tags: (product.tags ?? []).filter(
+              (tag) => tag.trim().toLowerCase() !== "featured",
+            ),
+          }
+        : {}),
       published: false,
     })
     .select("id")
@@ -660,6 +842,20 @@ export async function duplicateProductAction(formData: FormData) {
         storage_path: img.storage_path,
         alt: img.alt,
         sort_order: img.sort_order,
+      })),
+    );
+  }
+
+  const attributeValues = product.product_attribute_values ?? [];
+  if (attributeValues.length) {
+    await admin.from("product_attribute_values").insert(
+      attributeValues.map((value) => ({
+        product_id: created.id,
+        attribute_id: value.attribute_id,
+        value_text: value.value_text,
+        value_number: value.value_number,
+        value_boolean: value.value_boolean,
+        value_json: value.value_json as never,
       })),
     );
   }

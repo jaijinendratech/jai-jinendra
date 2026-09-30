@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button, toast } from "@heroui/react";
+import { productTagLabels } from "@/lib/catalog/tags";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
 import { useWishlist } from "@/lib/wishlist/use-wishlist";
@@ -28,6 +29,9 @@ export function ProductCard({
   const { has, toggle, hydrated } = useWishlist();
   const { updateItem } = useCart();
   const favourited = hydrated && has(product.id);
+  const tags = productTagLabels(product);
+
+  const activeOriginalPrice = activeVariantData?.originalPrice ?? product.originalPrice;
 
   function onToggleFavourite(e: React.MouseEvent) {
     e.preventDefault();
@@ -60,10 +64,17 @@ export function ProductCard({
   return (
     <article className="culinary-lift flex flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-surface-container-low">
-        {product.badge ? (
-          <span className="absolute left-2 top-2 z-10 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white sm:left-2.5 sm:top-2.5 sm:px-2 sm:text-[10px]">
-            {product.badge}
-          </span>
+        {tags.length > 0 ? (
+          <div className="absolute left-2 top-2 z-10 flex max-w-[75%] flex-col items-start gap-1 sm:left-2.5 sm:top-2.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white sm:px-2 sm:text-[10px]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         ) : null}
         <Link href={productHref} className="absolute inset-0 block">
           <Image
@@ -139,9 +150,9 @@ export function ProductCard({
             <p className="price text-sm font-bold leading-none text-on-surface sm:text-lg">
               {formatINR(activePrice)}
             </p>
-            {product.originalPrice ? (
-              <p className="mt-0.5 hidden text-xs text-on-surface-variant sm:mt-1 md:block">
-                <span className="price line-through">{formatINR(product.originalPrice)}</span>
+            {activeOriginalPrice ? (
+              <p className="mt-0.5 text-[11px] text-on-surface-variant sm:mt-1 sm:text-xs">
+                <span className="price line-through">{formatINR(activeOriginalPrice)}</span>
                 {product.discountLabel ? (
                   <span className="ml-1.5 font-semibold text-secondary">
                     {product.discountLabel}
@@ -149,7 +160,7 @@ export function ProductCard({
                 ) : null}
               </p>
             ) : product.ctaNote ? (
-              <p className="mt-0.5 hidden text-xs text-on-surface-variant md:block">
+              <p className="mt-0.5 text-[11px] text-on-surface-variant sm:text-xs">
                 {product.ctaNote}
               </p>
             ) : null}

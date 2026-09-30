@@ -165,6 +165,10 @@ export type Database = {
           origin: string | null;
           shelf_life: string | null;
           ingredients: string[] | null;
+          shipping_title: string | null;
+          shipping_note: string | null;
+          highlights: string[] | null;
+          tags: string[] | null;
           published: boolean;
           created_at: string;
           updated_at: string;
@@ -193,6 +197,10 @@ export type Database = {
           origin?: string | null;
           shelf_life?: string | null;
           ingredients?: string[] | null;
+          shipping_title?: string | null;
+          shipping_note?: string | null;
+          highlights?: string[] | null;
+          tags?: string[] | null;
           published?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -221,6 +229,10 @@ export type Database = {
           origin?: string | null;
           shelf_life?: string | null;
           ingredients?: string[] | null;
+          shipping_title?: string | null;
+          shipping_note?: string | null;
+          highlights?: string[] | null;
+          tags?: string[] | null;
           published?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -288,6 +300,8 @@ export type Database = {
           unit: string | null;
           description: string | null;
           active: boolean;
+          filterable: boolean;
+          filter_group: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -300,6 +314,8 @@ export type Database = {
           unit?: string | null;
           description?: string | null;
           active?: boolean;
+          filterable?: boolean;
+          filter_group?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -312,6 +328,8 @@ export type Database = {
           unit?: string | null;
           description?: string | null;
           active?: boolean;
+          filterable?: boolean;
+          filter_group?: string | null;
           created_at?: string;
           updated_at?: string;
         };

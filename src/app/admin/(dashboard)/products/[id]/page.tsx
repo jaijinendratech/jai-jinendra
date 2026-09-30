@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import {
+  getAdminAttributeDefinitions,
   getAdminCategories,
   getAdminProductById,
   getAdminSubcategories,
@@ -32,8 +33,11 @@ export default async function AdminProductEditPage({
   const product = await getAdminProductById(id);
   if (!product) notFound();
 
-  const categories = await getAdminCategories();
-  const subcategories = await getAdminSubcategories();
+  const [categories, subcategories, attributeDefinitions] = await Promise.all([
+    getAdminCategories(),
+    getAdminSubcategories(),
+    getAdminAttributeDefinitions(),
+  ]);
   const { supabase } = getIntegrationStatus();
 
   const categoryOptions = categories.map((c) => ({
@@ -49,6 +53,7 @@ export default async function AdminProductEditPage({
         product={product}
         categories={categoryOptions}
         subcategories={subcategories}
+        attributeDefinitions={attributeDefinitions}
         supabase={supabase}
       />
     </div>

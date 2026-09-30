@@ -7,6 +7,7 @@ import { CatalogueGiftBanner } from "@/components/catalogue/CatalogueGiftBanner"
 import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { CataloguePagination } from "@/components/catalogue/CatalogueToolbar";
 import { catalogueMeta } from "@/data/catalogue";
+import { productMatchesAttribute } from "@/lib/catalog/filters";
 import type { Product } from "@/types/catalog";
 
 function matchesPrice(product: Product, rangeId: string | null): boolean {
@@ -28,22 +29,22 @@ function matchesPrice(product: Product, rangeId: string | null): boolean {
 
 export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
   const searchParams = useSearchParams();
-  const purity = searchParams.get("purity");
+  const attr = searchParams.get("attr");
   const spice = searchParams.get("spice");
   const price = searchParams.get("price");
 
   const filtered = useMemo(() => {
     return products.filter((product) => {
-      if (purity && !product.dietary?.includes(purity)) return false;
+      if (!productMatchesAttribute(product, attr)) return false;
       if (spice && product.spiceNote !== spice) return false;
       if (!matchesPrice(product, price)) return false;
       return true;
     });
-  }, [products, purity, spice, price]);
+  }, [products, attr, spice, price]);
 
   return (
     <section className="space-y-8 lg:col-span-9">
-      {(purity || spice || price) && filtered.length !== products.length ? (
+      {(attr || spice || price) && filtered.length !== products.length ? (
         <p className="text-sm text-on-surface-variant">
           Showing {filtered.length} of {products.length} products
         </p>

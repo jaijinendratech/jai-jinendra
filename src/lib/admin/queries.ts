@@ -2,6 +2,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import { mockOrders, mockEnquiries, mockMediaAssets } from "@/data/admin-mock";
 import { catalogueProducts } from "@/data/catalogue";
+import { parseAttributeOptions } from "@/lib/catalog/attributes";
+import { tagsFromFlags } from "@/lib/catalog/tags";
+import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
 import { categories as homeCategories, heroSlides } from "@/data/home";
 import { flagshipOutlets } from "@/data/promise-pages";
 import {
@@ -103,12 +106,34 @@ export type AdminProductListItem = {
   category: string;
   categoryId: string | null;
   price: number;
+  mrp: number | null;
   image: string | null;
   variantCount: number;
   stockQty: number;
   published: boolean;
   featured: boolean;
   rating: number;
+};
+
+export type AdminAttributeDefinition = {
+  id: string;
+  key: string;
+  label: string;
+  dataType: string;
+  options: string[];
+  filterGroup: string | null;
+  filterable: boolean;
+};
+
+export type AdminProductAttributeValue = {
+  attributeId: string;
+  label: string;
+  dataType: string;
+  options: string[];
+  filterGroup: string | null;
+  filterable: boolean;
+  valueBoolean: boolean | null;
+  valueText: string | null;
 };
 
 export type AdminProductDetail = {
@@ -134,6 +159,11 @@ export type AdminProductDetail = {
   origin: string | null;
   shelfLife: string | null;
   ingredients: string[];
+  shippingTitle: string | null;
+  shippingNote: string | null;
+  highlights: string[];
+  tags: string[] | null;
+  attributes: AdminProductAttributeValue[];
   published: boolean;
   variants: {
     id: string;
@@ -733,6 +763,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
       category: String(p.category),
       categoryId: null,
       price: p.price,
+      mrp: p.originalPrice ?? null,
       image: p.image,
       variantCount: p.variants.length,
       stockQty: p.variants.reduce((s, v) => s + (v.stockQty ?? 12), 0),
@@ -746,7 +777,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
   const { data } = await admin
     .from("products")
     .select(
-      "id, slug, name, published, featured, rating, categories(slug), product_variants(price_paise, stock_qty), product_images(storage_path, sort_order)",
+      "id, slug, name, published, featured, rating, categories(slug), product_variants(price_paise, mrp_paise, stock_qty), product_images(storage_path, sort_order)",
     )
     .order("name");
 
@@ -758,7 +789,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
     featured: boolean;
     rating: number | null;
     categories: { slug: string } | null;
-    product_variants: { price_paise: number; stock_qty: number }[] | null;
+    product_variants: { price_paise: number; mrp_paise: number | null; stock_qty: number }[] | null;
     product_images: { storage_path: string; sort_order: number }[] | null;
   };
 
@@ -770,6 +801,14 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
     const minPrice = variants.length
       ? Math.min(...variants.map((v) => v.price_paise)) / 100
       : 0;
+    
+    // Attempt to find the highest mrp among the cheapest variants, or any mrp
+    const minPricePaise = minPrice * 100;
+    const cheapestVariants = variants.filter(v => v.price_paise === minPricePaise);
+    const mrpPaise = cheapestVariants.length > 0 && cheapestVariants[0].mrp_paise
+      ? cheapestVariants[0].mrp_paise 
+      : variants.length > 0 ? variants[0].mrp_paise : null;
+
     return {
       id: p.id,
       slug: p.slug,
@@ -777,6 +816,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
       category: p.categories?.slug ?? "uncategorized",
       categoryId: null,
       price: minPrice,
+      mrp: mrpPaise ? mrpPaise / 100 : null,
       image: images[0]?.storage_path ?? null,
       variantCount: variants.length,
       stockQty: variants.reduce((s, v) => s + v.stock_qty, 0),
@@ -816,6 +856,11 @@ export async function getAdminProductById(
       origin: p.origin ?? null,
       shelfLife: p.shelfLife ?? null,
       ingredients: p.ingredients ?? [],
+      shippingTitle: null,
+      shippingNote: null,
+      highlights: [],
+      tags: p.badge ? [p.badge] : [],
+      attributes: [],
       published: true,
       variants: p.variants.map((v, i) => ({
         id: v.id,
@@ -886,23 +931,45 @@ export async function getAdminProductById(
     origin: string | null;
     shelf_life: string | null;
     ingredients: string[] | null;
+    shipping_title: string | null;
+    shipping_note: string | null;
+    highlights: string[] | null;
+    tags: string[] | null;
     published: boolean;
     categories: { slug: string } | null;
     product_variants: Variant[] | null;
     product_images: Image[] | null;
+    product_attribute_values: {
+      attribute_id: string;
+      value_text: string | null;
+      value_boolean: boolean | null;
+      attribute_definitions: {
+        id: string;
+        key: string;
+        label: string;
+        data_type: string;
+        options: unknown;
+        filterable: boolean | null;
+        filter_group: string | null;
+      } | null;
+    }[] | null;
   };
 
   const admin = createAdminClient();
-  const { data: raw } = await admin
+  const detailSchema = await productDetailSchemaReady(admin);
+  const definitionColumns = detailSchema
+    ? "id, key, label, data_type, options, filterable, filter_group"
+    : "id, key, label, data_type, options";
+  const { data: raw, error } = await admin
     .from("products")
     .select(
-      "*, categories(slug), product_variants(*), product_images(*)",
+      `*, categories(slug), product_variants(*), product_images(*), product_attribute_values(attribute_id, value_text, value_boolean, attribute_definitions(${definitionColumns}))`,
     )
     .or(`id.eq.${id},slug.eq.${id}`)
     .maybeSingle();
 
-  const data = raw as ProductDetailRow | null;
-  if (!data) return null;
+  if (error || !raw) return null;
+  const data = raw as unknown as ProductDetailRow;
 
   const variants = (data.product_variants ?? []).sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -934,6 +1001,35 @@ export async function getAdminProductById(
     origin: data.origin,
     shelfLife: data.shelf_life,
     ingredients: data.ingredients ?? [],
+    shippingTitle: data.shipping_title,
+    shippingNote: data.shipping_note,
+    highlights: data.highlights ?? [],
+    tags: tagsFromFlags({
+      tags: data.tags,
+      featured: data.featured,
+      bestseller: data.bestseller,
+      newArrival: data.new_arrival,
+      seasonal: data.seasonal,
+      badge: data.badge,
+    }),
+    attributes: (data.product_attribute_values ?? []).flatMap((row) => {
+      const definition = row.attribute_definitions;
+      if (!definition) return [];
+      return [
+        {
+          attributeId: row.attribute_id,
+          label: definition.label,
+          dataType: definition.data_type,
+          options: parseAttributeOptions(definition.options),
+          filterGroup: definition.filter_group,
+          filterable: Boolean(definition.filterable),
+          valueBoolean: row.value_boolean,
+          valueText: row.value_text,
+        },
+      ];
+    }).filter(
+      (row) => row.dataType === "boolean" || row.dataType === "select",
+    ),
     published: data.published,
     variants: variants.map((v) => ({
       id: v.id,
@@ -956,6 +1052,43 @@ export async function getAdminProductById(
       sortOrder: img.sort_order,
     })),
   };
+}
+
+export async function getAdminAttributeDefinitions(): Promise<
+  AdminAttributeDefinition[]
+> {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  const detailSchema = await productDetailSchemaReady(admin);
+  const columns = detailSchema
+    ? "id, key, label, data_type, options, filterable, filter_group"
+    : "id, key, label, data_type, options";
+  const { data } = await admin
+    .from("attribute_definitions")
+    .select(columns)
+    .eq("active", true)
+    .order("label");
+
+  type Row = {
+    id: string;
+    key: string;
+    label: string;
+    data_type: string;
+    options: unknown;
+    filterable: boolean | null;
+    filter_group: string | null;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((row) => ({
+    id: row.id,
+    key: row.key,
+    label: row.label,
+    dataType: row.data_type,
+    options: parseAttributeOptions(row.options),
+    filterGroup: row.filter_group,
+    filterable: Boolean(row.filterable),
+  }));
 }
 
 export async function getAdminCategories() {

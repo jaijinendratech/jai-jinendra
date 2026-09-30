@@ -18,7 +18,7 @@
 | Login | Email/password and Google (Supabase Auth) until Jio DLT is available; delivery phone stays on checkout |
 | Inventory | Full stock tracking per SKU/variant; block checkout when OOS |
 | Notifications | Email only at launch (Resend) |
-| Categories | namkeens, kachoris, mithai, gifts, tea-time, dry-fruits, combos |
+| Categories | namkeen, sweets (including gajak), gifting, bakery, combos |
 
 ---
 

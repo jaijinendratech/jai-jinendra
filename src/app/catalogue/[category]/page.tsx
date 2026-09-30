@@ -8,12 +8,15 @@ import {
   specialtyFilters,
 } from "@/data/catalogue";
 import {
+  getCatalogueSpecialtyFilters,
   getCategoryListingProducts,
   getStorefrontCategoryChildren,
 } from "@/lib/catalog/queries";
 import {
   CATEGORY_ROUTE_ALIASES,
   dbSlugToCategoryId,
+  GAJAK_LISTING_SLUG,
+  GAJAK_LISTING_TITLE,
   isBakeryMemberSlug,
   resolveCategorySlug,
   STOREFRONT_CATALOGUE_SECTIONS,
@@ -35,6 +38,8 @@ function readParam(value: string | string[] | undefined): string | null {
 }
 
 function categoryTitle(resolvedSlug: string): string {
+  if (resolvedSlug === GAJAK_LISTING_SLUG) return GAJAK_LISTING_TITLE;
+
   const storefront = STOREFRONT_CATALOGUE_SECTIONS.find(
     (item) => item.slug === resolvedSlug,
   );
@@ -76,7 +81,10 @@ export default async function CatalogueCategoryPage({
 
   const query = await searchParams;
   const requestedSub = readParam(query.sub);
-  const children = await getStorefrontCategoryChildren(resolved);
+  const [children, specialty] = await Promise.all([
+    getStorefrontCategoryChildren(resolved),
+    getCatalogueSpecialtyFilters(),
+  ]);
   const activeSub =
     requestedSub &&
     (children.some((child) => child.slug === requestedSub) ||
@@ -116,6 +124,8 @@ export default async function CatalogueCategoryPage({
       }
       categoryTitle={title}
       childPills={childPills}
+      activeCategorySlug={resolved}
+      specialty={specialty}
     />
   );
 }

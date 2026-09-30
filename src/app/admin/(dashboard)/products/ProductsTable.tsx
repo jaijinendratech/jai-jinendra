@@ -27,11 +27,13 @@ export function ProductsTable({
   products,
   categories,
   subcategories = [],
+  attributeDefinitions = [],
   supabaseOn,
 }: {
   products: AdminProductListItem[];
   categories: { id: string; title: string; slug?: string }[];
   subcategories?: import("@/lib/admin/queries").AdminSubcategoryRow[];
+  attributeDefinitions?: import("@/lib/admin/queries").AdminAttributeDefinition[];
   supabaseOn: boolean;
 }) {
   const [q, setQ] = useState("");
@@ -161,8 +163,15 @@ export function ProductsTable({
                 </td>
                 <td className="px-4 py-3 capitalize">{product.category}</td>
                 <td className="px-4 py-3">{product.variantCount}</td>
-                <td className="px-4 py-3 price font-semibold">
-                  {formatINR(product.price)}
+                <td className="px-4 py-3 font-semibold">
+                  <div className="flex flex-col">
+                    <span className="price text-on-surface">{formatINR(product.price)}</span>
+                    {product.mrp ? (
+                      <span className="price text-xs font-normal text-on-surface-variant line-through">
+                        {formatINR(product.mrp)}
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge
@@ -228,6 +237,7 @@ export function ProductsTable({
         state={modal}
         categories={categories}
         subcategories={subcategories}
+        attributeDefinitions={attributeDefinitions}
         supabase={supabaseOn}
         onClose={() => setModal(null)}
         onCreated={(productId) => setModal({ mode: "edit", productId })}
