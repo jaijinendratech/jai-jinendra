@@ -2,33 +2,51 @@
 
 import { Modal, useOverlayState } from "@heroui/react";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const DISMISS_KEY = "jj-offer-popup-dismissed";
 
-export function OfferPopup() {
-  const [open, setOpen] = useState(false);
+type Listener = () => void;
 
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(DISMISS_KEY) === "1") return;
-    } catch {
-      // sessionStorage can throw in private mode; still show once
-    }
-    setOpen(true);
-  }, []);
+const listeners = new Set<Listener>();
+let closedThisView = false;
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function isOpenInSession() {
+  if (closedThisView) return false;
+  try {
+    return sessionStorage.getItem(DISMISS_KEY) !== "1";
+  } catch {
+    // sessionStorage can throw in private mode; still show once
+    return true;
+  }
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
+function dismiss() {
+  closedThisView = true;
+  try {
+    sessionStorage.setItem(DISMISS_KEY, "1");
+  } catch {
+    // still close for this view
+  }
+  listeners.forEach((listener) => listener());
+}
+
+export function OfferPopup() {
+  const open = useSyncExternalStore(subscribe, isOpenInSession, getServerSnapshot);
 
   const state = useOverlayState({
     isOpen: open,
     onOpenChange: (next) => {
-      if (!next && open) {
-        try {
-          sessionStorage.setItem(DISMISS_KEY, "1");
-        } catch {
-          // still close for this view
-        }
-      }
-      setOpen(next);
+      if (!next) dismiss();
     },
   });
 
