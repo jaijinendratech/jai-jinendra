@@ -31,6 +31,8 @@ const ALIAS_TO_DB: Record<string, string> = {
   "tea-time": "tea-time-bites",
   "dry-cakes": "dry-cakes",
   cookies: "cookies",
+  /** Virtual nav category: cookies + dry cakes (see categoryQuerySlugs). */
+  bakery: "bakery",
   gajak: "gajak",
   gifting: "gifting",
   gifts: "gifting",
@@ -39,6 +41,9 @@ const ALIAS_TO_DB: Record<string, string> = {
   combos: "combos",
   "dry-fruits": "dry-fruits",
 };
+
+/** Real DB categories grouped under the virtual "bakery" category. */
+export const BAKERY_CATEGORY_SLUGS = ["cookies", "dry-cakes"];
 
 /** DB slug → preferred storefront URL segment (legacy routes still resolve). */
 const DB_TO_PREFERRED_URL: Record<string, string> = {
@@ -80,6 +85,7 @@ export function dbSlugToCategoryId(dbSlug: string): CategoryId {
     snacks: "tea-time-bites",
     "dry-cakes": "dry-cakes",
     cookies: "cookies",
+    bakery: "cookies",
     gajak: "gajak",
     gifting: "gifting",
     gifts: "gifting",
@@ -117,6 +123,7 @@ export function categoryQuerySlugs(resolvedDbSlug: string): string[] {
   if (resolvedDbSlug === "sweets") return ["sweets", "mithai"];
   if (resolvedDbSlug === "namkeen") return ["namkeen", "namkeens"];
   if (resolvedDbSlug === "gifting") return ["gifting", "gifts"];
+  if (resolvedDbSlug === "bakery") return [...BAKERY_CATEGORY_SLUGS];
   if (resolvedDbSlug === "tea-time-bites")
     return ["tea-time-bites", "tea-time"];
   return [resolvedDbSlug];

@@ -22,6 +22,7 @@ type Props = {
 };
 
 function categoryTitle(resolvedSlug: string): string {
+  if (resolvedSlug === "bakery") return "Bakery";
   const categoryId = dbSlugToCategoryId(resolvedSlug);
   const fromHome = categories.find((item) => item.id === categoryId);
   if (fromHome) return fromHome.title;
@@ -63,6 +64,7 @@ export default async function CatalogueCategoryPage({ params }: Props) {
       products={products}
       activeCategory={activeCategory === "combos" ? "tea-time-bites" : activeCategory}
       categoryTitle={categoryTitle(resolved)}
+      categorySlug={resolved}
     />
   );
 }

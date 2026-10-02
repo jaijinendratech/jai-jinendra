@@ -2,11 +2,14 @@ import { Suspense } from "react";
 import { CatalogueFilters } from "@/components/catalogue/CatalogueFilters";
 import { CatalogueHero } from "@/components/catalogue/CatalogueHero";
 import { CatalogueToolbar } from "@/components/catalogue/CatalogueToolbar";
+import { CategoryUspBadges } from "@/components/catalogue/CategoryUspBadges";
 import { FilterableCatalogueGrid } from "@/components/catalogue/FilterableCatalogueGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import {
+  bakeryUspBadges,
   catalogueMeta,
   cataloguePills,
+  namkeenUspBadges,
   priceRanges,
   purityFilters,
   specialtyFilters,
@@ -18,11 +21,21 @@ export function CataloguePageView({
   products,
   activeCategory,
   categoryTitle,
+  categorySlug,
 }: {
   products: Product[];
   activeCategory: CategoryId | "all";
   categoryTitle?: string;
+  /** Raw resolved category slug (e.g. "bakery"); used for category-specific extras. */
+  categorySlug?: string;
 }) {
+  const uspBadges =
+    categorySlug === "bakery"
+      ? bakeryUspBadges
+      : categorySlug === "namkeen"
+        ? namkeenUspBadges
+        : null;
+
   return (
     <main className="container-jj py-6 md:py-8">
       <Breadcrumbs
@@ -45,6 +58,13 @@ export function CataloguePageView({
         pills={cataloguePills}
         activeCategory={activeCategory}
       />
+
+      {uspBadges ? (
+        <CategoryUspBadges
+          items={uspBadges}
+          ariaLabel={`${categoryTitle ?? "Category"} highlights`}
+        />
+      ) : null}
 
       <CatalogueToolbar
         shown={products.length}

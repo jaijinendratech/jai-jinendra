@@ -1,4 +1,6 @@
+import { Ban, Droplets, Flame, ShieldCheck, Sparkles, WheatOff } from "lucide-react";
 import images from "@/data/image-map.json";
+import type { CategoryUspBadge } from "@/components/catalogue/CategoryUspBadges";
 import type {
   CatalogueFilterOption,
   CataloguePill,
@@ -94,6 +96,20 @@ export const catalogueMeta = {
     },
   ],
 } as const;
+
+export const bakeryUspBadges: CategoryUspBadge[] = [
+  { id: "veg", label: "100% Veg.", veg: true },
+  { id: "no-palm-oil", label: "No Palm Oil, Real Butter", icon: Droplets },
+  { id: "fresh", label: "Freshly Baked", icon: Flame },
+  { id: "premium", label: "Premium Ingredients", icon: Sparkles },
+];
+
+export const namkeenUspBadges: CategoryUspBadge[] = [
+  { id: "no-onion-garlic", label: "No Onion, No Garlic", icon: Ban },
+  { id: "no-palm-oil", label: "No Palm Oil", icon: Droplets },
+  { id: "no-maida", label: "No Maida", icon: WheatOff },
+  { id: "no-preservatives", label: "No Preservatives", icon: ShieldCheck },
+];
 
 export const cataloguePills: CataloguePill[] = [
   { id: "all", label: "All Products", mobileLabel: "All", count: 64, icon: "menu" },

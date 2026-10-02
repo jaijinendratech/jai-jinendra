@@ -4,6 +4,7 @@ import {
   getHeroCarouselContent,
 } from "@/lib/admin/queries";
 import { siteConfig, celebrationBanner } from "@/data/home";
+import { thaliBuilderMeta } from "@/data/thali-builder";
 import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
 import { HomepageContentEditor } from "./HomepageContentEditor";
 
@@ -21,6 +22,7 @@ export default async function AdminHomeContentPage({
   const slides = await getHeroCarouselContent("home");
   const announcementBlock = await getContentBlock("home", "announcement");
   const celebrationBlock = await getContentBlock("home", "celebration");
+  const thaliOfferBlock = await getContentBlock("home", "thali_offer");
 
   const announcement =
     (announcementBlock?.content as { text?: string } | null)?.text ??
@@ -32,6 +34,9 @@ export default async function AdminHomeContentPage({
     title: celebrationBanner.title,
     body: celebrationBanner.body,
   };
+  const thaliDiscountPercent =
+    (thaliOfferBlock?.content as { discountPercent?: number } | null)
+      ?.discountPercent ?? thaliBuilderMeta.defaultDiscountPercent;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -45,6 +50,7 @@ export default async function AdminHomeContentPage({
         announcement={announcement}
         celebrationTitle={celebration.title ?? ""}
         celebrationBody={celebration.body ?? ""}
+        thaliDiscountPercent={thaliDiscountPercent}
         slides={slides}
       />
     </div>

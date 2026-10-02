@@ -5,12 +5,13 @@ import { HeritageSection } from "@/components/home/HeritageSection";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { PuritySection } from "@/components/home/PuritySection";
+import { ThaliBuilder } from "@/components/home/ThaliBuilder";
 import { SignatureCollections } from "@/components/home/SignatureCollections";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
-import { getHeroCarouselContent } from "@/lib/admin/queries";
+import { getContentBlock, getHeroCarouselContent } from "@/lib/admin/queries";
 import {
+  getProductsByCategory,
   getPublishedProducts,
   getSpecialAttentionCategories,
 } from "@/lib/catalog/queries";
@@ -23,6 +24,7 @@ import {
   testimonials,
   trustItems,
 } from "@/data/home";
+import { thaliBuilderMeta, thaliCategoryGroups } from "@/data/thali-builder";
 
 function categoryKeyFromHref(href: string): string {
   const cleaned = href.replace(/\/$/, "");
@@ -34,12 +36,57 @@ function categoryKeyFromHref(href: string): string {
 }
 
 export default async function HomePage() {
-  const [allProducts, heroSlides, specialAttention] = await Promise.all([
-    getPublishedProducts(),
-    getHeroCarouselContent("home"),
-    getSpecialAttentionCategories(),
-  ]);
+  const [allProducts, heroSlides, specialAttention, thaliOfferBlock, thaliByGroup] =
+    await Promise.all([
+      getPublishedProducts(),
+      getHeroCarouselContent("home"),
+      getSpecialAttentionCategories(),
+      getContentBlock("home", "thali_offer"),
+      Promise.all(
+        thaliCategoryGroups.map((group) => getProductsByCategory(group.categorySlug)),
+      ),
+    ]);
   const featuredProducts = allProducts.slice(0, 8);
+
+  const thaliDiscountPercent =
+    (thaliOfferBlock?.content as { discountPercent?: number } | null)
+      ?.discountPercent ?? thaliBuilderMeta.defaultDiscountPercent;
+
+  /**
+   * A handful of products per category card (see thaliCategoryGroups), so
+   * each card has real choices and "View More" is meaningful. Fetched with
+   * getProductsByCategory — the same reliable, already-proven query path
+   * used by /catalogue/[category] — rather than filtered out of the flat
+   * published-products list, whose category field isn't reliably
+   * resolvable for every category in this catalogue (e.g. gajak products
+   * didn't match there, despite /catalogue/gajak itself working fine).
+   * If the curated groups don't add up to at least `slotCount` products
+   * (small/seed catalogues), top up from the rest of the catalogue so the
+   * thali can still be completed — top-up items won't necessarily appear
+   * in a category card, but guarantee the thali itself stays completable.
+   */
+  const thaliCurated: typeof allProducts = [];
+  const thaliCuratedIds = new Set<string>();
+  const thaliGroupedIds: Record<string, string[]> = {};
+  thaliCategoryGroups.forEach((group, i) => {
+    const picked = (thaliByGroup[i] ?? [])
+      .filter((p) => !thaliCuratedIds.has(p.id))
+      .slice(0, thaliBuilderMeta.poolItemsPerGroup);
+    thaliGroupedIds[group.id] = picked.map((p) => p.id);
+    for (const p of picked) {
+      thaliCurated.push(p);
+      thaliCuratedIds.add(p.id);
+    }
+  });
+  const thaliTopUp = allProducts.filter((p) => !thaliCuratedIds.has(p.id));
+  const thaliPoolSize = Math.max(
+    thaliBuilderMeta.slotCount,
+    thaliCurated.length,
+  );
+  const thaliProducts = [...thaliCurated, ...thaliTopUp].slice(
+    0,
+    thaliPoolSize,
+  );
   const specialKeys = new Set(
     specialAttention.map((c) => categoryKeyFromHref(c.href)),
   );
@@ -121,7 +168,12 @@ export default async function HomePage() {
       <HeritageSection />
       <SignatureCollections items={signatures} />
       <CelebrationBanner specialAttention={specialForBanner} />
-      <PuritySection />
+      <ThaliBuilder
+        products={thaliProducts}
+        groupedIds={thaliGroupedIds}
+        slotCount={thaliBuilderMeta.slotCount}
+        discountPercent={thaliDiscountPercent}
+      />
       <TestimonialsSection items={testimonials} />
       <InstagramSection posts={instagramPosts} />
       <NewsletterSection />
