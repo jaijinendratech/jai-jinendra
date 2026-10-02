@@ -1,29 +1,28 @@
+import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
 import { CategorySection } from "@/components/home/CategorySection";
 import { CelebrationBanner } from "@/components/home/CelebrationBanner";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HeritageSection } from "@/components/home/HeritageSection";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { InstagramSection } from "@/components/home/InstagramSection";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { ThaliBuilder } from "@/components/home/ThaliBuilder";
 import { SignatureCollections } from "@/components/home/SignatureCollections";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { ThaliBuilder } from "@/components/home/ThaliBuilder";
 import { TrustStrip } from "@/components/home/TrustStrip";
-import { getContentBlock, getHeroCarouselContent } from "@/lib/admin/queries";
+import {
+  getAchievementMediaContent,
+  getContentBlock,
+  getHeroCarouselContent,
+  getVideoTestimonials,
+} from "@/lib/admin/queries";
+import { productCategorySlug, resolveCategorySlug } from "@/lib/catalog/aliases";
 import {
   getCategoryListingProducts,
+  getHomeCategoryTiles,
   getPublishedProducts,
   getSpecialAttentionCategories,
 } from "@/lib/catalog/queries";
-import { resolveCategorySlug } from "@/lib/catalog/aliases";
-import {
-  categories,
-  instagramPosts,
-  signatures,
-  siteConfig,
-  testimonials,
-  trustItems,
-} from "@/data/home";
+import { signatures, siteConfig, testimonials, trustItems } from "@/data/home";
 import { thaliBuilderMeta, thaliCategoryGroups } from "@/data/thali-builder";
 
 function categoryKeyFromHref(href: string): string {
@@ -36,18 +35,29 @@ function categoryKeyFromHref(href: string): string {
 }
 
 export default async function HomePage() {
-  const [allProducts, heroSlides, specialAttention, thaliOfferBlock, thaliByGroup] =
-    await Promise.all([
-      getPublishedProducts(),
-      getHeroCarouselContent("home"),
-      getSpecialAttentionCategories(),
-      getContentBlock("home", "thali_offer"),
-      Promise.all(
-        thaliCategoryGroups.map((group) =>
-          getCategoryListingProducts(group.categorySlug, null),
-        ),
+  const [
+    allProducts,
+    heroSlides,
+    specialAttention,
+    categoryTiles,
+    achievementMedia,
+    videos,
+    thaliOfferBlock,
+    thaliByGroup,
+  ] = await Promise.all([
+    getPublishedProducts(),
+    getHeroCarouselContent("home"),
+    getSpecialAttentionCategories(),
+    getHomeCategoryTiles(),
+    getAchievementMediaContent(),
+    getVideoTestimonials(),
+    getContentBlock("home", "thali_offer"),
+    Promise.all(
+      thaliCategoryGroups.map((group) =>
+        getCategoryListingProducts(group.categorySlug, null),
       ),
-    ]);
+    ),
+  ]);
   const featuredProducts = allProducts.slice(0, 8);
 
   const thaliDiscountPercent =
@@ -94,15 +104,26 @@ export default async function HomePage() {
   const specialKeys = new Set(
     specialAttention.map((c) => categoryKeyFromHref(c.href)),
   );
-  const homeCategories = categories.map((c) => ({
-    ...c,
-    specialAttention: specialKeys.has(categoryKeyFromHref(c.href)),
-  }));
+  const homeCategories = categoryTiles.map((category) => {
+    const sample = allProducts.find(
+      (product) => productCategorySlug(product) === category.slug,
+    );
+    return {
+      id: category.id,
+      title: category.title,
+      href: category.href,
+      image: category.image || sample?.image || "/images/prod0.jpg",
+      imageAlt: sample?.imageAlt || category.title,
+      specialAttention: category.featured || specialKeys.has(category.slug),
+    };
+  });
 
-  /** Prefer storefront routes (e.g. /sweets) over generic /catalogue/… when possible. */
+  /** Prefer the live category route when a featured category matches. */
   const specialForBanner = specialAttention.map((item) => {
     const key = categoryKeyFromHref(item.href);
-    const match = categories.find((c) => categoryKeyFromHref(c.href) === key);
+    const match = homeCategories.find(
+      (category) => categoryKeyFromHref(category.href) === key,
+    );
     return {
       ...item,
       href: match?.href ?? item.href,
@@ -178,8 +199,8 @@ export default async function HomePage() {
         slotCount={thaliBuilderMeta.slotCount}
         discountPercent={thaliDiscountPercent}
       />
-      <TestimonialsSection items={testimonials} />
-      <InstagramSection posts={instagramPosts} />
+      <TestimonialsSection items={testimonials} videos={videos} />
+      <AchievementMediaSection content={achievementMedia} />
       <NewsletterSection />
     </main>
   );

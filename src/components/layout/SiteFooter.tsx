@@ -6,6 +6,32 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { footerBrand, footerColumns, siteConfig } from "@/data/home";
 
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M14 8.5V6.75c0-.55.45-1 1-1h1.5V3H14c-2.21 0-4 1.79-4 4v1.5H7.5V12H10v9h3.5v-9h2.75l.5-3.5H13.5V7c0-.28.22-.5.5-.5h2.5v-3H14c-1.93 0-3.5 1.57-3.5 3.5v1.5H14Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="4"
+        y="4"
+        width="16"
+        height="16"
+        rx="4"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="16.75" cy="7.25" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 function FooterAccordionColumn({
   title,
   links,
@@ -50,7 +76,7 @@ function FooterAccordionColumn({
 export function SiteFooter() {
   return (
     <footer className="border-t border-outline-variant/40 bg-surface-container-high">
-      <div className="container-jj grid gap-6 py-8 md:grid-cols-2 md:gap-10 md:py-12 lg:grid-cols-4">
+      <div className="container-jj grid gap-6 py-8 md:grid-cols-2 md:gap-10 md:py-12 lg:grid-cols-3">
         <div>
           <Link href="/" className="inline-flex shrink-0">
             <Image
@@ -67,12 +93,24 @@ export function SiteFooter() {
             <span className="hidden md:inline">{footerBrand.body}</span>
           </p>
           <div className="mt-3 flex flex-wrap gap-2 md:mt-4">
-            <span className="rounded-full border border-secondary/30 bg-secondary-container/40 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-on-secondary-container">
-              100% Shuddh Pure Veg
-            </span>
-            <span className="hidden rounded-full border border-outline-variant/40 bg-surface-container-lowest px-3 py-1 text-[11px] font-semibold text-on-surface-variant md:inline">
-              FSSAI Lic #{siteConfig.fssai}
-            </span>
+            <a
+              href={siteConfig.social.facebook}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Follow Jai Jinendra on Facebook"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant transition hover:border-primary/40 hover:text-primary"
+            >
+              <FacebookIcon className="h-4 w-4" />
+            </a>
+            <a
+              href={siteConfig.social.instagram}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Follow Jai Jinendra on Instagram"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant transition hover:border-primary/40 hover:text-primary"
+            >
+              <InstagramIcon className="h-4 w-4" />
+            </a>
           </div>
           <Link
             href="/support"

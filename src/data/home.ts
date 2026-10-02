@@ -1,14 +1,16 @@
 import images from "@/data/image-map.json";
 import type {
+  AchievementMedia,
+  AchievementPageContent,
   Category,
   FooterColumn,
-  InstagramPost,
   NavLink,
   Product,
   PurityPillar,
   SignatureCollection,
   Testimonial,
   TrustItem,
+  VideoTestimonial,
 } from "@/types/catalog";
 
 export const siteConfig = {
@@ -23,6 +25,7 @@ export const siteConfig = {
   fssai: "10020014002931",
   founded: 1982,
   social: {
+    facebook: "https://instagram.com/JaiJinendraNamkeens",
     instagram: "https://instagram.com/JaiJinendraNamkeens",
   },
   announcement:
@@ -49,11 +52,12 @@ export const siteConfig = {
 } as const;
 
 export const navLinks: NavLink[] = [
-  { label: "Namkeen", href: "/catalogue/namkeen" },
   { label: "Sweets", href: "/catalogue/sweets" },
-  { label: "Gifting", href: "/catalogue/gifting" },
+  { label: "Namkeen", href: "/catalogue/namkeen" },
   { label: "Bakery", href: "/catalogue/bakery" },
-  { label: "Combos", href: "/combos" },
+  { label: "Gajak", href: "/catalogue/gajak" },
+  { label: "Gifting", href: "/catalogue/gifting" },
+  { label: "Catering", href: "/catering" },
 ];
 
 export const heroSlides = [
@@ -400,44 +404,70 @@ export const testimonials: Testimonial[] = [
   },
 ];
 
-export const instagramPosts: InstagramPost[] = [
+export const achievementMedia: AchievementMedia = {
+  eyebrow: "Achievements & Media",
+  title: "Recognition, moments, and media from our kitchens",
+  body: "From festive coverage to community milestones — a living gallery of Jai Jinendra.",
+  ctaLabel: "See Achievements",
+  items: [],
+};
+
+export const videoTestimonials: VideoTestimonial[] = [
   {
-    id: "1",
-    image: images.ig0,
-    imageAlt: "Masala chai with mathri flatlay",
-    href: "https://instagram.com/JaiJinendraNamkeens",
+    id: "video-1",
+    videoUrl: "",
+    posterUrl: "",
+    name: "Customer story",
+    location: "",
+    quote: "",
   },
   {
-    id: "2",
-    image: images.ig1,
-    imageAlt: "Roasted cashews with Kashmiri chilli",
-    href: "https://instagram.com/JaiJinendraNamkeens",
+    id: "video-2",
+    videoUrl: "",
+    posterUrl: "",
+    name: "Customer story",
+    location: "",
+    quote: "",
   },
   {
-    id: "3",
-    image: images.ig2,
-    imageAlt: "Opening a festive gift box during Diwali",
-    href: "https://instagram.com/JaiJinendraNamkeens",
-  },
-  {
-    id: "4",
-    image: images.ig3,
-    imageAlt: "Halwai folding kachori dough by hand",
-    href: "https://instagram.com/JaiJinendraNamkeens",
-  },
-  {
-    id: "5",
-    image: images.ig4,
-    imageAlt: "Sev and bhujia in paper cones at a garden tea party",
-    href: "https://instagram.com/JaiJinendraNamkeens",
-  },
-  {
-    id: "6",
-    image: images.ig5,
-    imageAlt: "Festive family dinner with kachoris and laddoos",
-    href: "https://instagram.com/JaiJinendraNamkeens",
+    id: "video-3",
+    videoUrl: "",
+    posterUrl: "",
+    name: "Customer story",
+    location: "",
+    quote: "",
   },
 ];
+
+export const achievementPage: AchievementPageContent = {
+  intro: {
+    title: "Our milestones are being prepared",
+    body: `From loyal families to festive gifting partners, every milestone reflects the trust placed in ${siteConfig.name}. We are collecting the full story of our achievements, recognition, and community moments for this page.`,
+  },
+  items: [
+    {
+      id: "years",
+      year: "",
+      title: "40+ years of craft",
+      description: "Detailed achievement content will be added soon.",
+      imageUrl: "",
+    },
+    {
+      id: "customers",
+      year: "",
+      title: "Pan-India customers",
+      description: "Detailed achievement content will be added soon.",
+      imageUrl: "",
+    },
+    {
+      id: "gifting",
+      year: "",
+      title: "Festive gifting trust",
+      description: "Detailed achievement content will be added soon.",
+      imageUrl: "",
+    },
+  ],
+};
 
 export const newsletter = {
   eyebrow: "Welcome Offer",
@@ -457,33 +487,23 @@ export const footerBrand = {
 
 export const footerColumns: FooterColumn[] = [
   {
-    title: "Our Delicacies",
+    title: "Categories",
     links: [
-      { label: "Namkeens & Farsan", href: "/catalogue/namkeens" },
-      { label: "Traditional Sweets", href: "/sweets" },
-      { label: "Festive Hampers", href: "/hampers" },
-      { label: "Chai-Nashta Combos", href: "/combos" },
-      { label: "Royal Dry Fruit Blends", href: "/catalogue/dry-fruits" },
+      { label: "Sweets", href: "/catalogue/sweets" },
+      { label: "Namkeen", href: "/catalogue/namkeen" },
+      { label: "Bakery", href: "/catalogue/bakery" },
+      { label: "Gajak", href: "/catalogue/gajak" },
+      { label: "Gifting", href: "/catalogue/gifting" },
       { label: "Full Catalogue", href: "/catalogue" },
     ],
   },
   {
-    title: "The Promise",
+    title: "Company",
     links: [
-      { label: "Our Heritage Story", href: "/heritage" },
-      { label: "Purity & Lab Testing", href: "/purity" },
-      { label: "Pan-India Freshness Guarantee", href: "/freshness" },
-      { label: "Corporate Gifting Desk", href: "/corporate" },
-      { label: "Our Flagship Outlets", href: "/outlets" },
-    ],
-  },
-  {
-    title: "Customer Care",
-    links: [
-      { label: "Track Order", href: "/track-order" },
-      { label: "Shipping & Returns", href: "/shipping-returns" },
-      { label: "Customer Support FAQs", href: "/support" },
-      { label: "Terms & Privacy", href: "/terms-privacy" },
+      { label: "About us", href: "/about" },
+      { label: "Achievement", href: "/achievement" },
+      { label: "Our Outlets", href: "/outlets" },
+      { label: "Contact us", href: "/contact" },
     ],
   },
 ];

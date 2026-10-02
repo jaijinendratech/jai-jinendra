@@ -704,6 +704,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      offer_leads: {
+        Row: {
+          id: string;
+          full_name: string;
+          phone: string;
+          coupon_code: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          phone: string;
+          coupon_code?: string;
+          source?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          phone?: string;
+          coupon_code?: string;
+          source?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       content_blocks: {
         Row: {
           id: string;

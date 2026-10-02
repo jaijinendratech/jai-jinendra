@@ -151,11 +151,40 @@ export type Testimonial = {
   rating: number;
 };
 
-export type InstagramPost = {
+export type AchievementMediaItem = {
   id: string;
-  image: string;
-  imageAlt: string;
-  href: string;
+  src: string;
+  alt: string;
+};
+
+export type AchievementMedia = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  ctaLabel: string;
+  items: AchievementMediaItem[];
+};
+
+export type VideoTestimonial = {
+  id: string;
+  videoUrl: string;
+  posterUrl: string;
+  name: string;
+  location: string;
+  quote: string;
+};
+
+export type AchievementPageItem = {
+  id: string;
+  year: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+};
+
+export type AchievementPageContent = {
+  intro: { title: string; body: string };
+  items: AchievementPageItem[];
 };
 
 export type FooterColumn = {
