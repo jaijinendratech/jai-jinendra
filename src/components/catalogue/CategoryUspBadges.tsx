@@ -6,6 +6,10 @@ export type CategoryUspBadge = {
   /** Renders the brand's veg-mark instead of an icon when true. */
   veg?: boolean;
   icon?: LucideIcon;
+  /** Small-caps caption inside the medallion — used by PuritySealCertification only. */
+  medallionLabel?: string;
+  /** One-line blurb under the heading — used by PuritySealCertification only. */
+  description?: string;
 };
 
 /** Compact icon + label badge row for a single catalogue category. */

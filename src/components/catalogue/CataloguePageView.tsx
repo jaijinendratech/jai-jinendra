@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { CatalogueFilters } from "@/components/catalogue/CatalogueFilters";
-import { CategoryUspBadges } from "@/components/catalogue/CategoryUspBadges";
 import {
   CategoryPillRow,
   type CategoryPill,
 } from "@/components/catalogue/CategoryPillRow";
 import { CatalogueSections } from "@/components/catalogue/CatalogueSections";
+import { PuritySealCertification } from "@/components/catalogue/PuritySealCertification";
 import { FilterableCatalogueGrid } from "@/components/catalogue/FilterableCatalogueGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { bakeryUspBadges, namkeenUspBadges, priceRanges } from "@/data/catalogue";
@@ -52,12 +52,7 @@ export function CataloguePageView({
         ]}
       />
 
-      {uspBadges ? (
-        <CategoryUspBadges
-          items={uspBadges}
-          ariaLabel={`${categoryTitle ?? "Category"} highlights`}
-        />
-      ) : null}
+      {uspBadges ? <PuritySealCertification items={uspBadges} /> : null}
 
       {overview && sections ? (
         <CatalogueSections sections={sections} />

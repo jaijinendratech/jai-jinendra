@@ -1,4 +1,4 @@
-import { Ban, Droplets, Flame, ShieldCheck, Sparkles, WheatOff } from "lucide-react";
+import { Ban, Droplets, DropletOff, Flame, ShieldCheck, Star, WheatOff } from "lucide-react";
 import images from "@/data/image-map.json";
 import type { CategoryUspBadge } from "@/components/catalogue/CategoryUspBadges";
 import type {
@@ -98,17 +98,66 @@ export const catalogueMeta = {
 } as const;
 
 export const bakeryUspBadges: CategoryUspBadge[] = [
-  { id: "veg", label: "100% Veg.", veg: true },
-  { id: "no-palm-oil", label: "No Palm Oil, Real Butter", icon: Droplets },
-  { id: "fresh", label: "Freshly Baked", icon: Flame },
-  { id: "premium", label: "Premium Ingredients", icon: Sparkles },
+  {
+    id: "veg",
+    label: "100% Veg.",
+    veg: true,
+    medallionLabel: "100% Eggless",
+    description:
+      "Sacred eggless baking tradition crafted strictly per pure vegetarian Sattvic vows.",
+  },
+  {
+    id: "no-palm-oil",
+    label: "No Palm Oil, Real Butter",
+    icon: Droplets,
+    medallionLabel: "Pure Butter",
+    description: "Baked exclusively with rich pure dairy butter. Zero hydrogenated fat or palm oil.",
+  },
+  {
+    id: "fresh",
+    label: "Freshly Baked",
+    icon: Flame,
+    medallionLabel: "Oven Crisp",
+    description: "Small artisanal batches prepared fresh daily for maximum crispness and aroma.",
+  },
+  {
+    id: "premium",
+    label: "Premium Ingredients",
+    icon: Star,
+    medallionLabel: "Gold Grade",
+    description: "Finest whole almonds, whole spices, and pure unadulterated flours.",
+  },
 ];
 
 export const namkeenUspBadges: CategoryUspBadge[] = [
-  { id: "no-onion-garlic", label: "No Onion, No Garlic", icon: Ban },
-  { id: "no-palm-oil", label: "No Palm Oil", icon: Droplets },
-  { id: "no-maida", label: "No Maida", icon: WheatOff },
-  { id: "no-preservatives", label: "No Preservatives", icon: ShieldCheck },
+  {
+    id: "no-onion-garlic",
+    label: "No Onion, No Garlic",
+    icon: Ban,
+    medallionLabel: "Jain Pure",
+    description: "Sacred Sattvic delicacy crafted per strict traditional temple vow.",
+  },
+  {
+    id: "no-palm-oil",
+    label: "No Palm Oil",
+    icon: DropletOff,
+    medallionLabel: "Cold Pressed",
+    description: "Single-origin wood-pressed groundnut & mustard oil crisping only.",
+  },
+  {
+    id: "no-maida",
+    label: "No Maida",
+    icon: WheatOff,
+    medallionLabel: "Besan Only",
+    description: "100% Rajasthani Chana Besan & whole grain flours. Zero refined wheat.",
+  },
+  {
+    id: "no-preservatives",
+    label: "No Preservatives",
+    icon: ShieldCheck,
+    medallionLabel: "100% Pure",
+    description: "Fresh batch preparation with rock salt & pristine natural spices.",
+  },
 ];
 
 export const cataloguePills: CataloguePill[] = [
