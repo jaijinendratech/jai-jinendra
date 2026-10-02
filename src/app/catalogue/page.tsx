@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CataloguePageView } from "@/components/catalogue/CataloguePageView";
 import { catalogueMeta } from "@/data/catalogue";
-import { getPublishedProducts } from "@/lib/catalog/queries";
+import { getCatalogueOverview } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 
 export const revalidate = 60;
@@ -18,6 +18,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CataloguePage() {
-  const products = await getPublishedProducts();
-  return <CataloguePageView products={products} activeCategory="all" />;
+  const sections = await getCatalogueOverview();
+  return <CataloguePageView activeCategory="all" sections={sections} />;
 }

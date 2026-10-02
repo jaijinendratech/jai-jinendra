@@ -9,6 +9,7 @@ import {
   UtensilsCrossed,
   Wheat,
 } from "lucide-react";
+import { BakeryDietaryMarks } from "@/components/catalogue/BakeryDietaryMarks";
 import type { CataloguePill, CategoryId } from "@/types/catalog";
 
 const icons = {
@@ -29,6 +30,7 @@ export function CatalogueHero({
   mobileTitle,
   mobileEyebrow,
   mobileDescription,
+  showBakeryMarks = false,
 }: {
   title: string;
   eyebrow: string;
@@ -38,19 +40,24 @@ export function CatalogueHero({
   mobileTitle?: string;
   mobileEyebrow?: string;
   mobileDescription?: string;
+  showBakeryMarks?: boolean;
 }) {
   return (
     <section className="relative mb-4 overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 md:mb-8 md:p-10">
       <div className="relative z-10 max-w-3xl">
-        <div className="mb-1.5 flex items-center gap-2 md:mb-2">
-          <span className="veg-mark" aria-hidden>
-            <span className="veg-mark-dot" />
-          </span>
-          <span className="label-sm uppercase tracking-widest text-secondary">
-            <span className="md:hidden">{mobileEyebrow ?? eyebrow}</span>
-            <span className="hidden md:inline">{eyebrow}</span>
-          </span>
-        </div>
+        {showBakeryMarks ? (
+          <BakeryDietaryMarks className="mb-2" />
+        ) : (
+          <div className="mb-1.5 flex items-center gap-2 md:mb-2">
+            <span className="veg-mark" aria-hidden>
+              <span className="veg-mark-dot" />
+            </span>
+            <span className="label-sm uppercase tracking-widest text-secondary">
+              <span className="md:hidden">{mobileEyebrow ?? eyebrow}</span>
+              <span className="hidden md:inline">{eyebrow}</span>
+            </span>
+          </div>
+        )}
         <h1 className="font-display text-xl font-bold leading-tight text-primary md:text-[32px] md:leading-10">
           <span className="md:hidden">{mobileTitle ?? title}</span>
           <span className="hidden md:inline">{title}</span>

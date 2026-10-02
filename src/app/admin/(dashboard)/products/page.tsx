@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { getAdminCategories, getAdminProducts, getAdminSubcategories, getIntegrationStatus } from "@/lib/admin/queries";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
+import {
+  getAdminAttributeDefinitions,
+  getAdminCategories,
+  getAdminProducts,
+  getAdminSubcategories,
+  getIntegrationStatus,
+} from "@/lib/admin/queries";
 import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
 import { ProductsTable } from "./ProductsTable";
 
@@ -14,10 +22,17 @@ export default async function AdminProductsPage({
   searchParams: Promise<{ notice?: string }>;
 }) {
   const { notice } = await searchParams;
-  const products = await getAdminProducts();
-  const categories = await getAdminCategories();
-  const subcategories = await getAdminSubcategories();
+  const [products, categories, subcategories, attributeDefinitions] =
+    await Promise.all([
+      getAdminProducts(),
+      getAdminCategories(),
+      getAdminSubcategories(),
+      getAdminAttributeDefinitions(),
+    ]);
   const { supabase } = getIntegrationStatus();
+  const detailSchemaReady = supabase
+    ? await productDetailSchemaReady(createAdminClient())
+    : true;
 
   const categoryOptions = categories.map((c) => ({
     id: c.id,
@@ -32,10 +47,21 @@ export default async function AdminProductsPage({
         description={`${products.length} treats ready for the shop floor.`}
       />
       <NoticeBanner notice={notice} />
+      {supabase && !detailSchemaReady ? (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Product editing works. Shipping, highlights, tags, and catalogue filter
+          flags save after you apply{" "}
+          <span className="font-semibold">
+            supabase/migrations/010_product_detail_and_filters.sql
+          </span>
+          .
+        </p>
+      ) : null}
       <ProductsTable
         products={products}
         categories={categoryOptions}
         subcategories={subcategories}
+        attributeDefinitions={attributeDefinitions}
         supabaseOn={supabase}
       />
     </div>

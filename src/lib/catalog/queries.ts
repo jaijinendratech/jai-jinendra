@@ -1,19 +1,26 @@
+import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
+  BAKERY_MEMBER_SLUGS,
   categoryHref,
   categoryQuerySlugs,
   dbSlugToCategoryId,
+  GAJAK_LISTING_SLUG,
+  GAJAK_PARENT_SLUG,
+  isBakeryMemberSlug,
   normalizeCategoryRef,
+  productCategorySlug,
   resolveCategorySlug,
+  STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
 import {
   catalogueProducts,
   getProductBySlug as mockGetBySlug,
-  getProductsByCategory as mockGetByCategory,
 } from "@/data/catalogue";
 import type {
+  CatalogueFilterOption,
   Product,
   ProductAttribute,
   ProductVariant,
@@ -52,6 +59,10 @@ type DbProductRow = {
   origin: string | null;
   shelf_life: string | null;
   ingredients: string[] | null;
+  shipping_title?: string | null;
+  shipping_note: string | null;
+  highlights: string[] | null;
+  tags: string[] | null;
   categories: { slug: string; title: string } | null;
   subcategories: { slug: string; title: string } | null;
   product_variants: DbVariantRow[];
@@ -61,7 +72,13 @@ type DbProductRow = {
     value_number: number | null;
     value_boolean: boolean | null;
     value_json: unknown;
-    attribute_definitions: { key: string; label: string; data_type: string } | null;
+    attribute_definitions: {
+      key: string;
+      label: string;
+      data_type: string;
+      filterable?: boolean | null;
+      filter_group?: string | null;
+    } | null;
   }[];
 };
 
@@ -99,7 +116,14 @@ function mapAttributes(
       } else if (def.data_type === "multi_select") {
         value = r.value_json;
       }
-      return { key: def.key, label: def.label, value };
+      return {
+        key: def.key,
+        label: def.label,
+        value,
+        dataType: def.data_type,
+        filterable: Boolean(def.filterable),
+        filterGroup: def.filter_group,
+      };
     });
 }
 
@@ -146,6 +170,10 @@ function mapDbProduct(row: DbProductRow): Product {
       alt: img.alt ?? undefined,
     })),
     badge: row.badge ?? undefined,
+    tags: row.tags?.filter(Boolean) ?? undefined,
+    highlights: row.highlights?.filter(Boolean) ?? undefined,
+    shippingTitle: row.shipping_title ?? undefined,
+    shippingNote: row.shipping_note ?? undefined,
     tagline: row.tagline ?? undefined,
     featured: row.featured ?? undefined,
     seasonal: row.seasonal ?? undefined,
@@ -192,10 +220,18 @@ function mapMockProduct(p: Product): Product {
   };
 }
 
-const productSelect = `
+function productSelect(detailSchema: boolean) {
+  const detailColumns = detailSchema
+    ? "shipping_title, shipping_note, highlights, tags,"
+    : "";
+  const definitionColumns = detailSchema
+    ? "key, label, data_type, filterable, filter_group"
+    : "key, label, data_type";
+  return `
   id, slug, name, description, long_description, spice_note, dietary,
   badge, tagline, rating, review_count, seo_title, seo_description,
   featured, seasonal, origin, shelf_life, ingredients,
+  ${detailColumns}
   categories ( slug, title ),
   subcategories ( slug, title ),
   product_variants (
@@ -205,9 +241,36 @@ const productSelect = `
   product_images ( storage_path, alt, sort_order ),
   product_attribute_values (
     value_text, value_number, value_boolean, value_json,
-    attribute_definitions ( key, label, data_type )
+    attribute_definitions ( ${definitionColumns} )
   )
 `;
+}
+
+/**
+ * Embed filters only apply to parent rows when the relationship is inner.
+ * A plain `categories.slug` filter empties the embed, so every product falls
+ * through as namkeen and category pages 404.
+ */
+function productSelectFiltered(options: {
+  category?: boolean;
+  subcategory?: boolean;
+  detailSchema?: boolean;
+}): string {
+  let select = productSelect(Boolean(options.detailSchema));
+  if (options.category) {
+    select = select.replace(
+      "categories ( slug, title )",
+      "categories!inner ( slug, title )",
+    );
+  }
+  if (options.subcategory) {
+    select = select.replace(
+      "subcategories ( slug, title )",
+      "subcategories!inner ( slug, title )",
+    );
+  }
+  return select;
+}
 
 /**
  * When Supabase is configured: DB only (empty on error — never mock).
@@ -239,9 +302,10 @@ export async function getPublishedProducts(): Promise<Product[]> {
   }
 
   const supabase = await createClient();
+  const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelect(detailSchema))
     .eq("published", true)
     .order("name");
 
@@ -274,9 +338,10 @@ export async function getProductBySlug(
   }
 
   const supabase = await createClient();
+  const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelect(detailSchema))
     .eq("slug", slug)
     .eq("published", true)
     .maybeSingle();
@@ -288,39 +353,210 @@ export async function getProductBySlug(
 export async function getProductsByCategory(
   category: string,
 ): Promise<Product[]> {
-  if (!isSupabaseConfigured()) {
-    return mockGetByCategory(category).map((p) =>
-      mapMockProduct({
-        ...p,
-        category: { slug: String(p.category), title: String(p.category) },
-        variants: p.variants.map((v) => ({
-          id: v.variantId ?? v.id,
-          label: v.label,
-          sellingUnit: "other" as const,
-          quantityValue: null,
-          price: v.price ?? p.price,
-          sku: v.sku ?? `${p.slug}-${v.id}`,
-          stockQty: v.stockQty ?? 0,
-          available: true,
-          variantId: v.variantId ?? v.id,
-        })),
-      } as Product),
-    );
-  }
-
   const resolved = resolveCategorySlug(category) ?? category;
   const categorySlugs = categoryQuerySlugs(resolved);
 
+  if (!isSupabaseConfigured()) {
+    const allowed = new Set(categorySlugs);
+    return catalogueProducts
+      .filter((p) => allowed.has(String(p.category)))
+      .map((p) =>
+        mapMockProduct({
+          ...p,
+          category: { slug: String(p.category), title: String(p.category) },
+          variants: p.variants.map((v) => ({
+            id: v.variantId ?? v.id,
+            label: v.label,
+            sellingUnit: "other" as const,
+            quantityValue: null,
+            price: v.price ?? p.price,
+            sku: v.sku ?? `${p.slug}-${v.id}`,
+            stockQty: v.stockQty ?? 0,
+            available: true,
+            variantId: v.variantId ?? v.id,
+          })),
+        } as Product),
+      );
+  }
+
   const supabase = await createClient();
+  const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelectFiltered({ category: true, detailSchema }))
     .eq("published", true)
     .in("categories.slug", categorySlugs)
     .order("name");
 
   if (error || !data?.length) return [];
-  return (data as unknown as DbProductRow[]).map(mapDbProduct);
+  const allowed = new Set(categorySlugs);
+  return (data as unknown as DbProductRow[])
+    .map(mapDbProduct)
+    .filter((product) => allowed.has(productCategorySlug(product)));
+}
+
+export type StorefrontChild = {
+  slug: string;
+  title: string;
+};
+
+export type CatalogueSection = {
+  slug: string;
+  title: string;
+  showBakeryMarks: boolean;
+  children: StorefrontChild[];
+  products: Product[];
+};
+
+type PublishedTaxonomy = {
+  titles: Map<string, string>;
+  childrenByCategorySlug: Map<string, StorefrontChild[]>;
+};
+
+/**
+ * Published category and subcategory titles.
+ * Empty when Supabase is unavailable — callers must not fall back to mock catalog data.
+ */
+async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const supabase = await createClient();
+  const [categoriesResult, subcategoriesResult] = await Promise.all([
+    supabase.from("categories").select("id, slug, title").eq("published", true),
+    supabase
+      .from("subcategories")
+      .select("category_id, slug, title, sort_order")
+      .eq("published", true)
+      .order("sort_order"),
+  ]);
+
+  if (
+    categoriesResult.error ||
+    !categoriesResult.data ||
+    subcategoriesResult.error ||
+    !subcategoriesResult.data
+  ) {
+    return null;
+  }
+
+  const idToSlug = new Map(
+    categoriesResult.data.map((category) => [category.id, category.slug]),
+  );
+  const titles = new Map(
+    categoriesResult.data.map((category) => [category.slug, category.title]),
+  );
+  const childrenByCategorySlug = new Map<string, StorefrontChild[]>();
+
+  for (const row of subcategoriesResult.data) {
+    const parentSlug = idToSlug.get(row.category_id);
+    if (!parentSlug) continue;
+    const list = childrenByCategorySlug.get(parentSlug) ?? [];
+    list.push({ slug: row.slug, title: row.title });
+    childrenByCategorySlug.set(parentSlug, list);
+  }
+
+  return { titles, childrenByCategorySlug };
+}
+
+function childrenForResolvedSlug(
+  resolvedSlug: string,
+  taxonomy: PublishedTaxonomy,
+): StorefrontChild[] {
+  if (resolvedSlug === "bakery") {
+    return BAKERY_MEMBER_SLUGS.flatMap((slug) => {
+      const title = taxonomy.titles.get(slug);
+      return title ? [{ slug, title }] : [];
+    });
+  }
+  return taxonomy.childrenByCategorySlug.get(resolvedSlug) ?? [];
+}
+
+/** Subcategory pills for a storefront category. Bakery children are sibling categories. */
+export async function getStorefrontCategoryChildren(
+  categorySlug: string,
+): Promise<StorefrontChild[]> {
+  const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
+  const taxonomy = await loadPublishedTaxonomy();
+  if (!taxonomy) return [];
+  return childrenForResolvedSlug(resolved, taxonomy);
+}
+
+/**
+ * `/catalogue/gajak` is not a storefront section. Products live under sweets
+ * with subcategory slug `gajak`. Also include anything still on the legacy
+ * gajak category until that category is unpublished.
+ */
+async function getGajakListingProducts(): Promise<Product[]> {
+  const [moved, legacy] = await Promise.all([
+    getProductsBySubcategory(GAJAK_PARENT_SLUG, GAJAK_LISTING_SLUG),
+    getProductsByCategory(GAJAK_LISTING_SLUG),
+  ]);
+  const seen = new Set<string>();
+  const products: Product[] = [];
+  for (const product of [...moved, ...legacy]) {
+    if (seen.has(product.id)) continue;
+    seen.add(product.id);
+    products.push(product);
+  }
+  products.sort((a, b) => a.name.localeCompare(b.name));
+  return products;
+}
+
+/**
+ * Products for a category page, honoring `?sub=`.
+ * Bakery filters by member category slug; other categories use the subcategory relation.
+ * The gajak route lists the gajak subcategory of sweets when no `?sub=` is set.
+ */
+export async function getCategoryListingProducts(
+  categorySlug: string,
+  subcategorySlug: string | null,
+): Promise<Product[]> {
+  const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
+  if (
+    subcategorySlug &&
+    resolved === "bakery" &&
+    isBakeryMemberSlug(subcategorySlug)
+  ) {
+    return getProductsByCategory(subcategorySlug);
+  }
+  if (subcategorySlug && resolved !== "bakery") {
+    return getProductsBySubcategory(resolved, subcategorySlug);
+  }
+  if (resolved === GAJAK_LISTING_SLUG) return getGajakListingProducts();
+  return getProductsByCategory(resolved);
+}
+
+/** One block per parent category for /catalogue. Empty groups when Supabase is off. */
+export async function getCatalogueOverview(): Promise<CatalogueSection[]> {
+  if (!isSupabaseConfigured()) {
+    return STOREFRONT_CATALOGUE_SECTIONS.map((section) => ({
+      slug: section.slug,
+      title: section.title,
+      showBakeryMarks: section.slug === "bakery",
+      children: [],
+      products: [],
+    }));
+  }
+
+  const [taxonomy, products] = await Promise.all([
+    loadPublishedTaxonomy(),
+    getPublishedProducts(),
+  ]);
+
+  return STOREFRONT_CATALOGUE_SECTIONS.map((section) => {
+    const resolved = resolveCategorySlug(section.slug) ?? section.slug;
+    const allowed = new Set(categoryQuerySlugs(resolved));
+    const matched = products.filter((product) =>
+      allowed.has(productCategorySlug(product)),
+    );
+    return {
+      slug: section.slug,
+      title: section.title,
+      showBakeryMarks: section.slug === "bakery",
+      children: taxonomy ? childrenForResolvedSlug(resolved, taxonomy) : [],
+      products: matched.slice(0, 3),
+    };
+  });
 }
 
 export async function getProductsBySubcategory(
@@ -331,16 +567,32 @@ export async function getProductsBySubcategory(
 
   const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
   const supabase = await createClient();
+  const detailSchema = await productDetailSchemaReady(supabase);
+  const categorySlugs = categoryQuerySlugs(resolved);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(
+      productSelectFiltered({ category: true, subcategory: true, detailSchema }),
+    )
     .eq("published", true)
-    .eq("categories.slug", resolved)
+    .in("categories.slug", categorySlugs)
     .eq("subcategories.slug", subcategorySlug)
     .order("name");
 
   if (error || !data?.length) return [];
-  return (data as unknown as DbProductRow[]).map(mapDbProduct);
+  const allowedCategories = new Set(categoryQuerySlugs(resolved));
+  return (data as unknown as DbProductRow[])
+    .map(mapDbProduct)
+    .filter((product) => {
+      const subSlug =
+        product.subcategory && typeof product.subcategory === "object"
+          ? product.subcategory.slug
+          : null;
+      return (
+        allowedCategories.has(productCategorySlug(product)) &&
+        subSlug === subcategorySlug
+      );
+    });
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
@@ -359,9 +611,10 @@ export async function searchProducts(query: string): Promise<Product[]> {
   if (!q) return getPublishedProducts();
 
   const supabase = await createClient();
+  const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productSelect(detailSchema))
     .eq("published", true)
     .or(`name.ilike.%${q}%,description.ilike.%${q}%`)
     .order("name")
@@ -460,6 +713,54 @@ export type SpecialAttentionCategory = {
   slug: string;
   href: string;
 };
+
+export type CatalogueSpecialtyFilter = CatalogueFilterOption & { href: string };
+
+/** Published categories with live product counts for the catalogue sidebar. */
+export async function getCatalogueSpecialtyFilters(): Promise<
+  CatalogueSpecialtyFilter[]
+> {
+  if (!isSupabaseConfigured()) {
+    const counts = new Map<string, { label: string; count: number }>();
+    for (const product of catalogueProducts) {
+      const slug = String(product.category);
+      const current = counts.get(slug);
+      counts.set(slug, {
+        label: current?.label ?? slug,
+        count: (current?.count ?? 0) + 1,
+      });
+    }
+    return [...counts.entries()].map(([slug, item]) => ({
+      id: slug,
+      label: item.label,
+      count: item.count,
+      href: categoryHref(slug),
+    }));
+  }
+
+  const supabase = await createClient();
+  const [categoriesResult, productsResult] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, slug, title")
+      .eq("published", true)
+      .order("sort_order"),
+    supabase.from("products").select("category_id").eq("published", true),
+  ]);
+
+  const counts = new Map<string, number>();
+  for (const row of productsResult.data ?? []) {
+    if (!row.category_id) continue;
+    counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+  }
+
+  return (categoriesResult.data ?? []).map((category) => ({
+    id: category.slug,
+    label: category.title,
+    count: counts.get(category.id) ?? 0,
+    href: categoryHref(category.slug),
+  }));
+}
 
 /** Featured categories for storefront navbar + CTA (no cookies — safe in layout). */
 export async function getSpecialAttentionCategories(): Promise<

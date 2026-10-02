@@ -11,7 +11,7 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { getContentBlock, getHeroCarouselContent } from "@/lib/admin/queries";
 import {
-  getProductsByCategory,
+  getCategoryListingProducts,
   getPublishedProducts,
   getSpecialAttentionCategories,
 } from "@/lib/catalog/queries";
@@ -43,7 +43,9 @@ export default async function HomePage() {
       getSpecialAttentionCategories(),
       getContentBlock("home", "thali_offer"),
       Promise.all(
-        thaliCategoryGroups.map((group) => getProductsByCategory(group.categorySlug)),
+        thaliCategoryGroups.map((group) =>
+          getCategoryListingProducts(group.categorySlug, null),
+        ),
       ),
     ]);
   const featuredProducts = allProducts.slice(0, 8);
@@ -55,15 +57,17 @@ export default async function HomePage() {
   /**
    * A handful of products per category card (see thaliCategoryGroups), so
    * each card has real choices and "View More" is meaningful. Fetched with
-   * getProductsByCategory — the same reliable, already-proven query path
-   * used by /catalogue/[category] — rather than filtered out of the flat
-   * published-products list, whose category field isn't reliably
-   * resolvable for every category in this catalogue (e.g. gajak products
-   * didn't match there, despite /catalogue/gajak itself working fine).
-   * If the curated groups don't add up to at least `slotCount` products
-   * (small/seed catalogues), top up from the rest of the catalogue so the
-   * thali can still be completed — top-up items won't necessarily appear
-   * in a category card, but guarantee the thali itself stays completable.
+   * getCategoryListingProducts — the exact function /catalogue/[category]
+   * itself uses — rather than filtered out of the flat published-products
+   * list (whose category field isn't reliably resolvable for every
+   * category here) or the simpler getProductsByCategory (which, for
+   * "gajak", only covers the legacy category and misses products now
+   * modeled as a sweets subcategory — getCategoryListingProducts already
+   * handles that union). If the curated groups don't add up to at least
+   * `slotCount` products (small/seed catalogues), top up from the rest of
+   * the catalogue so the thali can still be completed — top-up items won't
+   * necessarily appear in a category card, but guarantee the thali itself
+   * stays completable.
    */
   const thaliCurated: typeof allProducts = [];
   const thaliCuratedIds = new Set<string>();

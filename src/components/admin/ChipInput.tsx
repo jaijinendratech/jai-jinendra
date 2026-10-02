@@ -10,12 +10,16 @@ export function ChipInput({
   defaultValue = [],
   mode = "multi",
   placeholder = "Type and press Enter",
+  suggestions = [],
+  onChange,
 }: {
-  name: string;
+  name?: string;
   label: string;
   defaultValue?: string[];
   mode?: "single" | "multi";
   placeholder?: string;
+  suggestions?: string[];
+  onChange?: (chips: string[]) => void;
 }) {
   const [chips, setChips] = useState<string[]>(
     mode === "single"
@@ -31,8 +35,11 @@ export function ChipInput({
     if (!value) return;
     if (mode === "single") {
       setChips([value]);
+      onChange?.([value]);
     } else if (!chips.includes(value)) {
-      setChips((prev) => [...prev, value]);
+      const next = [...chips, value];
+      setChips(next);
+      onChange?.(next);
     }
     setDraft("");
   }
@@ -42,7 +49,9 @@ export function ChipInput({
       e.preventDefault();
       commit(draft.replace(/,/g, ""));
     } else if (e.key === "Backspace" && !draft && chips.length) {
-      setChips((prev) => prev.slice(0, -1));
+      const next = chips.slice(0, -1);
+      setChips(next);
+      onChange?.(next);
     }
   }
 
@@ -52,7 +61,7 @@ export function ChipInput({
   return (
     <div>
       <p className={labelClassName()}>{label}</p>
-      <input type="hidden" name={name} value={serialized} />
+      {name ? <input type="hidden" name={name} value={serialized} /> : null}
       <div
         className={`${fieldClassName()} flex min-h-11 flex-wrap items-center gap-1.5`}
       >
@@ -66,9 +75,11 @@ export function ChipInput({
               type="button"
               aria-label={`Remove ${chip}`}
               className="rounded-full hover:bg-primary/15"
-              onClick={() =>
-                setChips((prev) => prev.filter((c) => c !== chip))
-              }
+              onClick={() => {
+                const next = chips.filter((c) => c !== chip);
+                setChips(next);
+                onChange?.(next);
+              }}
             >
               <LuX className="h-3 w-3" />
             </button>
@@ -85,8 +96,25 @@ export function ChipInput({
           />
         )}
       </div>
+      {suggestions.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {suggestions
+            .filter((suggestion) => !chips.includes(suggestion))
+            .map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                className="rounded-full border border-outline-variant/40 px-2.5 py-0.5 text-[11px] font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
+                onClick={() => commit(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
+        </div>
+      ) : null}
       <p className="mt-1 text-[11px] text-on-surface-variant">
-        Press Enter to {mode === "single" ? "set badge" : "add"}
+        Press Enter to {mode === "single" ? "set" : "add"}
+        {suggestions.length ? ", or choose a suggestion" : ""}
       </p>
     </div>
   );

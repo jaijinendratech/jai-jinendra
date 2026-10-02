@@ -49,10 +49,10 @@ export const siteConfig = {
 } as const;
 
 export const navLinks: NavLink[] = [
-  { label: "Namkeens", href: "/catalogue/namkeens", highlight: true },
-  { label: "Sweets", href: "/sweets" },
-  { label: "Kachori & Snacks", href: "/kachoris" },
-  { label: "Gift Hampers", href: "/hampers" },
+  { label: "Namkeen", href: "/catalogue/namkeen" },
+  { label: "Sweets", href: "/catalogue/sweets" },
+  { label: "Gifting", href: "/catalogue/gifting" },
+  { label: "Bakery", href: "/catalogue/bakery" },
   { label: "Combos", href: "/combos" },
 ];
 

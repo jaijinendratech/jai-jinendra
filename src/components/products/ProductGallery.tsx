@@ -16,6 +16,7 @@ export function ProductGallery({
   image,
   alt,
   badge,
+  badges,
 }: {
   images?: GalleryImage[];
   /** Legacy single image, used only when `images` is empty. */
@@ -23,6 +24,7 @@ export function ProductGallery({
   /** Fallback alt text (usually the product name). */
   alt: string;
   badge?: string;
+  badges?: string[];
 }) {
   const normalized = (images ?? [])
     .map((img) => (typeof img === "string" ? { src: img } : img))
@@ -33,15 +35,25 @@ export function ProductGallery({
   const [active, setActive] = useState(0);
   const activeIndex = Math.min(active, Math.max(gallery.length - 1, 0));
   const current = gallery[activeIndex];
+  const labels = (badges?.length ? badges : badge ? [badge] : [])
+    .map((label) => label.trim())
+    .filter(Boolean);
 
   return (
     <div className="min-w-0 lg:sticky lg:top-28">
       <div className="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
         <div className="relative aspect-square w-full">
-          {badge ? (
-            <span className="absolute left-3 top-3 z-10 rounded bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white md:left-4 md:top-4 md:px-2.5 md:py-1">
-              {badge}
-            </span>
+          {labels.length > 0 ? (
+            <div className="absolute left-3 top-3 z-10 flex max-w-[70%] flex-col items-start gap-1 md:left-4 md:top-4">
+              {labels.map((label) => (
+                <span
+                  key={label}
+                  className="rounded bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white md:px-2.5 md:py-1"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
           ) : null}
           {current ? (
             <Image

@@ -3,8 +3,7 @@
  * Keep mobile + desktop on the same ratio so baked-in copy/CTAs stay visible.
  */
 export const HERO_BANNER_FRAME_CLASS =
-  "relative aspect-video w-full overflow-hidden bg-surface";
+  "relative aspect-[21/9] max-h-[500px] w-full overflow-hidden bg-surface";
 
 /** Image fit: contain keeps full banner art; cream fill matches brand canvas. */
-export const HERO_BANNER_IMAGE_CLASS =
-  "object-contain object-center bg-surface";
+export const HERO_BANNER_IMAGE_CLASS = "object-cover object-center bg-surface";

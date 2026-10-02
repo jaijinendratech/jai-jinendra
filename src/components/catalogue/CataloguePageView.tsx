@@ -1,38 +1,42 @@
 import { Suspense } from "react";
 import { CatalogueFilters } from "@/components/catalogue/CatalogueFilters";
-import { CatalogueHero } from "@/components/catalogue/CatalogueHero";
-import { CatalogueToolbar } from "@/components/catalogue/CatalogueToolbar";
 import { CategoryUspBadges } from "@/components/catalogue/CategoryUspBadges";
+import {
+  CategoryPillRow,
+  type CategoryPill,
+} from "@/components/catalogue/CategoryPillRow";
+import { CatalogueSections } from "@/components/catalogue/CatalogueSections";
 import { FilterableCatalogueGrid } from "@/components/catalogue/FilterableCatalogueGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import {
-  bakeryUspBadges,
-  catalogueMeta,
-  cataloguePills,
-  namkeenUspBadges,
-  priceRanges,
-  purityFilters,
-  specialtyFilters,
-  spiceFilters,
-} from "@/data/catalogue";
+import { bakeryUspBadges, namkeenUspBadges, priceRanges } from "@/data/catalogue";
+import type {
+  CatalogueSection,
+  CatalogueSpecialtyFilter,
+} from "@/lib/catalog/queries";
 import type { CategoryId, Product } from "@/types/catalog";
 
 export function CataloguePageView({
-  products,
+  products = [],
   activeCategory,
+  activeCategorySlug = "",
   categoryTitle,
-  categorySlug,
+  childPills = [],
+  sections,
+  specialty = [],
 }: {
-  products: Product[];
+  products?: Product[];
   activeCategory: CategoryId | "all";
+  activeCategorySlug?: string;
   categoryTitle?: string;
-  /** Raw resolved category slug (e.g. "bakery"); used for category-specific extras. */
-  categorySlug?: string;
+  childPills?: CategoryPill[];
+  sections?: CatalogueSection[];
+  specialty?: CatalogueSpecialtyFilter[];
 }) {
+  const overview = Boolean(sections);
   const uspBadges =
-    categorySlug === "bakery"
+    activeCategorySlug === "bakery"
       ? bakeryUspBadges
-      : categorySlug === "namkeen"
+      : activeCategorySlug === "namkeen"
         ? namkeenUspBadges
         : null;
 
@@ -48,17 +52,6 @@ export function CataloguePageView({
         ]}
       />
 
-      <CatalogueHero
-        title={categoryTitle ? categoryTitle : catalogueMeta.title}
-        eyebrow={catalogueMeta.eyebrow}
-        description={catalogueMeta.description}
-        mobileTitle={categoryTitle ? categoryTitle : catalogueMeta.mobileTitle}
-        mobileEyebrow={catalogueMeta.mobileEyebrow}
-        mobileDescription={catalogueMeta.mobileDescription}
-        pills={cataloguePills}
-        activeCategory={activeCategory}
-      />
-
       {uspBadges ? (
         <CategoryUspBadges
           items={uspBadges}
@@ -66,28 +59,38 @@ export function CataloguePageView({
         />
       ) : null}
 
-      <CatalogueToolbar
-        shown={products.length}
-        total={catalogueMeta.totalCount}
-        freshnessNote={catalogueMeta.freshnessNote}
-      />
-
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-        <Suspense fallback={null}>
-          <CatalogueFilters
-            specialty={specialtyFilters}
-            purity={purityFilters}
-            spice={spiceFilters}
-            prices={priceRanges}
-            activeCategory={activeCategory}
-            warranty={catalogueMeta.warranty}
+      {overview && sections ? (
+        <CatalogueSections sections={sections} />
+      ) : (
+        <>
+          <CategoryPillRow
+            label={`${categoryTitle ?? "Category"} sections`}
+            pills={childPills}
+            className="mb-6"
           />
-        </Suspense>
 
-        <Suspense fallback={<p className="lg:col-span-9 text-sm text-on-surface-variant">Loading…</p>}>
-          <FilterableCatalogueGrid products={products} />
-        </Suspense>
-      </div>
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+            <Suspense fallback={null}>
+              <CatalogueFilters
+                specialty={specialty}
+                products={products}
+                prices={priceRanges}
+                activeSlug={activeCategorySlug || String(activeCategory)}
+              />
+            </Suspense>
+
+            <Suspense
+              fallback={
+                <p className="lg:col-span-9 text-sm text-on-surface-variant">
+                  Loading…
+                </p>
+              }
+            >
+              <FilterableCatalogueGrid products={products} />
+            </Suspense>
+          </div>
+        </>
+      )}
     </main>
   );
 }

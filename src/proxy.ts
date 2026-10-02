@@ -41,7 +41,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  const { supabase, user, supabaseResponse } = await updateSession(request);
+  const { supabase, user, supabaseResponse } = await updateSession(
+    request,
+    requestHeaders,
+  );
 
   let role: string | null = null;
   if (user) {

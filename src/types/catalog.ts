@@ -8,6 +8,7 @@ export type NavLink = {
 export type CategoryId =
   | "sweets"
   | "namkeen"
+  | "bakery"
   | "tea-time-bites"
   | "dry-cakes"
   | "cookies"
@@ -37,6 +38,9 @@ export type ProductAttribute = {
   key: string;
   label: string;
   value: unknown;
+  dataType?: string;
+  filterable?: boolean;
+  filterGroup?: string | null;
 };
 
 export type ProductVariant = {
@@ -66,6 +70,11 @@ export type Product = {
   imageAlt?: string;
   images?: { src: string; alt?: string }[];
   badge?: string;
+  /** Merchandising labels. The card and detail badge prefer these over `badge`. */
+  tags?: string[];
+  highlights?: string[];
+  shippingTitle?: string;
+  shippingNote?: string;
   tagline?: string;
   featured?: boolean;
   seasonal?: boolean;

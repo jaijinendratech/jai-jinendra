@@ -20,19 +20,51 @@ export const CANONICAL_CATEGORY_SLUGS = [
 
 export type CanonicalCategorySlug = (typeof CANONICAL_CATEGORY_SLUGS)[number];
 
-/** URL / nav alias → DB category slug used in queries. */
+/**
+ * Sibling categories grouped under the storefront Bakery page.
+ * Bakery is not a database category.
+ */
+export const BAKERY_MEMBER_SLUGS = [
+  "tea-time-bites",
+  "dry-cakes",
+  "cookies",
+] as const;
+
+/** All-page parent blocks, in storefront order. Gajak is a sweets subcategory, not a section. */
+export const STOREFRONT_CATALOGUE_SECTIONS = [
+  { slug: "namkeen", title: "Namkeen" },
+  { slug: "sweets", title: "Sweets" },
+  { slug: "gifting", title: "Gifting" },
+  { slug: "bakery", title: "Bakery" },
+] as const;
+
+/**
+ * Legacy `/catalogue/gajak` route.
+ * Resolves as its own slug (not `sweets`). The category page applies `?sub=`
+ * only, so aliasing gajak → sweets would list every sweet. The listing loads
+ * sweets products whose subcategory slug is `gajak`.
+ */
+export const GAJAK_LISTING_SLUG = "gajak";
+export const GAJAK_LISTING_TITLE = "Gajak";
+export const GAJAK_PARENT_SLUG = "sweets";
+
+export function isBakeryMemberSlug(slug: string): boolean {
+  return (BAKERY_MEMBER_SLUGS as readonly string[]).includes(slug);
+}
+
+/** URL / nav alias → query key. `bakery` groups sibling categories; it is not a DB row. */
 const ALIAS_TO_DB: Record<string, string> = {
   sweets: "sweets",
   mithai: "sweets",
   namkeen: "namkeen",
   namkeens: "namkeen",
+  bakery: "bakery",
   "tea-time-bites": "tea-time-bites",
   snacks: "tea-time-bites",
   "tea-time": "tea-time-bites",
   "dry-cakes": "dry-cakes",
   cookies: "cookies",
-  /** Virtual nav category: cookies + dry cakes (see categoryQuerySlugs). */
-  bakery: "bakery",
+  // Not "sweets": see GAJAK_LISTING_SLUG.
   gajak: "gajak",
   gifting: "gifting",
   gifts: "gifting",
@@ -42,13 +74,11 @@ const ALIAS_TO_DB: Record<string, string> = {
   "dry-fruits": "dry-fruits",
 };
 
-/** Real DB categories grouped under the virtual "bakery" category. */
-export const BAKERY_CATEGORY_SLUGS = ["cookies", "dry-cakes"];
-
 /** DB slug → preferred storefront URL segment (legacy routes still resolve). */
 const DB_TO_PREFERRED_URL: Record<string, string> = {
   sweets: "sweets",
   namkeen: "namkeen",
+  bakery: "bakery",
   "tea-time-bites": "tea-time-bites",
   "dry-cakes": "dry-cakes",
   cookies: "cookies",
@@ -80,12 +110,12 @@ export function dbSlugToCategoryId(dbSlug: string): CategoryId {
     mithai: "sweets",
     namkeen: "namkeen",
     namkeens: "namkeen",
+    bakery: "bakery",
     "tea-time-bites": "tea-time-bites",
     "tea-time": "tea-time-bites",
     snacks: "tea-time-bites",
     "dry-cakes": "dry-cakes",
     cookies: "cookies",
-    bakery: "cookies",
     gajak: "gajak",
     gifting: "gifting",
     gifts: "gifting",
@@ -119,12 +149,20 @@ export function normalizeCategoryRef(
 
 /** Slugs to query when filtering products for a resolved category. */
 export function categoryQuerySlugs(resolvedDbSlug: string): string[] {
+  if (resolvedDbSlug === "bakery") {
+    return [
+      ...new Set(BAKERY_MEMBER_SLUGS.flatMap((slug) => categoryQuerySlugs(slug))),
+    ];
+  }
   if (resolvedDbSlug === "combos") return ["tea-time-bites", "combos", "tea-time"];
   if (resolvedDbSlug === "sweets") return ["sweets", "mithai"];
   if (resolvedDbSlug === "namkeen") return ["namkeen", "namkeens"];
   if (resolvedDbSlug === "gifting") return ["gifting", "gifts"];
-  if (resolvedDbSlug === "bakery") return [...BAKERY_CATEGORY_SLUGS];
   if (resolvedDbSlug === "tea-time-bites")
     return ["tea-time-bites", "tea-time"];
+  // Legacy gajak category only. Adding "sweets" here would make category-only
+  // queries (overview, related products) return every sweet. The gajak URL
+  // filters by subcategory in getCategoryListingProducts.
+  if (resolvedDbSlug === GAJAK_LISTING_SLUG) return [GAJAK_LISTING_SLUG];
   return [resolvedDbSlug];
 }

@@ -3,8 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
-import type { AdminProductDetail } from "@/lib/admin/queries";
-import type { AdminSubcategoryRow } from "@/lib/admin/queries";
+import type {
+  AdminAttributeDefinition,
+  AdminProductDetail,
+  AdminSubcategoryRow,
+} from "@/lib/admin/queries";
 import {
   saveProductAction,
   saveVariantAction,
@@ -24,6 +27,13 @@ import {
 } from "@/components/admin/AdminIconButton";
 import { AdminActionsMenu } from "@/components/admin/AdminActionsMenu";
 import { ChipInput } from "@/components/admin/ChipInput";
+import { ProductAttributesField } from "@/components/admin/ProductAttributesField";
+import {
+  DEFAULT_SHIPPING_NOTE,
+  DEFAULT_SHIPPING_TITLE,
+  MERCHANDISING_TAGS,
+  tagsFromFlags,
+} from "@/lib/catalog/tags";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import {
   MediaUploader,
@@ -250,6 +260,7 @@ export function ProductForm({
   product,
   categories,
   subcategories = [],
+  attributeDefinitions = [],
   supabase,
   layout = "page",
   onCreated,
@@ -258,6 +269,7 @@ export function ProductForm({
   product: AdminProductDetail | null;
   categories: CategoryOption[];
   subcategories?: AdminSubcategoryRow[];
+  attributeDefinitions?: AdminAttributeDefinition[];
   supabase: boolean;
   layout?: "page" | "modal";
   onCreated?: (productId: string) => void;
@@ -272,6 +284,9 @@ export function ProductForm({
   // Suggest a tagline from the name until the admin edits it.
   const tagline = taglineTouched ? taglineInput : suggestTagline(name);
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
+  const [subcategoryId, setSubcategoryId] = useState(
+    product?.subcategoryId ?? "",
+  );
   const [tab, setTab] = useState<"details" | "variants" | "images">("details");
   const [formError, setFormError] = useState<string | null>(null);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
@@ -289,6 +304,10 @@ export function ProductForm({
   const filteredSubcategories = useMemo(
     () => subcategories.filter((s) => s.categoryId === categoryId),
     [subcategories, categoryId],
+  );
+  const subcategorySlug = useMemo(
+    () => filteredSubcategories.find((s) => s.id === subcategoryId)?.slug ?? "",
+    [filteredSubcategories, subcategoryId],
   );
 
   async function handleSaveProduct(formData: FormData) {
@@ -339,7 +358,7 @@ export function ProductForm({
   }
 
   function applyPresets() {
-    setPresetDraft(variantPresetsForCategory(categorySlug));
+    setPresetDraft(variantPresetsForCategory(categorySlug, subcategorySlug));
     setShowAddVariant(true);
   }
 
@@ -438,7 +457,18 @@ export function ProductForm({
                 <select
                   name="categoryId"
                   value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
+                  onChange={(e) => {
+                    const nextCategoryId = e.target.value;
+                    setCategoryId(nextCategoryId);
+                    setSubcategoryId((current) =>
+                      subcategories.some(
+                        (row) =>
+                          row.id === current && row.categoryId === nextCategoryId,
+                      )
+                        ? current
+                        : "",
+                    );
+                  }}
                   className={fieldClassName()}
                 >
                   <option value="">— Select —</option>
@@ -454,7 +484,8 @@ export function ProductForm({
                   Subcategory
                   <select
                     name="subcategoryId"
-                    defaultValue={product?.subcategoryId ?? ""}
+                    value={subcategoryId}
+                    onChange={(e) => setSubcategoryId(e.target.value)}
                     className={fieldClassName()}
                   >
                     <option value="">— None —</option>
@@ -478,15 +509,6 @@ export function ProductForm({
                   />
                 </label>
               ) : null}
-              <div>
-                <ChipInput
-                  name="badge"
-                  label="Badge"
-                  mode="single"
-                  defaultValue={product?.badge ? [product.badge] : []}
-                  placeholder="e.g. Bestseller — press Enter"
-                />
-              </div>
               <label className={labelClassName()}>
                 Tagline
                 <input
@@ -515,26 +537,51 @@ export function ProductForm({
                   placeholder="Full story, bullets, highlights…"
                 />
               </AdminFieldFull>
+              <label className={labelClassName()}>
+                Shipping title
+                <input
+                  name="shippingTitle"
+                  defaultValue={
+                    product ? (product.shippingTitle ?? "") : DEFAULT_SHIPPING_TITLE
+                  }
+                  className={fieldClassName()}
+                  placeholder={DEFAULT_SHIPPING_TITLE}
+                />
+              </label>
+              <label className={labelClassName()}>
+                Shipping note
+                <input
+                  name="shippingNote"
+                  defaultValue={
+                    product ? (product.shippingNote ?? "") : DEFAULT_SHIPPING_NOTE
+                  }
+                  className={fieldClassName()}
+                  placeholder={DEFAULT_SHIPPING_NOTE}
+                />
+              </label>
+              <AdminFieldFull>
+                <ChipInput
+                  name="highlights"
+                  label="Highlights"
+                  mode="multi"
+                  defaultValue={product?.highlights ?? []}
+                  placeholder="No palm oil — press Enter"
+                />
+              </AdminFieldFull>
               <label className="flex items-center gap-2 text-sm font-semibold">
                 <input type="checkbox" name="published" defaultChecked={product?.published ?? true} />
                 Published
               </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" name="featured" defaultChecked={product?.featured ?? false} />
-                Featured
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" name="bestseller" defaultChecked={product?.bestseller ?? false} />
-                Bestseller
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" name="newArrival" defaultChecked={product?.newArrival ?? false} />
-                New arrival
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" name="seasonal" defaultChecked={product?.seasonal ?? false} />
-                Seasonal
-              </label>
+              <AdminFieldFull>
+                <ChipInput
+                  name="tags"
+                  label="Tags"
+                  mode="multi"
+                  defaultValue={product ? tagsFromFlags(product) : []}
+                  suggestions={[...MERCHANDISING_TAGS]}
+                  placeholder="Featured — press Enter"
+                />
+              </AdminFieldFull>
             </AdminFieldGrid>
           </AdminCard>
 
@@ -578,6 +625,16 @@ export function ProductForm({
               </AdminFieldFull>
             </AdminFieldGrid>
           </AdminCard>
+
+          {product ? (
+            <AdminCard title="Attributes">
+              <ProductAttributesField
+                key={product.attributes.map((attr) => attr.attributeId).join(",")}
+                definitions={attributeDefinitions}
+                values={product.attributes}
+              />
+            </AdminCard>
+          ) : null}
 
           {/* Preserve existing SEO columns (SEO tab removed from UI). */}
           <input type="hidden" name="seoTitle" value={product?.seoTitle ?? ""} />

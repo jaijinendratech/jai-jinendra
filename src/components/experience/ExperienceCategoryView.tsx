@@ -69,7 +69,7 @@ export function ExperienceCategoryView({
               initialCount={8}
               pageSize={8}
               priorityCount={4}
-              className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
+              className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4"
             />
           ) : (
             <p className="rounded-lg border border-dashed border-outline-variant/40 bg-surface-container-low p-6 text-sm text-on-surface-variant md:p-8">

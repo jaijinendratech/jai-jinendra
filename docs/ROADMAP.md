@@ -11,7 +11,7 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 | **Sprint 0** | 1–3 | Foundation — docs, Supabase, Stitch, auth | Largely done |
 | **Sprint 1–3** | — | Cart, checkout, admin CMS | Largely done in code |
 | **Hardening Phase 0–1** | — | Security + inventory + Zod | **Launch gate** — code done; apply migrations |
-| **Hardening Phase 2–3** | — | Cache, rate limits, tests, Sentry | **Post-launch** — code scaffolded |
+| **Hardening Phase 2–3** | — | Cache, rate limits, tests | **Post-launch** — code scaffolded |
 
 ---
 
@@ -40,7 +40,7 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 - [x] Cached product search index in root layout
 - [x] `revalidateTag` from admin + catalogue `revalidate = 60`
 - [x] SQL KPI RPC (`006_scale_ops.sql`)
-- [x] Rate limits (memory / Upstash)
+- [x] Rate limits (in-memory)
 - [x] Security headers + CSP report-only
 - [x] Webhook dedupe + Shiprocket token table + Resend retry
 
@@ -49,7 +49,7 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 - [x] Vitest unit tests (`npm run test`)
 - [x] Playwright smoke (`npm run test:e2e`)
 - [x] GitHub Actions CI (`tsc` + lint + unit tests)
-- [x] Sentry (`NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN`) + Vercel Analytics
+- [x] Vercel Analytics
 - [x] Structured payment logs (no PII)
 
 **Apply on Supabase before launch:** migrations `004`, `005`, `006`.
@@ -97,7 +97,7 @@ Living document. Update checkboxes as sprints complete. Source plan: E2E project
 - [x] CI pipeline
 - [ ] Expand Playwright: login → cart → COD
 - [ ] `sitemap.ts` / `robots.ts` audit
-- [x] Monitoring baseline (Sentry / Vercel Analytics)
+- [x] Monitoring baseline (Vercel Analytics)
 - [ ] Production deploy READY + webhook 2xx
 ---
 

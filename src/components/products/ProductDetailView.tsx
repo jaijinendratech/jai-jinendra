@@ -11,8 +11,15 @@ import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { SafeHtml } from "@/components/shared/SafeHtml";
 import { useCart } from "@/lib/cart/use-cart";
 import { toast } from "@heroui/react";
+import { productTagLabels } from "@/lib/catalog/tags";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
+
+function hallmarkLabels(product: Product): string[] {
+  return (product.attributes ?? [])
+    .filter((attr) => attr.dataType === "boolean" && attr.value === true)
+    .map((attr) => attr.label);
+}
 
 function AccordionBlock({
   title,
@@ -74,6 +81,14 @@ export function ProductDetailView({
     );
   }, [activeVariant, product]);
 
+  const struckPrice = activeVariantData?.originalPrice ?? product.originalPrice;
+  const showStruck = struckPrice != null && struckPrice > unitPrice;
+  const highlights = (product.highlights ?? []).filter(Boolean);
+  const tags = productTagLabels(product);
+  const hallmarks = hallmarkLabels(product);
+  const showShipping = Boolean(product.shippingTitle || product.shippingNote);
+  const showFreshness = Boolean(product.shelfLife || product.origin);
+
   const shortDescription = product.description;
   const longCopy = product.longDescription ?? product.description;
   const keyBullets = [
@@ -128,13 +143,33 @@ export function ProductDetailView({
 
       <div className="grid gap-5 lg:grid-cols-12 lg:gap-10">
         <div className="min-w-0 lg:col-span-6">
-          <ProductGallery
-            key={product.id}
-            images={product.images}
-            image={product.image}
-            alt={product.imageAlt ?? product.name}
-            badge={product.badge}
-          />
+          <div
+            className={
+              highlights.length
+                ? "grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_11.5rem]"
+                : undefined
+            }
+          >
+            <ProductGallery
+              key={product.id}
+              images={product.images}
+              image={product.image}
+              alt={product.imageAlt ?? product.name}
+              badges={tags}
+            />
+            {highlights.length > 0 ? (
+              <ul className="space-y-2 text-sm font-medium text-on-surface">
+                {highlights.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="text-primary" aria-hidden>
+                      •
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </div>
 
         <div className="lg:col-span-6">
@@ -147,7 +182,7 @@ export function ProductDetailView({
             </span>
           </div>
 
-          <h1 className="font-display mt-2 text-2xl font-semibold text-on-surface md:mt-3 md:text-4xl">
+          <h1 className="mt-2 text-2xl font-semibold text-on-surface md:mt-3 md:text-4xl">
             {product.name}
           </h1>
 
@@ -155,10 +190,10 @@ export function ProductDetailView({
             <p className="price text-2xl font-bold text-on-surface md:text-3xl">
               {formatINR(unitPrice)}
             </p>
-            {product.originalPrice ? (
+            {showStruck && struckPrice ? (
               <>
                 <p className="price text-sm text-outline line-through">
-                  {formatINR(product.originalPrice)}
+                  {formatINR(struckPrice)}
                 </p>
                 {product.discountLabel ? (
                   <span className="rounded bg-secondary-container/50 px-2 py-0.5 text-xs font-bold text-on-secondary-container">
@@ -203,7 +238,7 @@ export function ProductDetailView({
                     onClick={() => setActiveVariant(variant.id)}
                     className={`rounded border px-3 py-2 text-xs font-bold ${
                       activeVariant === variant.id
-                        ? "border-primary-container bg-primary-container text-white"
+                        ? "border-[#F4A06A] bg-[#F4A06A] text-white"
                         : "border-outline-variant/40 bg-white text-on-surface-variant hover:border-primary"
                     }`}
                   >
@@ -277,28 +312,48 @@ export function ProductDetailView({
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-2.5 sm:grid-cols-2 md:mt-6 md:gap-3">
-            <div className="flex items-start gap-3 rounded-lg border border-outline-variant/20 p-3">
-              <Truck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-              <div>
-                <p className="text-xs font-bold text-on-surface">Pan-India Express</p>
-                <p className="text-xs text-on-surface-variant">
-                  Dispatched in 24 hrs • Free above ₹999
-                </p>
-              </div>
+          {showShipping || showFreshness ? (
+            <div
+              className={`mt-5 grid gap-2.5 md:mt-6 md:gap-3 ${
+                showShipping && showFreshness ? "sm:grid-cols-2" : ""
+              }`}
+            >
+              {showShipping ? (
+                <div className="flex items-start gap-3 rounded-lg border border-outline-variant/20 p-3">
+                  <Truck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <div>
+                    {product.shippingTitle ? (
+                      <p className="text-xs font-bold text-on-surface">
+                        {product.shippingTitle}
+                      </p>
+                    ) : null}
+                    {product.shippingNote ? (
+                      <p className="text-xs text-on-surface-variant">
+                        {product.shippingNote}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              {showFreshness ? (
+                <div className="flex items-start gap-3 rounded-lg border border-outline-variant/20 p-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-secondary" aria-hidden />
+                  <div>
+                    {product.shelfLife ? (
+                      <p className="text-xs font-bold text-on-surface">
+                        {product.shelfLife}
+                      </p>
+                    ) : null}
+                    {product.origin ? (
+                      <p className="text-xs text-on-surface-variant">
+                        Origin: {product.origin}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
-            <div className="flex items-start gap-3 rounded-lg border border-outline-variant/20 p-3">
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-secondary" aria-hidden />
-              <div>
-                <p className="text-xs font-bold text-on-surface">
-                  {product.shelfLife ?? "Nitrogen sealed freshness"}
-                </p>
-                <p className="text-xs text-on-surface-variant">
-                  Origin: {product.origin ?? "Rajasthan"}
-                </p>
-              </div>
-            </div>
-          </div>
+          ) : null}
 
           {/* Mobile: details as accordions; desktop: open cards */}
           <div className="mt-6 md:hidden">
@@ -310,13 +365,11 @@ export function ProductDetailView({
                 />
               </AccordionBlock>
             ) : null}
-            {product.dietary?.length ? (
+            {hallmarks.length ? (
               <AccordionBlock title="Dietary Hallmarks">
                 <ul className="space-y-1.5 text-xs text-on-surface-variant">
-                  {product.dietary.map((item) => (
-                    <li key={item} className="capitalize">
-                      • {item.replace(/-/g, " ")}
-                    </li>
+                  {hallmarks.map((item) => (
+                    <li key={item}>• {item}</li>
                   ))}
                 </ul>
               </AccordionBlock>
@@ -332,16 +385,14 @@ export function ProductDetailView({
             ) : null}
           </div>
 
-          {(product.dietary?.length || product.ingredients?.length) && (
+          {(hallmarks.length || product.ingredients?.length) && (
             <div className="mt-8 hidden gap-4 sm:grid-cols-2 md:grid">
-              {product.dietary?.length ? (
+              {hallmarks.length ? (
                 <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4">
                   <h2 className="text-sm font-bold text-on-surface">Dietary Hallmarks</h2>
                   <ul className="mt-2 space-y-1.5 text-xs text-on-surface-variant">
-                    {product.dietary.map((item) => (
-                      <li key={item} className="capitalize">
-                        • {item.replace(/-/g, " ")}
-                      </li>
+                    {hallmarks.map((item) => (
+                      <li key={item}>• {item}</li>
                     ))}
                   </ul>
                 </div>

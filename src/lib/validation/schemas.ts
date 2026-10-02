@@ -284,18 +284,28 @@ export const adminProductSchema = z.object({
   longDescription: z.string().max(100000).nullable().optional(),
   spiceNote: z.string().max(80).nullable().optional(),
   dietary: z.array(z.string()).default([]),
-  badge: z.string().max(80).nullable().optional(),
   tagline: z.string().max(200).nullable().optional(),
   seoTitle: z.string().max(120).nullable().optional(),
   seoDescription: z.string().max(320).nullable().optional(),
   origin: z.string().max(120).nullable().optional(),
   shelfLife: z.string().max(120).nullable().optional(),
   ingredients: z.array(z.string()).default([]),
+  shippingTitle: z.string().max(120).nullable().optional(),
+  shippingNote: z.string().max(240).nullable().optional(),
+  highlights: z.array(z.string().trim().min(1).max(80)).max(24).default([]),
+  tags: z.array(z.string().trim().min(1).max(40)).max(24).default([]),
   published: z.boolean(),
-  featured: z.boolean(),
-  bestseller: z.boolean(),
-  newArrival: z.boolean(),
-  seasonal: z.boolean().optional(),
+});
+
+export const adminProductAttributeInputSchema = z.object({
+  attributeId: z.string().uuid().nullable().optional(),
+  label: z.string().trim().min(1).max(80),
+  dataType: z.enum(["boolean", "select"]),
+  filterGroup: z.string().trim().max(80).nullable().optional(),
+  filterable: z.boolean().optional(),
+  valueBoolean: z.boolean().nullable().optional(),
+  valueText: z.string().trim().max(120).nullable().optional(),
+  options: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
 });
 
 /** Ordered product gallery; index 0 is the primary image. No count limit. */
