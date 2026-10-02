@@ -2,29 +2,30 @@
 
 import { useMemo, useState } from "react";
 import { LazyProductGrid } from "@/components/products/LazyProductGrid";
-import { productFilters } from "@/data/home";
 import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
 
-type FeaturedProductsProps = {
-  products: Product[];
+export type ProductCategoryFilter = {
+  id: string;
+  label: string;
 };
 
-export function FeaturedProducts({ products: allProducts }: FeaturedProductsProps) {
-  const [filter, setFilter] = useState<(typeof productFilters)[number]["id"]>("all");
+type FeaturedProductsProps = {
+  products: Product[];
+  filters: ProductCategoryFilter[];
+};
+
+export function FeaturedProducts({
+  products: allProducts,
+  filters,
+}: FeaturedProductsProps) {
+  const [filter, setFilter] = useState("all");
+  const activeFilter = filters.some((item) => item.id === filter) ? filter : "all";
 
   const products = useMemo(() => {
-    if (filter === "all") return allProducts;
-    if (filter === "gifts") {
-      return allProducts.filter(
-        (p) =>
-          productCategorySlug(p) === "gifts" ||
-          productCategorySlug(p) === "gifting" ||
-          p.badge?.includes("Royal"),
-      );
-    }
-    return allProducts.filter((p) => productCategorySlug(p) === filter);
-  }, [allProducts, filter]);
+    if (activeFilter === "all") return allProducts;
+    return allProducts.filter((product) => productCategorySlug(product) === activeFilter);
+  }, [allProducts, activeFilter]);
 
   return (
     <section
@@ -44,13 +45,13 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
             </h2>
           </div>
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 md:mt-0 md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {productFilters.map((item) => (
+            {filters.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setFilter(item.id)}
                 className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors md:px-4 ${
-                  filter === item.id
+                  activeFilter === item.id
                     ? "bg-primary-container text-white shadow-sm"
                     : "border border-outline-variant/30 bg-surface-container-lowest text-on-surface-variant hover:text-primary"
                 }`}

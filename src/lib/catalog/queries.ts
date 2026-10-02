@@ -538,25 +538,21 @@ export async function getCatalogueOverview(): Promise<CatalogueSection[]> {
     }));
   }
 
-  const [taxonomy, products] = await Promise.all([
+  const [taxonomy, products, tiles] = await Promise.all([
     loadPublishedTaxonomy(),
     getPublishedProducts(),
+    getHomeCategoryTiles(),
   ]);
 
-  return STOREFRONT_CATALOGUE_SECTIONS.map((section) => {
-    const resolved = resolveCategorySlug(section.slug) ?? section.slug;
-    const allowed = new Set(categoryQuerySlugs(resolved));
-    const matched = products.filter((product) =>
-      allowed.has(productCategorySlug(product)),
-    );
-    return {
-      slug: section.slug,
-      title: section.title,
-      showBakeryMarks: section.slug === "bakery",
-      children: taxonomy ? childrenForResolvedSlug(resolved, taxonomy) : [],
-      products: matched.slice(0, 3),
-    };
-  });
+  return tiles.map((tile) => ({
+    slug: tile.slug,
+    title: tile.title,
+    showBakeryMarks: false,
+    children: taxonomy ? childrenForResolvedSlug(tile.slug, taxonomy) : [],
+    products: products
+      .filter((product) => productCategorySlug(product) === tile.slug)
+      .slice(0, 3),
+  }));
 }
 
 export async function getProductsBySubcategory(

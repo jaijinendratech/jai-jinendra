@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortOptions } from "@/data/catalogue";
 
 export function CatalogueToolbar({
@@ -70,57 +68,16 @@ export function CataloguePagination({
   shown: number;
   total: number;
 }) {
-  const progress = Math.round((shown / total) * 100);
+  const safeTotal = Math.max(total, 0);
+  const safeShown = Math.min(shown, safeTotal);
 
   return (
-    <div className="flex flex-col items-center justify-between gap-4 border-t border-outline-variant/20 pb-4 pt-8 sm:flex-row">
-      <div className="w-full sm:w-64">
-        <div className="mb-1.5 flex justify-between text-[10px] font-bold uppercase tracking-wide text-outline">
-          <span>
-            Showing {shown} of {total} items
-          </span>
-          <span>{progress}% Loaded</span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
-          <div
-            className="h-full rounded-full bg-primary"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled
-          className="flex h-9 w-9 items-center justify-center rounded border border-outline-variant/30 text-outline disabled:opacity-40"
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <Link
-          href="/catalogue"
-          className="flex h-9 w-9 items-center justify-center rounded bg-primary text-xs font-bold text-white"
-          aria-current="page"
-        >
-          1
-        </Link>
-        {[2, 3, 4].map((page) => (
-          <span
-            key={page}
-            className="flex h-9 w-9 items-center justify-center rounded border border-outline-variant/30 text-xs font-semibold text-on-surface"
-          >
-            {page}
-          </span>
-        ))}
-        <button
-          type="button"
-          className="flex h-9 w-9 items-center justify-center rounded border border-outline-variant/30 text-on-surface"
-          aria-label="Next page"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+    <div className="border-t border-outline-variant/20 pb-4 pt-8">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-outline">
+        {safeTotal === 0
+          ? "No products"
+          : `${safeShown} ${safeShown === 1 ? "product" : "products"}`}
+      </p>
     </div>
   );
 }

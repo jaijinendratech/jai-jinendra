@@ -314,6 +314,11 @@ export function ProductForm({
     setFormError(null);
     try {
       const result = await saveProductAction(formData);
+      if (result && "error" in result && result.error) {
+        setFormError(result.error);
+        toast.danger(result.error);
+        return;
+      }
       if (result && "productId" in result && result.productId) {
         router.refresh();
         toast.success(result.created ? "Product created" : "Product saved");
@@ -424,13 +429,7 @@ export function ProductForm({
 
       {tab === "details" ? (
         <form
-          action={
-            isModal
-              ? handleSaveProduct
-              : async (formData) => {
-                  await saveProductAction(formData);
-                }
-          }
+          action={handleSaveProduct}
           className="space-y-6"
         >
           {product ? <input type="hidden" name="id" value={product.id} /> : null}

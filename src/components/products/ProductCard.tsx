@@ -30,6 +30,8 @@ export function ProductCard({
   const { updateItem } = useCart();
   const favourited = hydrated && has(product.id);
   const tags = productTagLabels(product);
+  const missingPhoto =
+    !product.image || product.image.endsWith("/images/prod0.jpg");
 
   const activeOriginalPrice = activeVariantData?.originalPrice ?? product.originalPrice;
 
@@ -77,15 +79,21 @@ export function ProductCard({
           </div>
         ) : null}
         <Link href={productHref} className="absolute inset-0 block">
-          <Image
-            src={product.image}
-            alt={product.imageAlt ?? product.name}
-            fill
-            priority={priority}
-            loading={priority ? "eager" : "lazy"}
-            sizes="(max-width:640px) 50vw, (max-width:1024px) 50vw, 25vw"
-            className="object-cover object-center transition-transform duration-300 hover:scale-105"
-          />
+          {missingPhoto ? (
+            <span className="flex h-full items-center justify-center px-4 text-center text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              Photo coming soon
+            </span>
+          ) : (
+            <Image
+              src={product.image}
+              alt={product.imageAlt ?? product.name}
+              fill
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+              sizes="(max-width:640px) 50vw, (max-width:1024px) 50vw, 25vw"
+              className="object-cover object-center transition-transform duration-300 hover:scale-105"
+            />
+          )}
           <span className="sr-only">View {product.name}</span>
         </Link>
         <button

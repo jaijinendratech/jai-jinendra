@@ -189,7 +189,16 @@ export default async function HomePage() {
       <HeroCarousel slides={heroSlides} />
       <TrustStrip items={trustItems} />
       <CategorySection categories={homeCategories} />
-      <FeaturedProducts products={featuredProducts} />
+      <FeaturedProducts
+        products={allProducts}
+        filters={[
+          { id: "all", label: "All" },
+          ...categoryTiles.map((category) => ({
+            id: category.slug,
+            label: category.title,
+          })),
+        ]}
+      />
       <HeritageSection />
       <SignatureCollections items={signatures} />
       <CelebrationBanner specialAttention={specialForBanner} />

@@ -6,7 +6,6 @@ import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { CatalogueGiftBanner } from "@/components/catalogue/CatalogueGiftBanner";
 import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { CataloguePagination } from "@/components/catalogue/CatalogueToolbar";
-import { catalogueMeta } from "@/data/catalogue";
 import { productMatchesAttribute } from "@/lib/catalog/filters";
 import type { Product } from "@/types/catalog";
 
@@ -69,10 +68,7 @@ export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
       )}
 
       <CatalogueQualityStrip />
-      <CataloguePagination
-        shown={Math.min(filtered.length, filtered.length)}
-        total={catalogueMeta.totalCount}
-      />
+      <CataloguePagination shown={filtered.length} total={filtered.length} />
     </section>
   );
 }

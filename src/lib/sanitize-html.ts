@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 const ALLOWED_TAGS = [
   "p",
@@ -18,10 +18,13 @@ const ALLOWED_TAGS = [
   "blockquote",
 ];
 
+/** Server-safe HTML allowlist. Does not use jsdom (that crashes on Vercel Node). */
 export function sanitizeAdminHtml(dirty: string): string {
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR: ["class"],
+  return sanitizeHtml(dirty, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {
+      "*": ["class"],
+    },
   });
 }
 

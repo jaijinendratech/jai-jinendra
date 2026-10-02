@@ -31,9 +31,11 @@ function isActiveHref(pathname: string, href: string): boolean {
 export function SiteHeader({
   searchProducts = [],
   specialAttention = [],
+  categoryLinks = [],
 }: {
   searchProducts?: SearchProductHit[];
   specialAttention?: SpecialAttentionCategory[];
+  categoryLinks?: { label: string; href: string; special?: boolean }[];
 }) {
   const [open, setOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -51,13 +53,23 @@ export function SiteHeader({
     const attentionByKey = new Map(
       specialAttention.map((c) => [navCategoryKey(c.href), c] as const),
     );
+    const source =
+      categoryLinks.length > 0
+        ? [
+            ...categoryLinks,
+            { label: "Catering", href: "/catering", special: false },
+          ]
+        : navLinks;
 
-    return navLinks.map((link) => ({
+    return source.map((link) => ({
       label: link.label,
       href: link.href,
-      special: attentionByKey.has(navCategoryKey(link.href)),
+      special:
+        "special" in link && link.special != null
+          ? link.special
+          : attentionByKey.has(navCategoryKey(link.href)),
     }));
-  }, [specialAttention]);
+  }, [categoryLinks, specialAttention]);
 
   return (
     <header className="pointer-events-none sticky top-0 z-50 w-full">

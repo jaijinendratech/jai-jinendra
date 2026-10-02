@@ -10,7 +10,10 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
 import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
 import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
-import { getSpecialAttentionCategories } from "@/lib/catalog/queries";
+import {
+  getHomeCategoryTiles,
+  getSpecialAttentionCategories,
+} from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -87,7 +90,17 @@ export default async function RootLayout({
   const pathname = headerList.get("x-jj-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin");
   const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
-  const specialAttention = isAdmin ? [] : await getSpecialAttentionCategories();
+  const [specialAttention, categoryTiles] = isAdmin
+    ? [[], []]
+    : await Promise.all([
+        getSpecialAttentionCategories(),
+        getHomeCategoryTiles(),
+      ]);
+  const categoryLinks = categoryTiles.map((category) => ({
+    label: category.title,
+    href: category.href,
+    special: category.featured,
+  }));
 
   return (
     <html
@@ -109,9 +122,10 @@ export default async function RootLayout({
             <SiteHeader
               searchProducts={searchProducts}
               specialAttention={specialAttention}
+              categoryLinks={categoryLinks}
             />
             <div className="flex-1">{children}</div>
-            <SiteFooter />
+            <SiteFooter categoryLinks={categoryLinks} />
           </>
         )}
         <Analytics />

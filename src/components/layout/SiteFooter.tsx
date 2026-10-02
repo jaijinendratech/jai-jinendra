@@ -73,7 +73,23 @@ function FooterAccordionColumn({
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({
+  categoryLinks = [],
+}: {
+  categoryLinks?: { label: string; href: string }[];
+}) {
+  const columns = footerColumns.map((column) =>
+    column.title === "Categories" && categoryLinks.length > 0
+      ? {
+          ...column,
+          links: [
+            ...categoryLinks,
+            { label: "Full Catalogue", href: "/catalogue" },
+          ],
+        }
+      : column,
+  );
+
   return (
     <footer className="border-t border-outline-variant/40 bg-surface-container-high">
       <div className="container-jj grid gap-6 py-8 md:grid-cols-2 md:gap-10 md:py-12 lg:grid-cols-3">
@@ -127,7 +143,7 @@ export function SiteFooter() {
           </a>
         </div>
 
-        {footerColumns.map((column) => (
+        {columns.map((column) => (
           <FooterAccordionColumn
             key={column.title}
             title={column.title}

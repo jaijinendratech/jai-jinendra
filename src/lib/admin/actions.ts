@@ -31,6 +31,8 @@ import {
   videoTestimonialSchema,
   zodErrorMessage,
 } from "@/lib/validation/schemas";
+import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
+import { sanitizeAdminHtml } from "@/lib/sanitize-html";
 import { isSyntheticPhoneEmail } from "@/lib/customers";
 import { normalizeCouponCode } from "@/lib/coupons";
 import type { CouponType } from "@/types/database";
@@ -542,8 +544,7 @@ export async function saveProductAction(formData: FormData) {
     redirect("/admin/products?notice=supabase-required");
   }
 
-  const { sanitizeAdminHtml } = await import("@/lib/sanitize-html");
-
+  try {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const slugInput = String(formData.get("slug") ?? "").trim();
@@ -673,6 +674,14 @@ export async function saveProductAction(formData: FormData) {
   }
   if (productId) redirect(`/admin/products/${productId}`);
   return { ok: true as const, productId, created: !id };
+  } catch (error) {
+    if (isNextRedirectError(error)) throw error;
+    return {
+      ok: false as const,
+      error:
+        error instanceof Error ? error.message : "Could not save product.",
+    };
+  }
 }
 
 /** Load a product for the admin edit modal (client-callable). */
@@ -1352,8 +1361,6 @@ export async function saveComboAction(formData: FormData) {
   if (!isSupabaseConfigured()) {
     redirect("/admin/combos?notice=supabase-required");
   }
-
-  const { sanitizeAdminHtml } = await import("@/lib/sanitize-html");
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
