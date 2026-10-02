@@ -1510,6 +1510,10 @@ export async function saveHomepageContentAction(formData: FormData) {
   const announcement = String(formData.get("announcement") ?? "");
   const celebrationTitle = String(formData.get("celebrationTitle") ?? "");
   const celebrationBody = String(formData.get("celebrationBody") ?? "");
+  const thaliDiscountPercent = Math.min(
+    100,
+    Math.max(1, Math.round(Number(formData.get("thaliDiscountPercent") ?? 10))),
+  );
 
   const admin = createAdminClient();
   await Promise.all([
@@ -1527,6 +1531,15 @@ export async function saveHomepageContentAction(formData: FormData) {
         page_key: "home",
         section_key: "celebration",
         content: { title: celebrationTitle, body: celebrationBody },
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "page_key,section_key" },
+    ),
+    admin.from("content_blocks").upsert(
+      {
+        page_key: "home",
+        section_key: "thali_offer",
+        content: { discountPercent: thaliDiscountPercent },
         updated_at: new Date().toISOString(),
       },
       { onConflict: "page_key,section_key" },

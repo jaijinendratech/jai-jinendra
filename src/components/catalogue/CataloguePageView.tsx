@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { CatalogueFilters } from "@/components/catalogue/CatalogueFilters";
+import { CategoryUspBadges } from "@/components/catalogue/CategoryUspBadges";
 import {
   CategoryPillRow,
   type CategoryPill,
@@ -7,7 +8,7 @@ import {
 import { CatalogueSections } from "@/components/catalogue/CatalogueSections";
 import { FilterableCatalogueGrid } from "@/components/catalogue/FilterableCatalogueGrid";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import { priceRanges } from "@/data/catalogue";
+import { bakeryUspBadges, namkeenUspBadges, priceRanges } from "@/data/catalogue";
 import type {
   CatalogueSection,
   CatalogueSpecialtyFilter,
@@ -32,6 +33,12 @@ export function CataloguePageView({
   specialty?: CatalogueSpecialtyFilter[];
 }) {
   const overview = Boolean(sections);
+  const uspBadges =
+    activeCategorySlug === "bakery"
+      ? bakeryUspBadges
+      : activeCategorySlug === "namkeen"
+        ? namkeenUspBadges
+        : null;
 
   return (
     <main className="container-jj py-6 md:py-8">
@@ -45,17 +52,12 @@ export function CataloguePageView({
         ]}
       />
 
-      {/* <CatalogueHero
-        title={categoryTitle ? categoryTitle : catalogueMeta.title}
-        eyebrow={catalogueMeta.eyebrow}
-        description={catalogueMeta.description}
-        mobileTitle={categoryTitle ? categoryTitle : catalogueMeta.mobileTitle}
-        mobileEyebrow={catalogueMeta.mobileEyebrow}
-        mobileDescription={catalogueMeta.mobileDescription}
-        pills={cataloguePills}
-        activeCategory={activeCategory}
-        showBakeryMarks={activeCategory === "bakery"}
-      /> */}
+      {uspBadges ? (
+        <CategoryUspBadges
+          items={uspBadges}
+          ariaLabel={`${categoryTitle ?? "Category"} highlights`}
+        />
+      ) : null}
 
       {overview && sections ? (
         <CatalogueSections sections={sections} />
@@ -66,12 +68,6 @@ export function CataloguePageView({
             pills={childPills}
             className="mb-6"
           />
-          {/* 
-          <CatalogueToolbar
-            shown={products.length}
-            total={catalogueMeta.totalCount}
-            freshnessNote={catalogueMeta.freshnessNote}
-          /> */}
 
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
             <Suspense fallback={null}>

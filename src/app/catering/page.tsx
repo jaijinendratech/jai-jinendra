@@ -1,53 +1,71 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { CateringEnquiryForm } from "@/components/promise/CateringEnquiryForm";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import { siteConfig } from "@/data/home";
+import { cateringPage } from "@/data/promise-pages";
 
 export const metadata: Metadata = {
-  title: "Catering",
-  description: `Catering services from ${siteConfig.name} for family gatherings, weddings, and festive events.`,
+  title: cateringPage.metaTitle,
+  description: cateringPage.metaDescription,
   alternates: { canonical: "/catering" },
 };
 
 export default function CateringPage() {
   return (
     <main className="container-jj py-6 md:py-10">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Catering" }]} />
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Catering" },
+        ]}
+      />
 
-      <p className="label-sm uppercase tracking-widest text-primary">Catering</p>
-      <h1 className="font-display mt-2 text-3xl font-semibold text-on-surface md:text-4xl">
-        Celebration menus, prepared the Jai Jinendra way
-      </h1>
-      <p className="mt-4 max-w-3xl text-sm leading-7 text-on-surface-variant md:text-base">
-        We are preparing a dedicated catering experience for weddings, family functions, office
-        gatherings, and festive occasions. For now, reach out to our team and we will help you plan
-        a menu around authentic namkeens, mithai, bakery favourites, and gifting trays.
-      </p>
+      <section className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        <div>
+          <p className="label-sm uppercase tracking-widest text-primary">
+            {cateringPage.eyebrow}
+          </p>
+          <h1 className="font-display mt-2 text-3xl font-semibold text-on-surface md:text-4xl">
+            {cateringPage.title}
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-on-surface-variant md:text-base">
+            {cateringPage.intro}
+          </p>
+          <Link
+            href="/sweets"
+            className="mt-6 inline-flex rounded-lg border border-primary-container px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
+          >
+            Browse our sweets
+          </Link>
+        </div>
+        <div className="relative aspect-video overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
+          <Image
+            src={cateringPage.image}
+            alt={cateringPage.imageAlt}
+            fill
+            sizes="(max-width:1024px) 100vw, 50vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+      </section>
 
-      <div className="mt-10 rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-        <h2 className="font-display text-xl font-semibold text-on-surface">
-          Custom catering details coming soon
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-          This page is a placeholder while we finalize packages, serving formats, and enquiry
-          details for catering requests.
-        </p>
-      </div>
+      <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cateringPage.benefits.map((item) => (
+          <article
+            key={item.title}
+            className="rounded-xl border border-outline-variant/25 bg-surface-container-low p-5"
+          >
+            <h2 className="font-display text-lg font-semibold text-on-surface">{item.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">{item.body}</p>
+          </article>
+        ))}
+      </section>
 
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link
-          href="/contact"
-          className="inline-flex rounded-lg bg-primary-container px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary"
-        >
-          Contact us
-        </Link>
-        <Link
-          href="/catalogue"
-          className="inline-flex rounded-lg border border-primary-container px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
-        >
-          Browse catalogue
-        </Link>
-      </div>
+      <section className="mt-12 max-w-3xl">
+        <CateringEnquiryForm />
+      </section>
     </main>
   );
 }

@@ -178,6 +178,36 @@ export const corporatePage = {
   ],
 } as const;
 
+export const cateringPage = {
+  metaTitle: "Catering",
+  metaDescription:
+    "Pure-veg sweets, namkeens, and snack counters for weddings, festivals, pujas, and corporate events — catering enquiries from Jai Jinendra.",
+  eyebrow: "Events & Celebrations",
+  title: "Catering by Jai Jinendra",
+  intro:
+    "Bring our heritage mithai, fresh namkeens, and bakery treats to your wedding, festival, puja, or office event. Share your date, guest count, and city — our team will plan the menu and quantities with you.",
+  image: images.bannerSweetsLaddu,
+  imageAlt: "Assorted Jai Jinendra sweets arranged for an event",
+  benefits: [
+    {
+      title: "100% Shuddh Pure Veg",
+      body: "Every sweet and savory made in our own kitchens with the same purity standards as our retail range.",
+    },
+    {
+      title: "Menus for Every Occasion",
+      body: "Weddings, sangeet, pujas, festivals, and corporate gatherings — mithai, namkeen, and bakery counters.",
+    },
+    {
+      title: "Planned Quantities",
+      body: "Tell us your guest count and we will suggest portions so nothing runs short and little goes to waste.",
+    },
+    {
+      title: "Fresh for Your Date",
+      body: "Prepared close to your event date and packed to stay fresh until it is served.",
+    },
+  ],
+} as const;
+
 export type FlagshipOutlet = {
   id: string;
   name: string;

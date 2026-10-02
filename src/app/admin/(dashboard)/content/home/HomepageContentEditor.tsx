@@ -16,16 +16,21 @@ export function HomepageContentEditor({
   announcement: initialAnnouncement,
   celebrationTitle: initialTitle,
   celebrationBody: initialBody,
+  thaliDiscountPercent: initialThaliDiscountPercent,
   slides,
 }: {
   announcement: string;
   celebrationTitle: string;
   celebrationBody: string;
+  thaliDiscountPercent: number;
   slides: Slide[];
 }) {
   const [announcement, setAnnouncement] = useState(initialAnnouncement);
   const [celebrationTitle, setCelebrationTitle] = useState(initialTitle);
   const [celebrationBody, setCelebrationBody] = useState(initialBody);
+  const [thaliDiscountPercent, setThaliDiscountPercent] = useState(
+    initialThaliDiscountPercent,
+  );
   const previewSlide = slides[0];
 
   return (
@@ -64,6 +69,28 @@ export function HomepageContentEditor({
               className={fieldClassName()}
             />
           </label>
+        </AdminCard>
+
+        <AdminCard title="Build Your Thali offer">
+          <label className={labelClassName()}>
+            % off shown when a shopper completes the thali
+            <input
+              name="thaliDiscountPercent"
+              type="number"
+              min={1}
+              max={100}
+              value={thaliDiscountPercent}
+              onChange={(e) =>
+                setThaliDiscountPercent(Number(e.target.value))
+              }
+              className={fieldClassName()}
+            />
+          </label>
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Shown as a badge on the home page once every thali slot is
+            filled. Items still add to the cart at their regular price — see
+            the launch notes before relying on this as an enforced discount.
+          </p>
         </AdminCard>
 
         <AdminCard title="Hero slides">
