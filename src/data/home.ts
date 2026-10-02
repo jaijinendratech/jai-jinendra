@@ -52,7 +52,6 @@ export const siteConfig = {
 } as const;
 
 export const navLinks: NavLink[] = [
-  { label: "Sweets", href: "/catalogue/sweets" },
   { label: "Namkeen", href: "/catalogue/namkeen" },
   { label: "Bakery", href: "/catalogue/bakery" },
   { label: "Gajak", href: "/catalogue/gajak" },
