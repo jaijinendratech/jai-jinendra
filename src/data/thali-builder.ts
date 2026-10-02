@@ -1,8 +1,8 @@
 export const thaliBuilderMeta = {
   eyebrow: "✦ BUILD YOUR OWN ✦",
   mobileEyebrow: "Build Your Own",
-  centerLabel: "Royal Feast",
-  slotCount: 6,
+  /** Must match thaliSlotPositions.length — the plate PNG has 4 bowls. */
+  slotCount: 4,
   /** Used only until Admin → Content → Home saves a value. */
   defaultDiscountPercent: 10,
   /** Products pulled per category card when building the pool (page.tsx). */
@@ -10,6 +10,25 @@ export const thaliBuilderMeta = {
   /** Item rows shown per card before "View More". */
   cardPreviewCount: 3,
 } as const;
+
+/** public/images/thali-plate.png — real pixel size, for a true-ratio aspect box. */
+export const thaliPlateImage = {
+  src: "/images/thali-plate.png",
+  width: 546,
+  height: 457,
+} as const;
+
+/**
+ * Percent position (of the plate image's box) for each bowl's center, in
+ * slot order. Estimated by eye from the source image; nudge these if a
+ * slot's icon/photo drifts off its bowl after a design change.
+ */
+export const thaliSlotPositions = [
+  { x: 37, y: 30 },
+  { x: 63, y: 30 },
+  { x: 37, y: 63 },
+  { x: 63, y: 63 },
+] as const;
 
 export type ThaliCategoryGroupId = "sweets" | "namkeens" | "bakery" | "gajak";
 
