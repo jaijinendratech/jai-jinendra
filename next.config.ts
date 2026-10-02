@@ -17,6 +17,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
+      "media-src 'self' blob: https://*.supabase.co",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com",
       "frame-src https://api.razorpay.com https://checkout.razorpay.com",

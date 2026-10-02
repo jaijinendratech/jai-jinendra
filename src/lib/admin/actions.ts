@@ -24,8 +24,11 @@ import {
   adminProductSchema,
   adminSubcategorySchema,
   adminVariantSchema,
+  achievementMediaSchema,
+  achievementPageSchema,
   contentBlockSchema,
   heroSlideSchema,
+  videoTestimonialSchema,
   zodErrorMessage,
 } from "@/lib/validation/schemas";
 import { isSyntheticPhoneEmail } from "@/lib/customers";
@@ -1597,6 +1600,105 @@ export async function saveCarouselSlidesAction(formData: FormData) {
     "/admin/content/home",
     storefrontPath,
   );
+}
+
+export async function saveAchievementMediaAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    redirect("/admin/content/achievements?notice=supabase-required");
+  }
+
+  const raw = String(formData.get("contentJson") ?? "{}");
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    redirect("/admin/content/achievements?error=invalid-content");
+  }
+
+  const parsed = achievementMediaSchema.safeParse(payload);
+  if (!parsed.success) {
+    redirect("/admin/content/achievements?error=invalid-content");
+  }
+
+  const admin = createAdminClient();
+  await admin.from("content_blocks").upsert(
+    {
+      page_key: "home",
+      section_key: "achievement_media",
+      content: parsed.data as unknown as import("@/types/database").Json,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "page_key,section_key" },
+  );
+
+  revalidateAdmin("/admin/content/achievements", "/", "/achievement");
+}
+
+export async function saveVideoTestimonialsAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    redirect("/admin/content/testimonials?notice=supabase-required");
+  }
+
+  const raw = String(formData.get("contentJson") ?? "[]");
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    redirect("/admin/content/testimonials?error=invalid-content");
+  }
+
+  const parsed = z.array(videoTestimonialSchema).safeParse(payload);
+  if (!parsed.success) {
+    redirect("/admin/content/testimonials?error=invalid-content");
+  }
+
+  const admin = createAdminClient();
+  await admin.from("content_blocks").upsert(
+    {
+      page_key: "home",
+      section_key: "video_testimonials",
+      content: parsed.data as unknown as import("@/types/database").Json,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "page_key,section_key" },
+  );
+
+  revalidateAdmin("/admin/content/testimonials", "/", "/achievement");
+}
+
+export async function saveAchievementPageAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    redirect("/admin/content/achievements?notice=supabase-required");
+  }
+
+  const raw = String(formData.get("contentJson") ?? "{}");
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    redirect("/admin/content/achievements?error=invalid-content");
+  }
+
+  const parsed = achievementPageSchema.safeParse(payload);
+  if (!parsed.success) {
+    redirect("/admin/content/achievements?error=invalid-content");
+  }
+
+  const admin = createAdminClient();
+  await admin.from("content_blocks").upsert(
+    {
+      page_key: "achievement",
+      section_key: "page",
+      content: parsed.data as unknown as import("@/types/database").Json,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "page_key,section_key" },
+  );
+
+  revalidateAdmin("/admin/content/achievements", "/", "/achievement");
 }
 
 export async function updateEnquiryStatusAction(formData: FormData) {

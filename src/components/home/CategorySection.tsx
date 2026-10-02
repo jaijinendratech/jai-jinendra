@@ -1,9 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Category } from "@/types/catalog";
+type HomeCategory = {
+  id: string;
+  title: string;
+  href: string;
+  image: string;
+  imageAlt: string;
+  specialAttention?: boolean;
+};
 
-export function CategorySection({ categories }: { categories: Category[] }) {
+export function CategorySection({ categories }: { categories: HomeCategory[] }) {
   return (
     <section id="categories" className="bg-surface py-8 md:py-20">
       <div className="container-jj">
@@ -54,7 +61,7 @@ export function CategorySection({ categories }: { categories: Category[] }) {
                 />
               </div>
               <h3 className="text-center text-[11px] font-bold leading-tight text-on-surface transition-colors group-hover:text-primary sm:text-xs md:text-sm">
-                {category.mobileTitle ?? category.title}
+                {category.title}
               </h3>
             </Link>
           ))}

@@ -118,6 +118,15 @@
       opacity: 1;
     }
   }
+
+  @keyframes nav-slide-in {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
 }
 
 /* Saffron fills (#EF6113) use white labels. Hover stays a step darker with the same ink. */

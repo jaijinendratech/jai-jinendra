@@ -762,6 +762,38 @@ export async function getCatalogueSpecialtyFilters(): Promise<
   }));
 }
 
+export type HomeCategoryTile = {
+  id: string;
+  slug: string;
+  title: string;
+  href: string;
+  image: string | null;
+  featured: boolean;
+};
+
+/** Published categories for the homepage favourites row. */
+export async function getHomeCategoryTiles(): Promise<HomeCategoryTile[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, slug, title, image_url, featured")
+    .eq("published", true)
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data.map((category) => ({
+    id: category.id,
+    slug: category.slug,
+    title: category.title,
+    href: categoryHref(category.slug),
+    image: category.image_url,
+    featured: category.featured,
+  }));
+}
+
 /** Featured categories for storefront navbar + CTA (no cookies — safe in layout). */
 export async function getSpecialAttentionCategories(): Promise<
   SpecialAttentionCategory[]

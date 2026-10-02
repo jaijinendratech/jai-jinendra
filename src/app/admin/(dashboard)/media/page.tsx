@@ -10,6 +10,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+function isVideoPath(value: string) {
+  const clean = value.split("?")[0].toLowerCase();
+  return clean.endsWith(".mp4") || clean.endsWith(".webm");
+}
+
+function isVideoAsset(storagePath: string, publicUrl: string) {
+  return isVideoPath(storagePath) || isVideoPath(publicUrl);
+}
+
 export default async function AdminMediaPage() {
   const assets = await getAdminMedia();
   const { supabase, storage } = getIntegrationStatus();
@@ -35,13 +44,22 @@ export default async function AdminMediaPage() {
               </div>
             ) : null}
             <div className="relative aspect-video bg-surface-container">
-              <Image
-                src={asset.publicUrl}
-                alt={asset.alt ?? ""}
-                fill
-                sizes="300px"
-                className="object-cover"
-              />
+              {isVideoAsset(asset.storagePath, asset.publicUrl) ? (
+                <video
+                  src={asset.publicUrl}
+                  controls
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={asset.publicUrl}
+                  alt={asset.alt ?? ""}
+                  fill
+                  sizes="300px"
+                  className="object-cover"
+                />
+              )}
             </div>
             <div className="p-3">
               <p className="truncate text-sm font-semibold text-on-surface">

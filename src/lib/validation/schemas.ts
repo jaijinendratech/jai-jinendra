@@ -152,6 +152,17 @@ export const subscribeBodySchema = z.object({
     .transform((value) => value.toLowerCase()),
 });
 
+export const offerLeadBodySchema = z.object({
+  fullName: z.string().trim().min(2, "Enter your name.").max(120),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return /^[6-9]\d{9}$/.test(digits) || /^91[6-9]\d{9}$/.test(digits);
+    }, "Enter a valid 10-digit Indian mobile."),
+});
+
 export const profileUpdateSchema = z.object({
   fullName: z.string().trim().max(120).optional(),
   email: z.string().trim().email().max(200).optional().or(z.literal("")),
@@ -249,6 +260,45 @@ export const heroSlideSchema = z.object({
   id: z.string().min(1).max(80),
   src: z.string().min(1).max(500),
   alt: z.string().max(200).default(""),
+});
+
+export const achievementMediaSchema = z.object({
+  eyebrow: z.string().max(120).default(""),
+  title: z.string().trim().min(1).max(200),
+  body: z.string().max(2000).default(""),
+  ctaLabel: z.string().max(80).default(""),
+  items: z.array(
+    z.object({
+      id: z.string().min(1).max(80),
+      src: z.string().min(1).max(500),
+      alt: z.string().max(200).default(""),
+    }),
+  ),
+});
+
+export const videoTestimonialSchema = z.object({
+  id: z.string().min(1).max(80),
+  videoUrl: z.string().max(500).default(""),
+  posterUrl: z.string().max(2000).default(""),
+  name: z.string().trim().min(1).max(120),
+  location: z.string().max(120).default(""),
+  quote: z.string().max(1000).default(""),
+});
+
+export const achievementPageSchema = z.object({
+  intro: z.object({
+    title: z.string().trim().min(1).max(200),
+    body: z.string().max(4000).default(""),
+  }),
+  items: z.array(
+    z.object({
+      id: z.string().min(1).max(80),
+      year: z.string().max(20).default(""),
+      title: z.string().trim().min(1).max(200),
+      description: z.string().max(2000).default(""),
+      imageUrl: z.string().max(2000).default(""),
+    }),
+  ),
 });
 
 export const contentBlockSchema = z.object({

@@ -5,7 +5,18 @@ import { catalogueProducts } from "@/data/catalogue";
 import { parseAttributeOptions } from "@/lib/catalog/attributes";
 import { tagsFromFlags } from "@/lib/catalog/tags";
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
-import { categories as homeCategories, heroSlides } from "@/data/home";
+import {
+  achievementMedia as achievementMediaFallback,
+  achievementPage as achievementPageFallback,
+  categories as homeCategories,
+  heroSlides,
+  videoTestimonials as videoTestimonialsFallback,
+} from "@/data/home";
+import type {
+  AchievementMedia,
+  AchievementPageContent,
+  VideoTestimonial,
+} from "@/types/catalog";
 import { flagshipOutlets } from "@/data/promise-pages";
 import {
   comboBoxSizes,
@@ -1494,6 +1505,24 @@ export async function getAdminSubscribers() {
   }));
 }
 
+export async function getAdminOfferLeads() {
+  if (!isSupabaseConfigured()) return [];
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("offer_leads")
+    .select("id, full_name, phone, coupon_code, created_at")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    fullName: row.full_name,
+    phone: row.phone,
+    couponCode: row.coupon_code,
+    createdAt: row.created_at,
+  }));
+}
+
 export async function getAdminOutlets() {
   if (!isSupabaseConfigured()) {
     return flagshipOutlets.map((o, i) => ({
@@ -1678,6 +1707,29 @@ export async function getHeroCarouselContent(
     return block.content as { id: string; src: string; alt: string }[];
   }
   return staticCarouselFallback(pageKey);
+}
+
+export async function getAchievementMediaContent() {
+  const block = await getContentBlock("home", "achievement_media");
+  return (
+    (block?.content as AchievementMedia | null) ?? achievementMediaFallback
+  );
+}
+
+export async function getVideoTestimonials() {
+  const block = await getContentBlock("home", "video_testimonials");
+  if (block?.content && Array.isArray(block.content)) {
+    return block.content as VideoTestimonial[];
+  }
+  return videoTestimonialsFallback;
+}
+
+export async function getAchievementPageContent() {
+  const block = await getContentBlock("achievement", "page");
+  return (
+    (block?.content as AchievementPageContent | null) ??
+    achievementPageFallback
+  );
 }
 
 export function getIntegrationStatus() {
