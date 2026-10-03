@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { formatINR } from "@/lib/format";
 import type { SearchProductHit } from "@/lib/catalog/cached";
 
@@ -63,10 +64,7 @@ export function SearchDialog({
                 aria-busy={isDebouncing}
               />
               {isDebouncing ? (
-                <Loader2
-                  className="h-4 w-4 shrink-0 animate-spin text-primary"
-                  aria-hidden
-                />
+                <BrandSpinner size={16} label="Searching" />
               ) : null}
               <button
                 type="button"
@@ -84,7 +82,7 @@ export function SearchDialog({
 
             {isDebouncing && query.trim() ? (
               <p className="mt-3 flex items-center gap-2 text-sm text-on-surface-variant">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+                <BrandSpinner size={16} label="Searching" />
                 Searching…
               </p>
             ) : results.length > 0 ? (

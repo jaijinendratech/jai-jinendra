@@ -127,6 +127,19 @@
       transform: translateX(0);
     }
   }
+
+  @keyframes brand-spinner-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+.brand-spinner-ring {
+  animation: brand-spinner-spin 1.4s linear infinite;
 }
 
 /* Saffron fills (#EF6113) use white labels. Hover stays a step darker with the same ink. */

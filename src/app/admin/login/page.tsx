@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { loginAdminWithPasswordAction } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/admin-config";
 import { siteConfig } from "@/data/home";
@@ -51,6 +52,7 @@ export default async function AdminLoginPage({
           <input type="hidden" name="next" value={next} />
           <label className="block text-sm font-semibold text-on-surface">
             Email
+            <RequiredMark />
             <input
               name="email"
               type="email"
@@ -62,6 +64,7 @@ export default async function AdminLoginPage({
           </label>
           <label className="block text-sm font-semibold text-on-surface">
             Password
+            <RequiredMark />
             <input
               name="password"
               type="password"

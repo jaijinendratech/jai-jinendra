@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import {
   saveSubcategoryAction,
   setSubcategoryPublishedAction,
@@ -64,6 +65,7 @@ function SubcategoryForm({
         {subcategory ? <input type="hidden" name="id" value={subcategory.id} /> : null}
         <label className={labelClassName()}>
           Parent category
+          <RequiredMark />
           <select
             name="categoryId"
             required
@@ -79,6 +81,7 @@ function SubcategoryForm({
         </label>
         <label className={labelClassName()}>
           Title
+          <RequiredMark />
           <input
             name="title"
             required

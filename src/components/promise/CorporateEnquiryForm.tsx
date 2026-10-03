@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { siteConfig } from "@/data/home";
 
 export function CorporateEnquiryForm() {
@@ -75,6 +76,7 @@ export function CorporateEnquiryForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold text-on-surface">
           Full name
+          <RequiredMark />
           <input
             required
             name="name"
@@ -84,6 +86,7 @@ export function CorporateEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Work email
+          <RequiredMark />
           <input
             required
             name="email"
@@ -94,6 +97,7 @@ export function CorporateEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Phone
+          <RequiredMark />
           <input
             required
             name="phone"
@@ -104,6 +108,7 @@ export function CorporateEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Company
+          <RequiredMark />
           <input
             required
             name="company"
@@ -113,6 +118,7 @@ export function CorporateEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface sm:col-span-2">
           Approx. quantity
+          <RequiredMark />
           <input
             required
             name="quantity"
@@ -125,6 +131,7 @@ export function CorporateEnquiryForm() {
       </div>
       <label className="block text-sm font-semibold text-on-surface">
         Programme notes
+        <RequiredMark />
         <textarea
           name="notes"
           rows={4}

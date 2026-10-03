@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { siteConfig } from "@/data/home";
 
 const fieldClassName =
@@ -83,10 +84,12 @@ export function CateringEnquiryForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold text-on-surface">
           Full name
+          <RequiredMark />
           <input required name="name" placeholder="Your name" className={fieldClassName} />
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Email
+          <RequiredMark />
           <input
             required
             name="email"
@@ -97,14 +100,17 @@ export function CateringEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Phone
+          <RequiredMark />
           <input required name="phone" type="tel" placeholder="+91" className={fieldClassName} />
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Event date
+          <RequiredMark />
           <input required name="eventDate" type="date" className={fieldClassName} />
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Approx. guests
+          <RequiredMark />
           <input
             required
             name="guests"
@@ -116,11 +122,13 @@ export function CateringEnquiryForm() {
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Event city
+          <RequiredMark />
           <input required name="city" placeholder="City" className={fieldClassName} />
         </label>
       </div>
       <label className="block text-sm font-semibold text-on-surface">
         Event details
+        <RequiredMark />
         <textarea
           name="notes"
           rows={4}

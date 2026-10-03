@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
 import { formatINR } from "@/lib/format";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import {
   saveComboAction,
   setComboFeaturedAction,
@@ -80,6 +81,7 @@ function ComboFormFields({
         {combo ? <input type="hidden" name="id" value={combo.id} /> : null}
         <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
           Name
+          <RequiredMark />
           <input
             name="name"
             required
@@ -97,6 +99,7 @@ function ComboFormFields({
         </AdminFieldFull>
         <label className={labelClassName()}>
           Price (INR)
+          <RequiredMark />
           <input
             name="price"
             type="number"

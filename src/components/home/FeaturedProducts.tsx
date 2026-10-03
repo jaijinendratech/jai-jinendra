@@ -1,31 +1,10 @@
-"use client";
-
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { LazyProductGrid } from "@/components/products/LazyProductGrid";
-import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
 
-export type ProductCategoryFilter = {
-  id: string;
-  label: string;
-};
-
-type FeaturedProductsProps = {
-  products: Product[];
-  filters: ProductCategoryFilter[];
-};
-
-export function FeaturedProducts({
-  products: allProducts,
-  filters,
-}: FeaturedProductsProps) {
-  const [filter, setFilter] = useState("all");
-  const activeFilter = filters.some((item) => item.id === filter) ? filter : "all";
-
-  const products = useMemo(() => {
-    if (activeFilter === "all") return allProducts;
-    return allProducts.filter((product) => productCategorySlug(product) === activeFilter);
-  }, [allProducts, activeFilter]);
+export function FeaturedProducts({ products }: { products: Product[] }) {
+  const visible = products.slice(0, 4);
 
   return (
     <section
@@ -44,28 +23,17 @@ export function FeaturedProducts({
               <span className="hidden md:inline">CUSTOMER FAVOURITES</span>
             </h2>
           </div>
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 md:mt-0 md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filters.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setFilter(item.id)}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors md:px-4 ${
-                  activeFilter === item.id
-                    ? "bg-primary-container text-white shadow-sm"
-                    : "border border-outline-variant/30 bg-surface-container-lowest text-on-surface-variant hover:text-primary"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <Link
+            href="/catalogue"
+            className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary-container px-4 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary-container hover:text-white md:mt-0"
+          >
+            See More
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
         </div>
 
         <LazyProductGrid
-          products={products}
-          initialCount={8}
-          pageSize={8}
+          products={visible}
           priorityCount={4}
           className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-4 lg:gap-7"
         />

@@ -10,10 +10,8 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
 import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
 import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
-import {
-  getHomeCategoryTiles,
-  getSpecialAttentionCategories,
-} from "@/lib/catalog/queries";
+import { getSpecialAttentionCategories } from "@/lib/catalog/queries";
+import { categoryHref, PRIMARY_NAV_CATEGORIES } from "@/lib/catalog/aliases";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -90,16 +88,11 @@ export default async function RootLayout({
   const pathname = headerList.get("x-jj-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin");
   const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
-  const [specialAttention, categoryTiles] = isAdmin
-    ? [[], []]
-    : await Promise.all([
-        getSpecialAttentionCategories(),
-        getHomeCategoryTiles(),
-      ]);
-  const categoryLinks = categoryTiles.map((category) => ({
+  const specialAttention = isAdmin ? [] : await getSpecialAttentionCategories();
+  const categoryLinks = PRIMARY_NAV_CATEGORIES.map((category) => ({
     label: category.title,
-    href: category.href,
-    special: category.featured,
+    href: categoryHref(category.slug),
+    special: category.special,
   }));
 
   return (

@@ -4,7 +4,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   Check,
-  Loader2,
   Minus,
   Plus,
   Search,
@@ -14,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { useRouter } from "next/navigation";
 import { productCategorySlug } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
@@ -402,10 +402,7 @@ export function ComboBuilder({ products }: { products: Product[] }) {
               ref={loadMoreRef}
               className="mt-6 flex flex-col items-center gap-2"
             >
-              <Loader2
-                className="h-5 w-5 animate-spin text-primary"
-                aria-label="Loading more products"
-              />
+              <BrandSpinner size="sm" label="Loading more products" />
               <p className="text-xs text-on-surface-variant">
                 Showing {visibleCount} of {filteredProducts.length}
               </p>

@@ -39,6 +39,22 @@ export const STOREFRONT_CATALOGUE_SECTIONS = [
 ] as const;
 
 /**
+ * Primary nav/footer category links, in the exact order the storefront shows
+ * them. Deliberately curated rather than a 1:1 map over whatever rows are
+ * `published` in the `categories` table — "Bakery" groups the three sibling
+ * bakery categories (see `BAKERY_MEMBER_SLUGS`) under one link, and "Sweets"
+ * is included even before it has a category row / products in Supabase.
+ * `special` carries forward today's DB `featured` flags for Namkeen/Gifting.
+ */
+export const PRIMARY_NAV_CATEGORIES = [
+  { slug: "sweets", title: "Sweets", special: false },
+  { slug: "namkeen", title: "Namkeen", special: true },
+  { slug: "bakery", title: "Bakery", special: false },
+  { slug: "gajak", title: "Gajak", special: false },
+  { slug: "gifting", title: "Gifting", special: true },
+] as const;
+
+/**
  * Legacy `/catalogue/gajak` route.
  * Resolves as its own slug (not `sweets`). The category page applies `?sub=`
  * only, so aliasing gajak → sweets would list every sweet. The listing loads

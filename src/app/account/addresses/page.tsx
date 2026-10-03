@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -143,6 +144,7 @@ export default async function AccountAddressesPage({
         >
           <label className="block text-sm font-semibold sm:col-span-2">
             Full name
+            <RequiredMark />
             <input
               name="name"
               required
@@ -152,6 +154,7 @@ export default async function AccountAddressesPage({
           </label>
           <label className="block text-sm font-semibold">
             Phone
+            <RequiredMark />
             <input
               name="phone"
               required
@@ -161,6 +164,7 @@ export default async function AccountAddressesPage({
           </label>
           <label className="block text-sm font-semibold">
             Pincode
+            <RequiredMark />
             <input
               name="pincode"
               required
@@ -170,6 +174,7 @@ export default async function AccountAddressesPage({
           </label>
           <label className="block text-sm font-semibold sm:col-span-2">
             Address line 1
+            <RequiredMark />
             <input
               name="line1"
               required
@@ -187,6 +192,7 @@ export default async function AccountAddressesPage({
           </label>
           <label className="block text-sm font-semibold">
             City
+            <RequiredMark />
             <input
               name="city"
               required
@@ -196,6 +202,7 @@ export default async function AccountAddressesPage({
           </label>
           <label className="block text-sm font-semibold">
             State
+            <RequiredMark />
             <input
               name="state"
               required

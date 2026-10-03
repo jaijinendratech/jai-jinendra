@@ -3,6 +3,7 @@
 import { Modal, useOverlayState } from "@heroui/react";
 import { Copy, X } from "lucide-react";
 import { type FormEvent, useState, useSyncExternalStore } from "react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 
 const DISMISS_KEY = "jj-offer-popup-dismissed";
 const COUPON_CODE = "FLAT10";
@@ -151,6 +152,7 @@ export function OfferPopup() {
                   <label className="block">
                     <span className="text-xs font-bold uppercase tracking-wider text-outline">
                       Name
+                      <RequiredMark />
                     </span>
                     <input
                       value={fullName}
@@ -164,6 +166,7 @@ export function OfferPopup() {
                   <label className="block">
                     <span className="text-xs font-bold uppercase tracking-wider text-outline">
                       Mobile number
+                      <RequiredMark />
                     </span>
                     <input
                       value={phone}

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Button, Input, toast } from "@heroui/react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { newsletter } from "@/data/home";
 
 export function NewsletterSection() {
@@ -78,10 +79,10 @@ export function NewsletterSection() {
           <Button
             type="submit"
             isDisabled={sending}
-            className="shrink-0 rounded-lg bg-primary-container px-4 text-white md:px-6"
+            className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-white md:px-6"
           >
             {sending ? (
-              "Sending…"
+              <BrandSpinner size={16} label="Subscribing" />
             ) : (
               <>
                 <span className="md:hidden">{newsletter.mobileCta}</span>

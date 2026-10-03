@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { saveOutletAction, setOutletPublishedAction } from "@/lib/admin/actions";
 import {
   AdminFieldGrid,
@@ -78,6 +79,7 @@ function OutletFormFields({
         ) : null}
         <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
           Name
+          <RequiredMark />
           <input
             name="name"
             required
@@ -87,6 +89,7 @@ function OutletFormFields({
         </label>
         <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
           Address
+          <RequiredMark />
           <textarea
             name="address"
             rows={2}
