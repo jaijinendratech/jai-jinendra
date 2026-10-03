@@ -15,7 +15,11 @@ import {
   getHeroCarouselContent,
   getVideoTestimonials,
 } from "@/lib/admin/queries";
-import { productCategorySlug, resolveCategorySlug } from "@/lib/catalog/aliases";
+import {
+  categoryHref,
+  productCategorySlug,
+  resolveCategorySlug,
+} from "@/lib/catalog/aliases";
 import {
   getCategoryListingProducts,
   getHomeCategoryTiles,
@@ -108,12 +112,22 @@ export default async function HomePage() {
     const sample = allProducts.find(
       (product) => productCategorySlug(product) === category.slug,
     );
+    // "Tea Time Bites" tile shown as "Bakery" with a cleaner, circle-friendly
+    // product photo — display-only, no category/DB change (Bakery is a
+    // virtual grouping, same as the navbar; see BAKERY_MEMBER_SLUGS). Links
+    // to the grouped /catalogue/bakery route (covers Tea Time Bites + Dry
+    // Cakes + Cookies), not the raw Tea Time Bites category route.
+    const isBakeryTile = category.slug === "tea-time-bites";
     return {
       id: category.id,
-      title: category.title,
-      href: category.href,
-      image: category.image || sample?.image || "/images/prod0.jpg",
-      imageAlt: sample?.imageAlt || category.title,
+      title: isBakeryTile ? "Bakery" : category.title,
+      href: isBakeryTile ? categoryHref("bakery") : category.href,
+      image: isBakeryTile
+        ? "https://rsqktcygdsjfullapjrq.supabase.co/storage/v1/object/public/media/products/1790591091756-2i6qfvmo04e.webp"
+        : category.image || sample?.image || "/images/prod0.jpg",
+      imageAlt: isBakeryTile
+        ? "Bakery — Almond Biscotti"
+        : sample?.imageAlt || category.title,
       specialAttention: category.featured || specialKeys.has(category.slug),
     };
   });
@@ -188,26 +202,17 @@ export default async function HomePage() {
       </h1>
       <HeroCarousel slides={heroSlides} />
       <TrustStrip items={trustItems} />
-      <CategorySection categories={homeCategories} />
-      <FeaturedProducts
-        products={allProducts}
-        filters={[
-          { id: "all", label: "All" },
-          ...categoryTiles.map((category) => ({
-            id: category.slug,
-            label: category.title,
-          })),
-        ]}
-      />
-      <HeritageSection />
-      <SignatureCollections items={signatures} />
-      <CelebrationBanner specialAttention={specialForBanner} />
       <ThaliBuilder
         products={thaliProducts}
         groupedIds={thaliGroupedIds}
         slotCount={thaliBuilderMeta.slotCount}
         discountPercent={thaliDiscountPercent}
       />
+      <CategorySection categories={homeCategories} />
+      <FeaturedProducts products={allProducts} />
+      <HeritageSection />
+      <SignatureCollections items={signatures} />
+      <CelebrationBanner specialAttention={specialForBanner} />
       <TestimonialsSection items={testimonials} videos={videos} />
       {/* <AchievementMediaSection content={achievementMedia} /> */}
       <NewsletterSection />

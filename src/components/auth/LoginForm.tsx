@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -12,6 +13,8 @@ import {
   Input,
   Label,
 } from "@heroui/react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import {
   signInWithEmailAction,
   signInWithGoogleAction,
@@ -26,6 +29,63 @@ type LoginFormProps = {
   error?: string;
   notice?: string;
 };
+
+/** Must live inside the <Form> it reports on — useFormStatus reads the nearest parent form. */
+function EmailSubmitButton({
+  creating,
+  acceptedTerms,
+}: {
+  creating: boolean;
+  acceptedTerms: boolean;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      variant="primary"
+      isDisabled={pending || !acceptedTerms}
+      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container font-bold text-white hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? (
+        <BrandSpinner
+          size={18}
+          label={creating ? "Creating account" : "Signing in"}
+        />
+      ) : creating ? (
+        "Create account"
+      ) : (
+        "Sign in"
+      )}
+    </Button>
+  );
+}
+
+function GoogleSubmitButton({ acceptedTerms }: { acceptedTerms: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      variant="secondary"
+      isDisabled={pending || !acceptedTerms}
+      className="flex w-full items-center justify-center gap-3 rounded-lg border border-outline-variant/60 bg-white py-2.5 font-semibold text-on-surface shadow-sm transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? (
+        <BrandSpinner size={18} label="Connecting to Google" />
+      ) : (
+        <>
+          <Image
+            src="/images/g-logo.png"
+            alt="Google"
+            width={20}
+            height={20}
+            className="h-5 w-5 object-contain"
+          />
+          Continue with Google
+        </>
+      )}
+    </Button>
+  );
+}
 
 function errorMessage(error?: string): string | null {
   switch (error) {
@@ -149,6 +209,7 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
               className="text-sm font-semibold text-on-surface"
             >
               Email
+              <RequiredMark />
             </Label>
             <Input
               id="email"
@@ -166,6 +227,7 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
               className="text-sm font-semibold text-on-surface"
             >
               Password
+              <RequiredMark />
             </Label>
             <Input
               id="password"
@@ -216,14 +278,7 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
               </span>
             </Checkbox.Content>
           </Checkbox>
-          <Button
-            type="submit"
-            variant="primary"
-            isDisabled={!acceptedTerms}
-            className="w-full rounded-lg bg-primary-container font-bold text-white hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {creating ? "Create account" : "Sign in"}
-          </Button>
+          <EmailSubmitButton creating={creating} acceptedTerms={acceptedTerms} />
         </Form>
 
         <div className="flex items-center gap-3">
@@ -236,21 +291,7 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
 
         <Form action={signInWithGoogleAction}>
           <input type="hidden" name="next" value={next} />
-          <Button
-            type="submit"
-            variant="secondary"
-            isDisabled={!acceptedTerms}
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-outline-variant/60 bg-white py-2.5 font-semibold text-on-surface shadow-sm transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Image
-              src="/images/g-logo.png"
-              alt="Google"
-              width={20}
-              height={20}
-              className="h-5 w-5 object-contain"
-            />
-            Continue with Google
-          </Button>
+          <GoogleSubmitButton acceptedTerms={acceptedTerms} />
         </Form>
 
         <p className="text-center text-xs text-on-surface-variant">

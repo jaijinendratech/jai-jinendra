@@ -2,7 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { Search } from "lucide-react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { trackOrderMeta } from "@/data/customer-care";
 import { formatINR } from "@/lib/format";
 
@@ -73,6 +75,7 @@ export function TrackOrderForm() {
               className="label-md mb-1.5 block font-semibold text-on-surface"
             >
               Order number
+              <RequiredMark />
             </label>
             <input
               id="orderId"
@@ -93,6 +96,7 @@ export function TrackOrderForm() {
               className="label-md mb-1.5 block font-semibold text-on-surface"
             >
               Registered phone
+              <RequiredMark />
             </label>
             <input
               id="contact"
@@ -111,7 +115,11 @@ export function TrackOrderForm() {
             disabled={loading}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-3 text-sm font-semibold text-white transition hover:bg-primary disabled:opacity-60"
           >
-            <Search className="h-4 w-4" aria-hidden />
+            {loading ? (
+              <BrandSpinner size={16} label="Looking up order" />
+            ) : (
+              <Search className="h-4 w-4" aria-hidden />
+            )}
             {loading ? "Looking up…" : "Track shipment"}
           </button>
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import {
   saveCategoryAction,
   setCategoryFeaturedAction,
@@ -77,6 +78,7 @@ function CategoryFormFields({
         {category ? <input type="hidden" name="id" value={category.id} /> : null}
         <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
           Title
+          <RequiredMark />
           <input
             name="title"
             required

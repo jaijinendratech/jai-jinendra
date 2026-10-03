@@ -1,11 +1,35 @@
-import { Leaf, Package, Truck } from "lucide-react";
+import { Leaf, Package, Truck, UtensilsCrossed } from "lucide-react";
 import type { TrustItem } from "@/types/catalog";
 
 const iconMap = {
   eco: Leaf,
   package: Package,
   shipping: Truck,
+  swiggy: UtensilsCrossed,
+  zomato: UtensilsCrossed,
 } as const;
+
+/** Swiggy/Zomato get their own brand-colored chip instead of the shared neutral circle. */
+const brandChipClass: Partial<Record<TrustItem["icon"], string>> = {
+  swiggy: "border-transparent bg-[#FC8019] text-white",
+  zomato: "border-transparent bg-[#E23744] text-white",
+};
+
+function iconChipClass(icon: TrustItem["icon"]) {
+  if (icon === "veg") return "border-secondary/20 bg-surface-container-low text-secondary";
+  return (
+    brandChipClass[icon] ??
+    "border-outline-variant/30 bg-surface-container-low text-primary"
+  );
+}
+
+function Badge({ text }: { text: string }) {
+  return (
+    <span className="ml-1.5 inline-flex shrink-0 items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold leading-none text-primary md:px-2 md:text-[10px]">
+      {text}
+    </span>
+  );
+}
 
 export function TrustStrip({ items }: { items: TrustItem[] }) {
   return (
@@ -21,11 +45,7 @@ export function TrustStrip({ items }: { items: TrustItem[] }) {
                 className="flex min-w-38 shrink-0 items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-lowest px-3 py-2 shadow-sm"
               >
                 <div
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-surface-container-low ${
-                    item.icon === "veg"
-                      ? "border-secondary/20 text-secondary"
-                      : "border-outline-variant/30 text-primary"
-                  }`}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${iconChipClass(item.icon)}`}
                 >
                   {item.icon === "veg" ? (
                     <span className="veg-mark scale-90" aria-hidden>
@@ -36,8 +56,9 @@ export function TrustStrip({ items }: { items: TrustItem[] }) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="truncate text-[11px] font-semibold leading-tight text-on-surface">
-                    {item.mobileTitle ?? item.title}
+                  <h3 className="flex items-center truncate text-[11px] font-semibold leading-tight text-on-surface">
+                    <span className="truncate">{item.mobileTitle ?? item.title}</span>
+                    {item.badge ? <Badge text={item.badge} /> : null}
                   </h3>
                   <p className="mt-0.5 truncate text-[10px] leading-tight text-on-surface-variant">
                     {item.mobileDescription ?? item.description}
@@ -58,11 +79,7 @@ export function TrustStrip({ items }: { items: TrustItem[] }) {
                 className="flex items-center gap-3 px-2 py-1.5 md:px-4 md:py-0"
               >
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-surface-container-low ${
-                    item.icon === "veg"
-                      ? "border-secondary/20 text-secondary"
-                      : "border-outline-variant/30 text-primary"
-                  }`}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${iconChipClass(item.icon)}`}
                 >
                   {item.icon === "veg" ? (
                     <span className="veg-mark scale-110" aria-hidden>
@@ -73,8 +90,9 @@ export function TrustStrip({ items }: { items: TrustItem[] }) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-[13px] font-semibold leading-tight text-on-surface">
+                  <h3 className="flex items-center text-[13px] font-semibold leading-tight text-on-surface">
                     {item.title}
+                    {item.badge ? <Badge text={item.badge} /> : null}
                   </h3>
                   <p className="mt-0.5 text-[11px] leading-tight text-on-surface-variant">
                     {item.description}

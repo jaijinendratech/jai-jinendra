@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import type {
   AdminAttributeDefinition,
   AdminProductDetail,
@@ -170,6 +171,7 @@ function VariantEditor({
       <input type="hidden" name="productId" value={productId} />
       <label className={labelClassName()}>
         Label
+        <RequiredMark />
         <input
           name="label"
           required
@@ -204,6 +206,7 @@ function VariantEditor({
       </label>
       <label className={labelClassName()}>
         Price (INR)
+        <RequiredMark />
         <input
           name="price"
           type="number"
@@ -472,6 +475,7 @@ export function ProductForm({
             <AdminFieldGrid>
               <label className={labelClassName()}>
                 Name
+                <RequiredMark />
                 <input
                   name="name"
                   value={name}

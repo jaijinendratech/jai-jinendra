@@ -134,7 +134,9 @@ export type TrustItem = {
   mobileTitle?: string;
   description: string;
   mobileDescription?: string;
-  icon: "eco" | "package" | "veg" | "shipping";
+  icon: "eco" | "package" | "veg" | "shipping" | "swiggy" | "zomato";
+  /** Small pill shown next to the title, e.g. "100% Pure", "★ 4.5+". */
+  badge?: string;
 };
 
 export type PurityPillar = {

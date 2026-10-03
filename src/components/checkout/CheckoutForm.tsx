@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import { useCart } from "@/lib/cart/use-cart";
 import { formatINR } from "@/lib/format";
 import { calculateOrderTotals } from "@/lib/shipping";
@@ -230,18 +232,22 @@ export function CheckoutForm() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold sm:col-span-2">
               Full name
+              <RequiredMark />
               <input name="name" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               Phone
+              <RequiredMark />
               <input name="phone" required type="tel" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               Email
+              <RequiredMark />
               <input name="email" required type="email" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold sm:col-span-2">
               Address line 1
+              <RequiredMark />
               <input name="line1" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold sm:col-span-2">
@@ -250,10 +256,12 @@ export function CheckoutForm() {
             </label>
             <label className="text-sm font-semibold">
               City
+              <RequiredMark />
               <input name="city" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               State
+              <RequiredMark />
               <select name="state" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none">
                 {INDIAN_STATES.map((s) => (
                   <option key={s} value={s}>
@@ -264,6 +272,7 @@ export function CheckoutForm() {
             </label>
             <label className="text-sm font-semibold">
               Pincode
+              <RequiredMark />
               <input
                 name="pincode"
                 required
@@ -343,9 +352,9 @@ export function CheckoutForm() {
                 data-testid="coupon-apply"
                 disabled={couponBusy || !couponInput.trim()}
                 onClick={() => void applyCoupon()}
-                className="shrink-0 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
-                {couponBusy ? "…" : "Apply"}
+                {couponBusy ? <BrandSpinner size={16} label="Applying coupon" /> : "Apply"}
               </button>
             )}
           </div>
@@ -404,9 +413,16 @@ export function CheckoutForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-5 w-full rounded-lg bg-primary-container py-3 text-sm font-semibold text-white hover:bg-primary disabled:opacity-60"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-3 text-sm font-semibold text-white hover:bg-primary disabled:opacity-60"
         >
-          {submitting ? "Processing…" : "Place order"}
+          {submitting ? (
+            <>
+              <BrandSpinner size={18} label="Placing order" />
+              Processing…
+            </>
+          ) : (
+            "Place order"
+          )}
         </button>
       </aside>
     </form>

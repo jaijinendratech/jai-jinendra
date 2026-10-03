@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatINR } from "@/lib/format";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import type { AdminCustomer, AdminOrderListItem } from "@/lib/admin/queries";
 import {
   updateCustomerProfileAction,
@@ -102,7 +103,8 @@ export function CustomerDetailPanel({
               />
             </label>
             <label className={`${labelClassName()} ${adminFieldFullClassName()}`}>
-              Phone{phoneAccount ? " (required)" : ""}
+              Phone
+              {phoneAccount ? <RequiredMark /> : null}
               <input
                 name="phone"
                 defaultValue={customer.phone}

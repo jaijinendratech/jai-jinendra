@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
+import { RequiredMark } from "@/components/shared/RequiredMark";
 import {
   saveCouponAction,
   setCouponActiveAction,
@@ -102,6 +103,7 @@ function CouponFormFields({
         {coupon ? <input type="hidden" name="id" value={coupon.id} /> : null}
         <label className={labelClassName()}>
           Code
+          <RequiredMark />
           <input
             name="code"
             required
@@ -124,6 +126,7 @@ function CouponFormFields({
         </label>
         <label className={labelClassName()}>
           {type === "percent" ? "Percent (1–100)" : "Amount (₹)"}
+          <RequiredMark />
           <input
             name="value"
             type="number"

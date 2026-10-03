@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useState } from "react";
 import { Button, toast } from "@heroui/react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { productTagLabels } from "@/lib/catalog/tags";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
@@ -180,10 +181,7 @@ export function ProductCard({
             className="h-8 min-h-8 shrink-0 rounded-lg bg-primary-container px-2.5 text-xs font-semibold text-white hover:bg-primary sm:h-9 sm:min-h-9 sm:px-3 sm:text-sm"
           >
             {adding ? (
-              <Loader2
-                className="h-4 w-4 animate-spin"
-                aria-label="Adding to cart"
-              />
+              <BrandSpinner size="sm" label="Adding to cart" />
             ) : (
               "Add"
             )}

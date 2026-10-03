@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { ProductCard } from "@/components/products/ProductCard";
 import type { Product } from "@/types/catalog";
 
@@ -107,10 +107,7 @@ export function LazyProductGrid({
           className="flex flex-col items-center gap-2 py-2"
           aria-hidden={false}
         >
-          <Loader2
-            className="h-5 w-5 animate-spin text-primary"
-            aria-label="Loading more products"
-          />
+          <BrandSpinner size="sm" label="Loading more products" />
           <p className="text-xs text-on-surface-variant">
             Showing {visibleCount} of {products.length}
           </p>
