@@ -1,34 +1,14 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
-import { ADMIN_SESSION_COOKIE } from "@/lib/admin-config";
-import { createClient } from "@/lib/supabase/server";
+import { assertAdminApiAccess } from "@/lib/admin-api-auth";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_WIDTH = 1600;
 
-async function assertAdmin(): Promise<boolean> {
-  if (!isSupabaseConfigured()) {
-    const jar = await cookies();
-    return jar.get(ADMIN_SESSION_COOKIE)?.value === "1";
-  }
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-  return profile?.role === "admin";
-}
-
 export async function POST(request: Request) {
-  if (!(await assertAdmin())) {
+  if (!(await assertAdminApiAccess())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

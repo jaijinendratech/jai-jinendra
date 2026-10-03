@@ -105,6 +105,39 @@ function ProductImagesField({
   );
 }
 
+function ThaliImageField({
+  defaultPath,
+  disabled,
+}: {
+  defaultPath?: string | null;
+  disabled?: boolean;
+}) {
+  const initial = useMemo<MediaItem[]>(
+    () =>
+      defaultPath
+        ? [{ path: defaultPath, url: defaultPath, alt: "Thali plate" }]
+        : [],
+    [defaultPath],
+  );
+
+  return (
+    <div>
+      <MediaUploader
+        name="thali_image"
+        folder="products"
+        label="Thali plate image (landing page only)"
+        defaultItems={initial}
+        disabled={disabled}
+        disabledReason="Uploads require Supabase Storage."
+      />
+      <p className="mt-2 text-xs text-on-surface-variant">
+        Shown only in the homepage thali plate. A square, top-down photo or a
+        transparent PNG works best. Remove it to use the regular product image.
+      </p>
+    </div>
+  );
+}
+
 function VariantEditor({
   productId,
   variant,
@@ -589,6 +622,14 @@ export function ProductForm({
               <ProductImagesField />
             </AdminCard>
           ) : null}
+
+          <AdminCard title="Thali plate image (landing page only)">
+            <ThaliImageField
+              key={`${product?.id ?? "new"}:${product?.thaliImage ?? ""}`}
+              defaultPath={product?.thaliImage}
+              disabled={!supabase}
+            />
+          </AdminCard>
 
           <AdminCard title="Food attributes">
             <AdminFieldGrid>

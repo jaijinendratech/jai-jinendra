@@ -108,7 +108,7 @@ export const termsPrivacyContent = {
   description:
     "Terms of use and privacy practices for shopping with Jai Jinendra Namkeens.",
   intro:
-    "By browsing or purchasing from jaijinendra.com you agree to the terms below. We collect only what we need to fulfil orders and improve your festive gifting experience.",
+    "By browsing or purchasing from jaijinendra.com you agree to our Terms & Conditions. The notes below summarise acceptable use. We collect only what we need to fulfil orders and improve your festive gifting experience.",
   terms: [
     {
       id: "products",

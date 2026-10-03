@@ -1,4 +1,4 @@
-import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
+// import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
 import { CategorySection } from "@/components/home/CategorySection";
 import { CelebrationBanner } from "@/components/home/CelebrationBanner";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
@@ -10,7 +10,7 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { ThaliBuilder } from "@/components/home/ThaliBuilder";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import {
-  getAchievementMediaContent,
+  // getAchievementMediaContent,
   getContentBlock,
   getHeroCarouselContent,
   getVideoTestimonials,
@@ -40,7 +40,7 @@ export default async function HomePage() {
     heroSlides,
     specialAttention,
     categoryTiles,
-    achievementMedia,
+    // achievementMedia,
     videos,
     thaliOfferBlock,
     thaliByGroup,
@@ -49,7 +49,7 @@ export default async function HomePage() {
     getHeroCarouselContent("home"),
     getSpecialAttentionCategories(),
     getHomeCategoryTiles(),
-    getAchievementMediaContent(),
+    // getAchievementMediaContent(),
     getVideoTestimonials(),
     getContentBlock("home", "thali_offer"),
     Promise.all(
@@ -209,7 +209,7 @@ export default async function HomePage() {
         discountPercent={thaliDiscountPercent}
       />
       <TestimonialsSection items={testimonials} videos={videos} />
-      <AchievementMediaSection content={achievementMedia} />
+      {/* <AchievementMediaSection content={achievementMedia} /> */}
       <NewsletterSection />
     </main>
   );

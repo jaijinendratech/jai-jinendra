@@ -169,6 +169,8 @@ export type Database = {
           shipping_note: string | null;
           highlights: string[] | null;
           tags: string[] | null;
+          sort_order: number;
+          thali_image_path: string | null;
           published: boolean;
           created_at: string;
           updated_at: string;
@@ -201,6 +203,8 @@ export type Database = {
           shipping_note?: string | null;
           highlights?: string[] | null;
           tags?: string[] | null;
+          sort_order?: number;
+          thali_image_path?: string | null;
           published?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -233,6 +237,8 @@ export type Database = {
           shipping_note?: string | null;
           highlights?: string[] | null;
           tags?: string[] | null;
+          sort_order?: number;
+          thali_image_path?: string | null;
           published?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -1017,6 +1023,12 @@ export type Database = {
           p_subtotal_paise: number;
         };
         Returns: number;
+      };
+      reorder_products: {
+        Args: {
+          ids: string[];
+        };
+        Returns: undefined;
       };
     };
     Enums: {

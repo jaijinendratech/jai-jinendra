@@ -124,6 +124,7 @@ export type AdminProductListItem = {
   published: boolean;
   featured: boolean;
   rating: number;
+  sortOrder: number;
 };
 
 export type AdminAttributeDefinition = {
@@ -176,6 +177,7 @@ export type AdminProductDetail = {
   tags: string[] | null;
   attributes: AdminProductAttributeValue[];
   published: boolean;
+  thaliImage: string | null;
   variants: {
     id: string;
     label: string;
@@ -767,7 +769,7 @@ export async function getAdminOrderById(idOrNumber: string) {
 
 export async function getAdminProducts(): Promise<AdminProductListItem[]> {
   if (!isSupabaseConfigured()) {
-    return catalogueProducts.map((p) => ({
+    return catalogueProducts.map((p, index) => ({
       id: p.id,
       slug: p.slug,
       name: p.name,
@@ -781,6 +783,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
       published: true,
       featured: Boolean(p.badge),
       rating: p.rating,
+      sortOrder: index + 1,
     }));
   }
 
@@ -788,8 +791,9 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
   const { data } = await admin
     .from("products")
     .select(
-      "id, slug, name, published, featured, rating, categories(slug), product_variants(price_paise, mrp_paise, stock_qty), product_images(storage_path, sort_order)",
+      "id, slug, name, published, featured, rating, sort_order, categories(slug), product_variants(price_paise, mrp_paise, stock_qty), product_images(storage_path, sort_order)",
     )
+    .order("sort_order")
     .order("name");
 
   type Row = {
@@ -799,6 +803,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
     published: boolean;
     featured: boolean;
     rating: number | null;
+    sort_order: number;
     categories: { slug: string } | null;
     product_variants: { price_paise: number; mrp_paise: number | null; stock_qty: number }[] | null;
     product_images: { storage_path: string; sort_order: number }[] | null;
@@ -834,6 +839,7 @@ export async function getAdminProducts(): Promise<AdminProductListItem[]> {
       published: p.published,
       featured: p.featured,
       rating: Number(p.rating ?? 0),
+      sortOrder: p.sort_order,
     };
   });
 }
@@ -897,6 +903,7 @@ export async function getAdminProductById(
           sortOrder: 0,
         },
       ],
+      thaliImage: null,
     };
   }
 
@@ -946,6 +953,7 @@ export async function getAdminProductById(
     shipping_note: string | null;
     highlights: string[] | null;
     tags: string[] | null;
+    thali_image_path: string | null;
     published: boolean;
     categories: { slug: string } | null;
     product_variants: Variant[] | null;
@@ -1042,6 +1050,7 @@ export async function getAdminProductById(
       (row) => row.dataType === "boolean" || row.dataType === "select",
     ),
     published: data.published,
+    thaliImage: data.thali_image_path,
     variants: variants.map((v) => ({
       id: v.id,
       label: v.label,

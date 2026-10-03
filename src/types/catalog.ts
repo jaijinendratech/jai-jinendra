@@ -67,6 +67,10 @@ export type Product = {
   category: CategoryRef | CategoryId;
   subcategory?: SubcategoryRef | null;
   image: string;
+  /** Landing-page thali plate only. Listings keep `image`. */
+  thaliImage?: string;
+  /** Global storefront position. Lower comes first. */
+  sortOrder?: number;
   imageAlt?: string;
   images?: { src: string; alt?: string }[];
   badge?: string;

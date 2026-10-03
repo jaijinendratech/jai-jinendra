@@ -24,6 +24,7 @@ export const siteConfig = {
   email: "hello@jaijinendra.com",
   fssai: "10020014002931",
   founded: 1982,
+  city: "Kota, Rajasthan",
   social: {
     facebook: "https://instagram.com/JaiJinendraNamkeens",
     instagram: "https://instagram.com/JaiJinendraNamkeens",
@@ -503,6 +504,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "Achievement", href: "/achievement" },
       { label: "Our Outlets", href: "/outlets" },
       { label: "Contact us", href: "/contact" },
+      { label: "Terms & Conditions", href: "/terms" },
     ],
   },
 ];

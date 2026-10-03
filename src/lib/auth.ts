@@ -423,6 +423,10 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function hasAcceptedTerms(formData: FormData): boolean {
+  return formData.get("accept_terms") === "on";
+}
+
 function authErrorKind(error: {
   message: string;
   code?: string | null;
@@ -490,6 +494,9 @@ export async function signInWithEmailAction(formData: FormData) {
     String(formData.get("next") ?? "/account"),
     "/account",
   );
+  if (!hasAcceptedTerms(formData)) {
+    redirect(customerLoginPath({ next, error: "terms_required" }));
+  }
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
 
@@ -528,6 +535,12 @@ export async function signUpWithEmailAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
 
+  if (!hasAcceptedTerms(formData)) {
+    redirect(
+      customerLoginPath({ next, mode: "signup", error: "terms_required" }),
+    );
+  }
+
   if (!isSupabaseConfigured() || !isValidEmail(email)) {
     redirect(
       customerLoginPath({ next, mode: "signup", error: "invalid_credentials" }),
@@ -552,7 +565,10 @@ export async function signUpWithEmailAction(formData: FormData) {
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        terms_accepted_at: new Date().toISOString(),
+      },
       emailRedirectTo,
     },
   });

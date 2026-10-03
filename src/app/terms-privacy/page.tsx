@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { termsPrivacyContent } from "@/data/customer-care";
 
@@ -25,7 +26,11 @@ export default function TermsPrivacyPage() {
         {termsPrivacyContent.title}
       </h1>
       <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant md:text-base">
-        {termsPrivacyContent.intro}
+        {termsPrivacyContent.intro.split("Terms & Conditions")[0]}
+        <Link href="/terms" className="font-semibold text-primary hover:underline">
+          Terms & Conditions
+        </Link>
+        {termsPrivacyContent.intro.split("Terms & Conditions")[1]}
       </p>
       <p className="mt-2 text-xs text-on-surface-variant">
         {termsPrivacyContent.updatedLabel}

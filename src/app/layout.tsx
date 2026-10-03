@@ -22,6 +22,8 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
   display: "swap",
+  // Admin shell does not use display headings — avoid unused preload warnings.
+  preload: false,
 });
 
 const jakarta = Plus_Jakarta_Sans({
@@ -102,11 +104,15 @@ export default async function RootLayout({
     special: category.featured,
   }));
 
+  const fontClasses = isAdmin
+    ? jakarta.variable
+    : `${playfair.variable} ${jakarta.variable}`;
+
   return (
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${playfair.variable} ${jakarta.variable} h-full scroll-smooth`}
+      className={`${fontClasses} h-full scroll-smooth`}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-on-surface antialiased">
         <AppToastProvider />

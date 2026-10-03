@@ -59,7 +59,11 @@ export function MediaUploader({
         const body = new FormData();
         body.append("file", file);
         body.append("folder", folder);
-        const res = await fetch("/api/admin/upload", { method: "POST", body });
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          body,
+          credentials: "same-origin",
+        });
         const json = (await res.json()) as {
           path?: string;
           url?: string;

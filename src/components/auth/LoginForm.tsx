@@ -3,7 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Alert, Button, Card, Form, Input, Label } from "@heroui/react";
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Form,
+  Input,
+  Label,
+} from "@heroui/react";
 import {
   signInWithEmailAction,
   signInWithGoogleAction,
@@ -33,6 +41,8 @@ function errorMessage(error?: string): string | null {
       return "Too many attempts. Please wait and try again.";
     case "google_failed":
       return "Google sign-in could not start. Please try again.";
+    case "terms_required":
+      return "Please agree to the Terms & Conditions and Privacy Policy to continue.";
     default:
       return null;
   }
@@ -40,6 +50,7 @@ function errorMessage(error?: string): string | null {
 
 export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
   const [accountMode, setAccountMode] = useState<LoginMode>(mode);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const message = errorMessage(error);
   const creating = accountMode === "signup";
 
@@ -167,10 +178,49 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
               className="w-full"
             />
           </div>
+          {acceptedTerms ? (
+            <input type="hidden" name="accept_terms" value="on" />
+          ) : null}
+          <Checkbox
+            isSelected={acceptedTerms}
+            onChange={setAcceptedTerms}
+            isRequired
+            className="w-full"
+            aria-label="Agree to Terms and Conditions and Privacy Policy"
+          >
+            <Checkbox.Content className="items-start gap-3">
+              <Checkbox.Control className="mt-0.5 size-5 shrink-0 border-2 border-outline-variant bg-white shadow-sm data-[selected=true]:border-primary data-[selected=true]:bg-primary">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <span className="text-xs leading-5 text-on-surface-variant">
+                I agree to the{" "}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary hover:underline"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Terms & Conditions
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/terms-privacy#privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary hover:underline"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Privacy Policy
+                </Link>
+              </span>
+            </Checkbox.Content>
+          </Checkbox>
           <Button
             type="submit"
             variant="primary"
-            className="w-full rounded-lg bg-primary-container font-bold text-white hover:bg-primary"
+            isDisabled={!acceptedTerms}
+            className="w-full rounded-lg bg-primary-container font-bold text-white hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             {creating ? "Create account" : "Sign in"}
           </Button>
@@ -189,13 +239,14 @@ export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
           <Button
             type="submit"
             variant="secondary"
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-outline-variant/60 bg-white py-2.5 font-semibold text-on-surface shadow-sm transition hover:bg-surface-container-low"
+            isDisabled={!acceptedTerms}
+            className="flex w-full items-center justify-center gap-3 rounded-lg border border-outline-variant/60 bg-white py-2.5 font-semibold text-on-surface shadow-sm transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Image 
-              src="/images/g-logo.png" 
-              alt="Google" 
-              width={20} 
-              height={20} 
+            <Image
+              src="/images/g-logo.png"
+              alt="Google"
+              width={20}
+              height={20}
               className="h-5 w-5 object-contain"
             />
             Continue with Google

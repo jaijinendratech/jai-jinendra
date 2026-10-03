@@ -29,7 +29,6 @@ export default async function AdminLoginPage({
             width={siteConfig.logo.width}
             height={siteConfig.logo.height}
             className="h-12 w-auto object-contain"
-            priority
           />
           <h1 className="mt-4 text-xl font-bold text-on-surface">
             Admin sign in

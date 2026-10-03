@@ -44,6 +44,22 @@ function revalidateAdmin(...paths: string[]) {
   revalidateTag("content", "max");
 }
 
+function revalidateCatalog() {
+  revalidateAdmin("/admin/products", "/", "/catalogue");
+}
+
+async function nextProductSortOrder(
+  admin: ReturnType<typeof createAdminClient>,
+) {
+  const { data } = await admin
+    .from("products")
+    .select("sort_order")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data?.sort_order ?? 0) + 1;
+}
+
 function parseList(raw: string): string[] {
   return raw
     .split(/[,\n]/)
@@ -622,6 +638,8 @@ export async function saveProductAction(formData: FormData) {
       : {}),
     published: parsed.data.published,
     ...tagFlags(parsed.data.tags),
+    thali_image_path:
+      String(formData.get("thali_image") ?? "").trim() || null,
     updated_at: new Date().toISOString(),
   };
 
@@ -633,7 +651,10 @@ export async function saveProductAction(formData: FormData) {
   } else {
     const { data, error } = await admin
       .from("products")
-      .insert(payload)
+      .insert({
+        ...payload,
+        sort_order: await nextProductSortOrder(admin),
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -682,6 +703,65 @@ export async function saveProductAction(formData: FormData) {
         error instanceof Error ? error.message : "Could not save product.",
     };
   }
+}
+
+/** Persist a full 1-based product order. Ids omitted keep their current position. */
+export async function reorderProductsAction(orderedIds: string[]) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    return { ok: false as const, error: "Supabase is required." };
+  }
+
+  const ids = orderedIds.map((id) => id.trim()).filter(Boolean);
+  if (!ids.length) {
+    return { ok: false as const, error: "No products to reorder." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("reorder_products", { ids });
+  if (error) return { ok: false as const, error: error.message };
+
+  revalidateCatalog();
+  return { ok: true as const };
+}
+
+/**
+ * Move one product to a 1-based position and shift the others.
+ * Works from any admin page or filter because it reorders the full catalog.
+ */
+export async function setProductSortNumberAction(id: string, position: number) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    return { ok: false as const, error: "Supabase is required." };
+  }
+  if (!id) return { ok: false as const, error: "Missing product." };
+  if (!Number.isFinite(position)) {
+    return { ok: false as const, error: "Enter a sort position." };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("products")
+    .select("id")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true })
+    .limit(10000);
+  if (error) return { ok: false as const, error: error.message };
+
+  const ids = (data ?? []).map((row) => row.id);
+  if (!ids.includes(id)) {
+    return { ok: false as const, error: "Product not found." };
+  }
+
+  const clamped = Math.min(Math.max(1, Math.round(position)), ids.length);
+  const next = ids.filter((item) => item !== id);
+  next.splice(clamped - 1, 0, id);
+
+  const { error: rpcError } = await admin.rpc("reorder_products", { ids: next });
+  if (rpcError) return { ok: false as const, error: rpcError.message };
+
+  revalidateCatalog();
+  return { ok: true as const };
 }
 
 /** Load a product for the admin edit modal (client-callable). */
@@ -761,6 +841,8 @@ export async function duplicateProductAction(formData: FormData) {
     tags: string[] | null;
     seasonal: boolean;
     featured: boolean;
+    sort_order: number;
+    thali_image_path: string | null;
     product_variants: {
       label: string;
       sku: string;
@@ -822,6 +904,8 @@ export async function duplicateProductAction(formData: FormData) {
           }
         : {}),
       published: false,
+      sort_order: await nextProductSortOrder(admin),
+      thali_image_path: product.thali_image_path,
     })
     .select("id")
     .single();

@@ -64,7 +64,14 @@ function CornerFlourish({ className }: { className?: string }) {
       <path d="M16 16L24 24M16 24L24 16" strokeWidth="1" opacity="0.7" />
       <circle cx="5" cy="46" r="2.5" fill="currentColor" stroke="none" />
       <circle cx="46" cy="5" r="2.5" fill="currentColor" stroke="none" />
-      <circle cx="9" cy="9" r="1.75" fill="currentColor" stroke="none" opacity="0.8" />
+      <circle
+        cx="9"
+        cy="9"
+        r="1.75"
+        fill="currentColor"
+        stroke="none"
+        opacity="0.8"
+      />
     </svg>
   );
 }
@@ -102,7 +109,10 @@ export function ThaliBuilder({
   const [searchSlot, setSearchSlot] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const byId = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products],
+  );
   const selectedIds = useMemo(
     () => selected.filter((id): id is string => id !== null),
     [selected],
@@ -119,7 +129,9 @@ export function ThaliBuilder({
         const product = byId.get(id);
         return product ? [product] : [];
       });
-      const selectedCount = items.filter((p) => selectedIds.includes(p.id)).length;
+      const selectedCount = items.filter((p) =>
+        selectedIds.includes(p.id),
+      ).length;
       return { group, items, selectedCount };
     });
   }, [byId, groupedIds, selectedIds]);
@@ -171,7 +183,9 @@ export function ThaliBuilder({
   const searchResults = useMemo(() => {
     if (searchSlot === null) return [];
     const q = searchQuery.trim().toLowerCase();
-    const pool = q ? products.filter((p) => p.name.toLowerCase().includes(q)) : products;
+    const pool = q
+      ? products.filter((p) => p.name.toLowerCase().includes(q))
+      : products;
     return pool.slice(0, 8);
   }, [products, searchSlot, searchQuery]);
 
@@ -182,7 +196,8 @@ export function ThaliBuilder({
         const product = byId.get(id);
         if (!product) continue;
         const variant = product.variants[0];
-        const sku = variant?.sku ?? `${product.slug}-${variant?.id ?? "default"}`;
+        const sku =
+          variant?.sku ?? `${product.slug}-${variant?.id ?? "default"}`;
         await updateItem({ sku, qty: 1 });
       }
       toast.success("Thali added to cart", {
@@ -225,11 +240,14 @@ export function ThaliBuilder({
             <span className="hidden md:inline">{thaliBuilderMeta.eyebrow}</span>
           </span>
           <h2 className="font-display mt-3 text-2xl font-bold leading-tight text-primary md:text-[40px]">
-            Build Your <span className="font-normal italic text-[#a8790a]">Royal Thali</span>
+            Build Your{" "}
+            <span className="font-normal italic text-[#a8790a]">
+              Royal Thali
+            </span>
           </h2>
           <p className="font-display mt-2 text-sm italic text-on-surface-variant md:mt-3 md:text-base">
-            Curate your handcrafted feast. Select {slotCount} delicacies to complete your thali
-            and unlock a festive offer.
+            Curate your handcrafted feast. Select {slotCount} delicacies to
+            complete your thali and unlock a festive offer.
           </p>
 
           <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#caa43d]/50 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary">
@@ -241,8 +259,10 @@ export function ThaliBuilder({
         <div className="mx-auto flex max-w-5xl flex-col items-center">
           {/* The thali plate — real photo, slots overlaid on its bowls */}
           <div
-            className="relative mx-auto w-full max-w-96 sm:max-w-[28rem]"
-            style={{ aspectRatio: `${thaliPlateImage.width} / ${thaliPlateImage.height}` }}
+            className="relative mx-auto w-full max-w-96 sm:max-w-md"
+            style={{
+              aspectRatio: `${thaliPlateImage.width} / ${thaliPlateImage.height}`,
+            }}
           >
             <Image
               src={thaliPlateImage.src}
@@ -276,7 +296,9 @@ export function ThaliBuilder({
                 >
                   <button
                     type="button"
-                    onClick={() => (isEmpty ? openSearch(index) : clearSlot(index))}
+                    onClick={() =>
+                      isEmpty ? openSearch(index) : clearSlot(index)
+                    }
                     aria-label={
                       product
                         ? `Remove ${product.name} from thali`
@@ -291,7 +313,7 @@ export function ThaliBuilder({
                     {product ? (
                       <>
                         <Image
-                          src={product.image}
+                          src={product.thaliImage ?? product.image}
                           alt={product.imageAlt ?? product.name}
                           fill
                           sizes="80px"
@@ -329,7 +351,9 @@ export function ThaliBuilder({
               have items, so 1-3 cards sit centered instead of left-aligned in a fixed
               4-col grid with an empty trailing column. */}
           {(() => {
-            const visibleCount = groups.filter((g) => g.items.length > 0).length;
+            const visibleCount = groups.filter(
+              (g) => g.items.length > 0,
+            ).length;
             const gridClass =
               visibleCount <= 1
                 ? "max-w-xs grid-cols-1"
@@ -371,7 +395,8 @@ export function ThaliBuilder({
                       <div className="space-y-2">
                         {visible.map((product) => {
                           const isSelected = selectedIds.includes(product.id);
-                          const disabled = !isSelected && selectedIds.length >= slotCount;
+                          const disabled =
+                            !isSelected && selectedIds.length >= slotCount;
                           return (
                             <button
                               key={product.id}
@@ -425,17 +450,22 @@ export function ThaliBuilder({
                         <button
                           type="button"
                           onClick={() =>
-                            setExpanded((prev) => ({ ...prev, [group.id]: !isExpanded }))
+                            setExpanded((prev) => ({
+                              ...prev,
+                              [group.id]: !isExpanded,
+                            }))
                           }
                           className="mt-2 flex w-full items-center justify-center gap-1 text-[11px] font-semibold text-primary hover:underline"
                         >
                           {isExpanded ? (
                             <>
-                              Show less <ChevronUp className="h-3 w-3" aria-hidden />
+                              Show less{" "}
+                              <ChevronUp className="h-3 w-3" aria-hidden />
                             </>
                           ) : (
                             <>
-                              View More ({hiddenCount}) <ChevronDown className="h-3 w-3" aria-hidden />
+                              View More ({hiddenCount}){" "}
+                              <ChevronDown className="h-3 w-3" aria-hidden />
                             </>
                           )}
                         </button>
@@ -447,8 +477,8 @@ export function ThaliBuilder({
             );
           })()}
           <p className="mt-3 text-center text-[11px] italic text-on-surface-variant">
-            Click any delicacy to place it on your royal thali platter. Click a filled bowl on the
-            platter to remove it.
+            Click any delicacy to place it on your royal thali platter. Click a
+            filled bowl on the platter to remove it.
           </p>
 
           <button
@@ -487,7 +517,10 @@ export function ThaliBuilder({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 shrink-0 text-on-surface-variant" aria-hidden />
+              <Search
+                className="h-5 w-5 shrink-0 text-on-surface-variant"
+                aria-hidden
+              />
               <input
                 autoFocus
                 value={searchQuery}
@@ -516,7 +549,9 @@ export function ThaliBuilder({
                         disabled={isSelected}
                         onClick={() => assignToSlot(searchSlot, product.id)}
                         className={`flex w-full items-center gap-2.5 py-2.5 text-left transition ${
-                          isSelected ? "cursor-not-allowed opacity-50" : "hover:text-primary"
+                          isSelected
+                            ? "cursor-not-allowed opacity-50"
+                            : "hover:text-primary"
                         }`}
                       >
                         <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md">
@@ -537,9 +572,15 @@ export function ThaliBuilder({
                           </span>
                         </span>
                         {isSelected ? (
-                          <Check className="h-4 w-4 shrink-0 text-secondary" aria-hidden />
+                          <Check
+                            className="h-4 w-4 shrink-0 text-secondary"
+                            aria-hidden
+                          />
                         ) : (
-                          <Plus className="h-4 w-4 shrink-0 text-on-surface-variant" aria-hidden />
+                          <Plus
+                            className="h-4 w-4 shrink-0 text-on-surface-variant"
+                            aria-hidden
+                          />
                         )}
                       </button>
                     </li>
@@ -547,7 +588,9 @@ export function ThaliBuilder({
                 })}
               </ul>
             ) : (
-              <p className="mt-3 text-sm text-on-surface-variant">No delicacies found.</p>
+              <p className="mt-3 text-sm text-on-surface-variant">
+                No delicacies found.
+              </p>
             )}
           </div>
         </div>

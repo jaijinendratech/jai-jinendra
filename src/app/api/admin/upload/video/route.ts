@@ -1,30 +1,10 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
-import { ADMIN_SESSION_COOKIE } from "@/lib/admin-config";
-import { createClient } from "@/lib/supabase/server";
+import { assertAdminApiAccess } from "@/lib/admin-api-auth";
 
 const ALLOWED_TYPES = new Set(["video/mp4", "video/webm"]);
 const MAX_BYTES = 50 * 1024 * 1024;
-
-async function assertAdmin(): Promise<boolean> {
-  if (!isSupabaseConfigured()) {
-    const jar = await cookies();
-    return jar.get(ADMIN_SESSION_COOKIE)?.value === "1";
-  }
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-  return profile?.role === "admin";
-}
 
 function extensionFor(contentType: string): "mp4" | "webm" | null {
   if (contentType === "video/mp4") return "mp4";
@@ -33,7 +13,7 @@ function extensionFor(contentType: string): "mp4" | "webm" | null {
 }
 
 export async function POST(request: Request) {
-  if (!(await assertAdmin())) {
+  if (!(await assertAdminApiAccess())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

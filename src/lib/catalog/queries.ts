@@ -63,6 +63,8 @@ type DbProductRow = {
   shipping_note: string | null;
   highlights: string[] | null;
   tags: string[] | null;
+  sort_order: number | null;
+  thali_image_path: string | null;
   categories: { slug: string; title: string } | null;
   subcategories: { slug: string; title: string } | null;
   product_variants: DbVariantRow[];
@@ -164,6 +166,8 @@ function mapDbProduct(row: DbProductRow): Product {
       ? { slug: row.subcategories.slug, title: row.subcategories.title }
       : null,
     image: image?.storage_path ?? "/images/prod0.jpg",
+    thaliImage: row.thali_image_path ?? undefined,
+    sortOrder: row.sort_order ?? undefined,
     imageAlt: image?.alt ?? row.name,
     images: images.map((img) => ({
       src: img.storage_path,
@@ -231,6 +235,7 @@ function productSelect(detailSchema: boolean) {
   id, slug, name, description, long_description, spice_note, dietary,
   badge, tagline, rating, review_count, seo_title, seo_description,
   featured, seasonal, origin, shelf_life, ingredients,
+  sort_order, thali_image_path,
   ${detailColumns}
   categories ( slug, title ),
   subcategories ( slug, title ),
@@ -307,6 +312,7 @@ export async function getPublishedProducts(): Promise<Product[]> {
     .from("products")
     .select(productSelect(detailSchema))
     .eq("published", true)
+    .order("sort_order")
     .order("name");
 
   if (error || !data?.length) return [];
@@ -386,6 +392,7 @@ export async function getProductsByCategory(
     .select(productSelectFiltered({ category: true, detailSchema }))
     .eq("published", true)
     .in("categories.slug", categorySlugs)
+    .order("sort_order")
     .order("name");
 
   if (error || !data?.length) return [];
@@ -498,7 +505,10 @@ async function getGajakListingProducts(): Promise<Product[]> {
     seen.add(product.id);
     products.push(product);
   }
-  products.sort((a, b) => a.name.localeCompare(b.name));
+  products.sort(
+    (a, b) =>
+      (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name),
+  );
   return products;
 }
 
@@ -573,6 +583,7 @@ export async function getProductsBySubcategory(
     .eq("published", true)
     .in("categories.slug", categorySlugs)
     .eq("subcategories.slug", subcategorySlug)
+    .order("sort_order")
     .order("name");
 
   if (error || !data?.length) return [];
@@ -613,6 +624,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     .select(productSelect(detailSchema))
     .eq("published", true)
     .or(`name.ilike.%${q}%,description.ilike.%${q}%`)
+    .order("sort_order")
     .order("name")
     .limit(50);
 
@@ -680,6 +692,7 @@ export async function getProductSearchIndex(): Promise<
       "id, name, slug, description, product_variants ( price_paise, available )",
     )
     .eq("published", true)
+    .order("sort_order")
     .order("name");
 
   if (error || !data) return [];
