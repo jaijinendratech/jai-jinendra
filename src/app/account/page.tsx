@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  MapPinHouse,
+  PackageOpen,
+  ShoppingBag,
+  UserPen,
+  type LucideIcon,
+} from "lucide-react";
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -63,20 +70,48 @@ export default async function AccountOverviewPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        {[
-          { href: "/account/orders", label: "View orders", body: "Track status and history" },
-          { href: "/account/profile", label: "Edit profile", body: "Name, email, phone" },
-          { href: "/account/addresses", label: "Addresses", body: "Delivery locations" },
-        ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 transition hover:border-primary/40"
-          >
-            <p className="font-semibold text-primary">{item.label}</p>
-            <p className="mt-1 text-sm text-on-surface-variant">{item.body}</p>
-          </Link>
-        ))}
+        {(
+          [
+            {
+              href: "/account/orders",
+              label: "View orders",
+              body: "Track status and history",
+              icon: ShoppingBag,
+            },
+            {
+              href: "/account/profile",
+              label: "Edit profile",
+              body: "Name, email, phone",
+              icon: UserPen,
+            },
+            {
+              href: "/account/addresses",
+              label: "Addresses",
+              body: "Delivery locations",
+              icon: MapPinHouse,
+            },
+          ] satisfies {
+            href: string;
+            label: string;
+            body: string;
+            icon: LucideIcon;
+          }[]
+        ).map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 transition hover:border-primary/40"
+            >
+              <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <p className="mt-3 font-semibold text-primary">{item.label}</p>
+              <p className="mt-1 text-sm text-on-surface-variant">{item.body}</p>
+            </Link>
+          );
+        })}
       </section>
 
       <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6">
@@ -91,12 +126,15 @@ export default async function AccountOverviewPage() {
         </div>
 
         {!recentOrders.length ? (
-          <p className="mt-4 text-sm text-on-surface-variant">
-            No orders yet.{" "}
-            <Link href="/catalogue" className="text-primary hover:underline">
-              Start shopping
-            </Link>
-          </p>
+          <div className="mt-4 flex items-start gap-3 text-sm text-on-surface-variant">
+            <PackageOpen className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <p>
+              No orders yet.{" "}
+              <Link href="/catalogue" className="text-primary hover:underline">
+                Start shopping
+              </Link>
+            </p>
+          </div>
         ) : (
           <ul className="mt-4 divide-y divide-outline-variant/20">
             {recentOrders.map((order) => (

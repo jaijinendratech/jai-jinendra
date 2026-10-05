@@ -83,7 +83,9 @@ export async function createOrder(params: {
     couponCode = preview.coupon.code;
   }
 
-  const totals = calculateOrderTotals(cart.subtotalPaise, discountPaise);
+  const totals = calculateOrderTotals(cart.subtotalPaise, discountPaise, {
+    prepaid: params.paymentMethod === "razorpay",
+  });
 
   const addressSnapshot: Json = {
     ...params.address,
@@ -108,6 +110,7 @@ export async function createOrder(params: {
         payment_status: paymentStatus,
         subtotal_paise: totals.subtotalPaise,
         discount_paise: totals.discountPaise,
+        prepaid_discount_paise: totals.prepaidDiscountPaise,
         shipping_paise: totals.shippingPaise,
         total_paise: totals.totalPaise,
         coupon_id: couponId,
@@ -154,6 +157,8 @@ export async function createOrder(params: {
         to: params.address.email,
         orderNumber: order.order_number,
         totalPaise: totals.totalPaise,
+        discountPaise: totals.discountPaise,
+        prepaidDiscountPaise: totals.prepaidDiscountPaise,
         paymentMethod: "cod",
       }).catch(() => undefined);
     }
@@ -223,6 +228,8 @@ export async function handleRazorpayPaymentSuccess(params: {
       to: order.customer_email,
       orderNumber: order.order_number,
       totalPaise: order.total_paise,
+      discountPaise: order.discount_paise,
+      prepaidDiscountPaise: order.prepaid_discount_paise,
       paymentMethod: "razorpay",
     }).catch(() => undefined);
   }

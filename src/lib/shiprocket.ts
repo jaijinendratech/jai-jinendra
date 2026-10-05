@@ -232,6 +232,10 @@ export async function createShiprocketShipment(params: {
   orderDate?: string | null;
   paymentMethod: "razorpay" | "cod" | string;
   subtotalRupees: number;
+  /** Coupon discount in rupees. Combined with prepaid into total_discount. */
+  couponDiscountRupees?: number;
+  /** Prepaid (Razorpay) discount in rupees. */
+  prepaidDiscountRupees?: number;
   address: ShiprocketAddress;
   items: ShiprocketOrderItem[];
   /** Optional package defaults (cm / kg). */
@@ -251,6 +255,10 @@ export async function createShiprocketShipment(params: {
   if (phone.length !== 10) {
     throw new Error("Customer phone must be a valid 10-digit Indian mobile.");
   }
+
+  const couponDiscount = Math.max(0, params.couponDiscountRupees ?? 0);
+  const prepaidDiscount = Math.max(0, params.prepaidDiscountRupees ?? 0);
+  const totalDiscount = Math.round(couponDiscount + prepaidDiscount);
 
   const payload = {
     order_id: params.orderNumber.replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 50),
@@ -275,6 +283,7 @@ export async function createShiprocketShipment(params: {
     })),
     payment_method: params.paymentMethod === "cod" ? "COD" : "Prepaid",
     sub_total: Math.max(1, Math.round(params.subtotalRupees)),
+    ...(totalDiscount > 0 ? { total_discount: totalDiscount } : {}),
     length: params.lengthCm ?? 20,
     breadth: params.breadthCm ?? 15,
     height: params.heightCm ?? 10,

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Mail, Phone, User } from "lucide-react";
+import { AccountSubmitButton } from "@/components/account/AccountSubmitButton";
 import { getProfile, requireUser } from "@/lib/auth";
 import { updateAccountProfileAction } from "@/lib/account/actions";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -46,39 +48,57 @@ export default async function AccountProfilePage({
       >
         <label className="block text-sm font-semibold">
           Full name
-          <input
-            name="fullName"
-            defaultValue={profile?.full_name ?? ""}
-            className="mt-1.5 w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm font-normal"
-            disabled={!supabase}
-          />
+          <span className="relative mt-1.5 block">
+            <User
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant"
+              aria-hidden
+            />
+            <input
+              name="fullName"
+              defaultValue={profile?.full_name ?? ""}
+              className="w-full rounded-lg border border-outline-variant/40 bg-white py-2 pl-10 pr-3 text-sm font-normal"
+              disabled={!supabase}
+            />
+          </span>
         </label>
         <label className="block text-sm font-semibold">
           Email
-          <input
-            name="email"
-            type="email"
-            defaultValue={profile?.email ?? user.email ?? ""}
-            className="mt-1.5 w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm font-normal"
-            disabled={!supabase}
-          />
+          <span className="relative mt-1.5 block">
+            <Mail
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant"
+              aria-hidden
+            />
+            <input
+              name="email"
+              type="email"
+              defaultValue={profile?.email ?? user.email ?? ""}
+              className="w-full rounded-lg border border-outline-variant/40 bg-white py-2 pl-10 pr-3 text-sm font-normal"
+              disabled={!supabase}
+            />
+          </span>
         </label>
         <label className="block text-sm font-semibold">
           Phone
-          <input
-            name="phone"
-            defaultValue={profile?.phone ?? user.phone ?? ""}
-            className="mt-1.5 w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm font-normal"
-            disabled={!supabase}
-          />
+          <span className="relative mt-1.5 block">
+            <Phone
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant"
+              aria-hidden
+            />
+            <input
+              name="phone"
+              defaultValue={profile?.phone ?? user.phone ?? ""}
+              className="w-full rounded-lg border border-outline-variant/40 bg-white py-2 pl-10 pr-3 text-sm font-normal"
+              disabled={!supabase}
+            />
+          </span>
         </label>
         {supabase ? (
-          <button
-            type="submit"
+          <AccountSubmitButton
+            pendingLabel="Saving…"
             className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90"
           >
             Save profile
-          </button>
+          </AccountSubmitButton>
         ) : (
           <p className="text-sm text-on-surface-variant">
             Connect Supabase to edit your profile.

@@ -76,8 +76,12 @@ export function CheckoutForm() {
 
   const totals = useMemo(
     () =>
-      calculateOrderTotals(cart.subtotalPaise, appliedCoupon?.discountPaise ?? 0),
-    [cart.subtotalPaise, appliedCoupon?.discountPaise],
+      calculateOrderTotals(
+        cart.subtotalPaise,
+        appliedCoupon?.discountPaise ?? 0,
+        { prepaid: paymentMethod === "razorpay" },
+      ),
+    [cart.subtotalPaise, appliedCoupon?.discountPaise, paymentMethod],
   );
 
   async function applyCoupon() {
@@ -293,16 +297,26 @@ export function CheckoutForm() {
                 checked={paymentMethod === "razorpay"}
                 onChange={() => setPaymentMethod("razorpay")}
               />
-              <span className="text-sm font-semibold">Pay online (UPI / Card / Netbanking)</span>
+              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                Pay online (UPI / Card / Netbanking)
+                <span className="rounded-full bg-secondary/15 px-2 py-0.5 text-[11px] font-bold tracking-wide text-secondary">
+                  ₹20 OFF
+                </span>
+              </span>
             </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-outline-variant/30 px-4 py-3">
-              <input
-                type="radio"
-                name="pm"
-                checked={paymentMethod === "cod"}
-                onChange={() => setPaymentMethod("cod")}
-              />
-              <span className="text-sm font-semibold">Cash on delivery</span>
+            <label className="flex cursor-pointer flex-col gap-1 rounded-lg border border-outline-variant/30 px-4 py-3">
+              <span className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="pm"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                />
+                <span className="text-sm font-semibold">Cash on delivery</span>
+              </span>
+              <span className="pl-7 text-xs font-normal text-on-surface-variant">
+                Pay online and save ₹20
+              </span>
             </label>
           </div>
         </section>
@@ -387,6 +401,14 @@ export function CheckoutForm() {
               <dt>Discount{appliedCoupon ? ` (${appliedCoupon.code})` : ""}</dt>
               <dd className="price font-semibold">
                 −{formatINR(totals.discountPaise / 100)}
+              </dd>
+            </div>
+          ) : null}
+          {paymentMethod === "razorpay" && totals.prepaidDiscountPaise > 0 ? (
+            <div className="flex justify-between text-secondary">
+              <dt>Prepaid discount</dt>
+              <dd className="price font-semibold">
+                −{formatINR(totals.prepaidDiscountPaise / 100)}
               </dd>
             </div>
           ) : null}

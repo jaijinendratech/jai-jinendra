@@ -539,6 +539,7 @@ export type Database = {
           razorpay_payment_id: string | null;
           subtotal_paise: number;
           discount_paise: number;
+          prepaid_discount_paise: number;
           shipping_paise: number;
           total_paise: number;
           coupon_id: string | null;
@@ -566,6 +567,7 @@ export type Database = {
           razorpay_payment_id?: string | null;
           subtotal_paise: number;
           discount_paise?: number;
+          prepaid_discount_paise?: number;
           shipping_paise?: number;
           total_paise: number;
           coupon_id?: string | null;
@@ -593,6 +595,7 @@ export type Database = {
           razorpay_payment_id?: string | null;
           subtotal_paise?: number;
           discount_paise?: number;
+          prepaid_discount_paise?: number;
           shipping_paise?: number;
           total_paise?: number;
           coupon_id?: string | null;

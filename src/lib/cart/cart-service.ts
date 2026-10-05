@@ -194,7 +194,10 @@ export async function getCartSummary(): Promise<CartSummary> {
   return {
     items,
     itemCount: items.reduce((s, i) => s + i.qty, 0),
-    ...totals,
+    subtotalPaise: totals.subtotalPaise,
+    discountPaise: totals.discountPaise,
+    shippingPaise: totals.shippingPaise,
+    totalPaise: totals.totalPaise,
     warnings,
   };
 }

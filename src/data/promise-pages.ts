@@ -41,9 +41,9 @@ export const heritagePage = {
   stats: heritage.stats,
   timeline: [
     {
-      year: "1982",
-      title: "A Sacred Vow in Rajasthan",
-      body: "Founded in the royal lanes of Rajasthan on uncompromised purity — cold-pressed oils, hand-pounded spices, and zero preservatives.",
+      year: "1984",
+      title: "Founded at Aerodrome Circle, Kota",
+      body: "Established at Aerodrome Circle, Kota, Rajasthan, with much-loved Kota Kachoris and Namkeens — a trusted name among families across Kota and Rajasthan for distinctive taste, quality and consistency.",
     },
     {
       year: "1998",
@@ -80,7 +80,7 @@ export const heritagePage = {
 export const purityPage = {
   metaTitle: "Purity & Lab Testing",
   metaDescription:
-    "Learn how Jai Jinendra Namkeens maintains 100% shuddh vegetarian kitchens, cold-pressed oils, lab-tested batches, and FSSAI certification.",
+    "Learn how Jai Jinendra Sweets & Namkeens maintains 100% shuddh vegetarian kitchens, cold-pressed oils, lab-tested batches, and FSSAI certification.",
   eyebrow: "The Promise",
   title: "Purity & Lab Testing",
   intro: `Every batch from ${siteConfig.name} follows dedicated cleanroom protocols — pure vegetarian, cold-pressed oils, and nitrogen-sealed freshness.`,
@@ -146,7 +146,7 @@ export const freshnessPage = {
 export const corporatePage = {
   metaTitle: "Corporate Gifting Desk",
   metaDescription:
-    "Corporate Diwali hampers, wedding favours, and multi-address festive gifting with branding, brass seals, and pan-India dispatch from Jai Jinendra Namkeens.",
+    "Corporate Diwali hampers, wedding favours, and multi-address festive gifting with branding, brass seals, and pan-India dispatch from Jai Jinendra Sweets & Namkeens.",
   eyebrow: "Bespoke B2B Gifting",
   title: "Corporate Gifting Desk",
   intro:
@@ -179,31 +179,31 @@ export const corporatePage = {
 } as const;
 
 export const cateringPage = {
-  metaTitle: "Catering",
+  metaTitle: "Jain Catering by Jai Jinendra",
   metaDescription:
-    "Pure-veg sweets, namkeens, and snack counters for weddings, festivals, pujas, and corporate events — catering enquiries from Jai Jinendra.",
+    "Authentic Jain catering for weddings, religious functions, and special events — no onion, no garlic, no potato. Pure Jain food with magical taste from Jai Jinendra Sweets & Namkeens.",
   eyebrow: "Events & Celebrations",
-  title: "Catering by Jai Jinendra",
+  title: "Jain Catering by Jai Jinendra – Pure Jain Food, Magical Taste",
   intro:
-    "Bring our heritage mithai, fresh namkeens, and bakery treats to your wedding, festival, puja, or office event. Share your date, guest count, and city — our team will plan the menu and quantities with you.",
+    "Looking for Jain catering for a wedding, religious function, family gathering or special event? Jai Jinendra offers authentic Jain food prepared according to Jain dietary protocols, with no onion, no garlic and no potato. Our experienced team focuses on delivering delicious, flavourful food without compromising on traditional Jain food practices.",
   image: images.bannerSweetsLaddu,
   imageAlt: "Assorted Jai Jinendra sweets arranged for an event",
   benefits: [
     {
-      title: "100% Shuddh Pure Veg",
-      body: "Every sweet and savory made in our own kitchens with the same purity standards as our retail range.",
+      title: "Authentic Jain Catering",
+      body: "No onion, no garlic, no potato + Magical taste.",
     },
     {
-      title: "Menus for Every Occasion",
-      body: "Weddings, sangeet, pujas, festivals, and corporate gatherings — mithai, namkeen, and bakery counters.",
+      title: "Extensive Menu Options with Consistent Taste",
+      body: "Variety with high standard quality.",
     },
     {
       title: "Planned Quantities",
       body: "Tell us your guest count and we will suggest portions so nothing runs short and little goes to waste.",
     },
     {
-      title: "Fresh for Your Date",
-      body: "Prepared close to your event date and packed to stay fresh until it is served.",
+      title: "Catering for Every Celebration",
+      body: "Weddings, religious functions, festivals, corporate events or other occasions.",
     },
   ],
 } as const;
@@ -213,57 +213,58 @@ export type FlagshipOutlet = {
   name: string;
   city: string;
   address: string;
-  hours: string;
+  hours?: string;
   phone: string;
+  mapUrl: string;
   type: "flagship" | "kitchen" | "popup";
 };
 
+function mapsSearchUrl(address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
 export const flagshipOutlets: FlagshipOutlet[] = [
   {
-    id: "jodhpur-heritage",
-    name: "Jodhpur Heritage Kitchen Counter",
-    city: "Jodhpur, Rajasthan",
-    address: "Near Clock Tower Bazaar, Old City, Jodhpur 342001",
-    hours: "Mon–Sun · 10:00 AM – 8:30 PM",
-    phone: siteConfig.phone,
-    type: "kitchen",
-  },
-  {
-    id: "jaipur-flagship",
-    name: "Jaipur Flagship Boutique",
-    city: "Jaipur, Rajasthan",
-    address: "MI Road Heritage Lane, Jaipur 302001",
-    hours: "Mon–Sun · 11:00 AM – 9:00 PM",
-    phone: siteConfig.phone,
+    id: "aerodrome-circle",
+    name: "Aerodrome Circle (Flagship)",
+    city: "Kota, Rajasthan",
+    address: "Aerodrome Circle, Jhalawar Road, Gumanpura, Kota, Rajasthan 324006",
+    phone: "8306084988",
+    mapUrl: mapsSearchUrl(
+      "Aerodrome Circle, Jhalawar Road, Gumanpura, Kota, Rajasthan 324006",
+    ),
     type: "flagship",
   },
   {
-    id: "delhi-popup",
-    name: "Delhi NCR Festive Pop-Up",
-    city: "Gurugram, Delhi NCR",
-    address: "Seasonal counter · Select malls during Diwali & wedding season",
-    hours: "Festive calendar · Announced on Instagram",
-    phone: siteConfig.phone,
-    type: "popup",
+    id: "rangbari",
+    name: "Rangbari",
+    city: "Kota, Rajasthan",
+    address:
+      "Shop No. 4, Main Rd, opposite LIC Building, Veer Sawarkar Nagar, Rangbari, Kota, Rajasthan 324005",
+    phone: "9828806788",
+    mapUrl: mapsSearchUrl(
+      "Shop No. 4, Main Rd, opposite LIC Building, Veer Sawarkar Nagar, Rangbari, Kota, Rajasthan 324005",
+    ),
+    type: "kitchen",
   },
   {
-    id: "mumbai-popup",
-    name: "Mumbai Festive Pop-Up",
-    city: "South Mumbai",
-    address: "Seasonal counter · Partner festive markets (Oct–Nov)",
-    hours: "Festive calendar · Announced on Instagram",
-    phone: siteConfig.phone,
-    type: "popup",
+    id: "bundi-road",
+    name: "Bundi Road",
+    city: "Kota, Rajasthan",
+    address: "Bundi Road, Kota, Rajasthan",
+    phone: "8306084988",
+    mapUrl: mapsSearchUrl("Bundi Road, Kota, Rajasthan"),
+    type: "kitchen",
   },
 ];
 
 export const outletsPage = {
-  metaTitle: "Our Flagship Outlets",
+  metaTitle: "Our Outlets in Kota",
   metaDescription:
-    "Visit Jai Jinendra Namkeens flagship counters in Rajasthan and seasonal festive pop-ups across major metros.",
+    "Visit Jai Jinendra Sweets & Namkeens outlets in Kota — Aerodrome Circle flagship, Rangbari, and Bundi Road.",
   eyebrow: "Visit Us",
-  title: "Our Flagship Outlets",
+  title: "Our Outlets in Kota",
   intro:
-    "Taste fresh kadhai batches at our Rajasthan heritage counters, or find us at seasonal metro pop-ups during Diwali. Corporate gifting desk remains available year-round online.",
+    "Visit our Kota outlets for fresh kadhai batches, Kota Kachoris, namkeens, sweets, and gifting. Corporate gifting and pan-India orders remain available year-round online.",
   outlets: flagshipOutlets,
 } as const;

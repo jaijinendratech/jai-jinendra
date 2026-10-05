@@ -459,6 +459,8 @@ export async function createShiprocketShipmentAction(formData: FormData) {
     created_at: string;
     payment_method: string;
     subtotal_paise: number;
+    discount_paise: number;
+    prepaid_discount_paise: number;
     customer_phone: string | null;
     customer_email: string | null;
     status: OrderStatus;
@@ -519,6 +521,8 @@ export async function createShiprocketShipmentAction(formData: FormData) {
     orderDate: row.created_at,
     paymentMethod: row.payment_method,
     subtotalRupees: row.subtotal_paise / 100,
+    couponDiscountRupees: (row.discount_paise ?? 0) / 100,
+    prepaidDiscountRupees: (row.prepaid_discount_paise ?? 0) / 100,
     address: {
       name: addr.name || "Customer",
       phone: row.customer_phone || addr.phone || "",

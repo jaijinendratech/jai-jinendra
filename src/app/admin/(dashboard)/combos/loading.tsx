@@ -1,14 +1,13 @@
-import { BrandSpinner } from "@/components/shared/BrandSpinner";
+import { BrandLoader } from "@/components/shared/BrandLoader";
 
 /**
- * Overrides the parent `(dashboard)/loading.tsx` just for `/admin/combos`.
- * Same overlay — kept as a separate file to preserve this route's existing
- * override point, even though the content is now identical to the parent.
+ * Overrides the parent `(dashboard)/loading.tsx` for `/admin/combos`.
+ * Same overlay, kept so this route retains its own loading boundary.
  */
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-white lg:left-64">
-      <BrandSpinner size={140} label="Loading page" />
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-background lg:left-64">
+      <BrandLoader />
     </div>
   );
 }

@@ -1,9 +1,7 @@
 /**
- * Brand-themed loading spinner: the trefoil logo mark centered inside a
- * rotating ring of fading dots (see the reference design shared by the
- * client). Pure SVG/CSS — no animation library needed. Used both as a
- * small inline indicator inside buttons (`size="sm"`) and as a large
- * full-page overlay (`size="lg"`, see `src/app/loading.tsx`).
+ * Brand-themed inline spinner: the trefoil logo mark centered inside a
+ * rotating ring of fading dots. Pure SVG/CSS — no animation library needed.
+ * For buttons and small indicators only. Route-level loading uses BrandLoader.
  */
 const DOT_COUNT = 28;
 

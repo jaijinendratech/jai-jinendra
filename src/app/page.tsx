@@ -155,7 +155,7 @@ export default async function HomePage() {
         foundingDate: String(siteConfig.founded),
         email: siteConfig.email,
         telephone: siteConfig.phone,
-        sameAs: [siteConfig.social.instagram],
+        sameAs: [siteConfig.social.instagram, siteConfig.social.facebook],
       },
       {
         "@type": "WebSite",

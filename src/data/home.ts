@@ -14,20 +14,20 @@ import type {
 } from "@/types/catalog";
 
 export const siteConfig = {
-  name: "Jai Jinendra Namkeens",
-  legalName: "Jai Jinendra Namkeens",
+  name: "Jai Jinendra Sweets & Namkeens",
+  legalName: "Jai Jinendra Sweets & Namkeens",
   tagline: "Artisanal Savouries & Royal Sweets",
   description:
-    "Authentic Rajasthani namkeens, mithai, and festive hampers — freshly fried, nitrogen-sealed, and delivered pan-India. 100% shuddh vegetarian since 1982.",
+    "Authentic Rajasthani namkeens, mithai, and festive hampers — freshly fried, nitrogen-sealed, and delivered pan-India. 100% shuddh vegetarian since 1984, Aerodrome Circle, Kota.",
   url: "https://jaijinendra.com",
   phone: "+91 98288 02183",
   email: "jainamfoods.kota@gmail.com",
   fssai: "10020014002931",
-  founded: 1982,
+  founded: 1984,
   city: "Kota, Rajasthan",
   social: {
-    facebook: "https://instagram.com/JaiJinendraNamkeens",
-    instagram: "https://instagram.com/JaiJinendraNamkeens",
+    facebook: "https://www.facebook.com/jaijinendra.kota",
+    instagram: "https://www.instagram.com/jaijinendra.kota/",
   },
   announcement:
     "FREE PAN-INDIA DELIVERY ON ORDERS ABOVE ₹999 • Freshly Handcrafted & Nitrogen Packed • 100% Shuddh Shakahari (Pure Vegetarian)",
@@ -263,9 +263,9 @@ export const heritage = {
   eyebrow: "Generational Craft",
   title: "ROOTED IN TRADITION. MADE FOR TODAY.",
   mobileTitle: "Rooted in tradition. Made for today.",
-  body: "Started in 1982 in the royal lanes of Rajasthan, Jai Jinendra Namkeens was founded on a simple sacred vow: uncompromised purity, freshly cold-pressed oils, hand-pounded spices, and zero preservatives. Every single batch of our signature Ratlami Sev, Hing Kachori, and Pure Ghee Mithai is prepared under strict shuddh vegetarian protocols in dedicated cleanrooms. When you open a packet anywhere in India, you savour the exact crisp crunch of our halwai ovens on the day it was fried.",
+  body: "Started in 1984 at Aerodrome Circle, Kota, Jai Jinendra Sweets & Namkeens was founded on a simple sacred vow: uncompromised purity, freshly cold-pressed oils, hand-pounded spices, and zero preservatives. Every single batch of our signature Ratlami Sev, Hing Kachori, and Pure Ghee Mithai is prepared under strict shuddh vegetarian protocols in dedicated cleanrooms. When you open a packet anywhere in India, you savour the exact crisp crunch of our halwai ovens on the day it was fried.",
   mobileBody:
-    "Since 1982 in Rajasthan — pure oils, hand-pounded spices, zero preservatives. Fresh crispness sealed for pan-India delivery.",
+    "Since 1984 at Aerodrome Circle, Kota — pure oils, hand-pounded spices, zero preservatives. Fresh crispness sealed for pan-India delivery.",
   cta: { label: "Our Story & Purity Standards", href: "/heritage" },
   mobileCta: "Our Story",
   image: images.heritage,
@@ -505,7 +505,6 @@ export const footerColumns: FooterColumn[] = [
     title: "Company",
     links: [
       { label: "About us", href: "/about" },
-      { label: "Achievement", href: "/achievement" },
       { label: "Our Outlets", href: "/outlets" },
       { label: "Contact us", href: "/contact" },
       { label: "Terms & Conditions", href: "/terms" },

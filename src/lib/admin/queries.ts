@@ -639,6 +639,9 @@ export async function getAdminOrderById(idOrNumber: string) {
       city: order.city,
       total: order.total,
       subtotal: order.total,
+      discount: 0,
+      prepaidDiscount: 0,
+      couponCode: null as string | null,
       shipping: 0,
       status: mockStatusToOrder(order.status),
       paymentStatus: order.status === "pending" ? "pending" : "paid",
@@ -678,6 +681,9 @@ export async function getAdminOrderById(idOrNumber: string) {
     address_snapshot: Record<string, string | undefined> | null;
     total_paise: number;
     subtotal_paise: number;
+    discount_paise: number;
+    prepaid_discount_paise: number;
+    coupon_code: string | null;
     shipping_paise: number;
     status: OrderStatus;
     payment_status: PaymentStatus;
@@ -736,6 +742,9 @@ export async function getAdminOrderById(idOrNumber: string) {
     city: addr.city ?? "",
     total: row.total_paise / 100,
     subtotal: row.subtotal_paise / 100,
+    discount: (row.discount_paise ?? 0) / 100,
+    prepaidDiscount: (row.prepaid_discount_paise ?? 0) / 100,
+    couponCode: row.coupon_code ?? null,
     shipping: row.shipping_paise / 100,
     status: row.status,
     paymentStatus: row.payment_status,
@@ -1539,7 +1548,7 @@ export async function getAdminOutlets() {
       name: o.name,
       address: o.address,
       phone: o.phone,
-      hours: o.hours,
+      hours: o.hours ?? null,
       city: o.city,
       type: o.type,
       lat: null as number | null,

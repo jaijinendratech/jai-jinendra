@@ -120,6 +120,7 @@ export const enquiryBodySchema = z.discriminatedUnion("type", [
     type: z.literal("corporate"),
     payload: z
       .object({
+        kind: z.string().trim().max(40).optional(),
         name: z.string().trim().min(1).max(120).optional(),
         email: z.string().trim().email().max(200).optional(),
         phone: z.string().trim().max(20).optional(),
@@ -127,6 +128,18 @@ export const enquiryBodySchema = z.discriminatedUnion("type", [
         message: z.string().trim().max(2000).optional(),
       })
       .passthrough()
+      .superRefine((payload, ctx) => {
+        if (payload.kind === "catering") {
+          const phone = String(payload.phone ?? "").trim();
+          if (!phone) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Phone is required for catering enquiries",
+              path: ["phone"],
+            });
+          }
+        }
+      })
       .optional(),
   }),
   z.object({

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  OrderStatusChip,
+  PaymentMethodLabel,
+} from "@/components/account/OrderBadges";
 import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -21,6 +25,7 @@ export default async function AccountOrdersPage({
     id: string;
     order_number: string;
     status: string;
+    payment_method: string;
     total_paise: number;
     created_at: string;
   }[] = [];
@@ -29,7 +34,7 @@ export default async function AccountOrdersPage({
     const supabase = await createClient();
     const { data } = await supabase
       .from("orders")
-      .select("id, order_number, status, total_paise, created_at")
+      .select("id, order_number, status, payment_method, total_paise, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     orders = data ?? [];
@@ -72,11 +77,14 @@ export default async function AccountOrdersPage({
                   <p className="font-semibold text-primary">
                     {order.order_number}
                   </p>
-                  <p className="text-on-surface-variant">
-                    {new Date(order.created_at).toLocaleDateString("en-IN")} ·{" "}
-                    <span className="capitalize">
-                      {order.status.replace(/_/g, " ")}
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-on-surface-variant">
+                    <span>
+                      {new Date(order.created_at).toLocaleDateString("en-IN")}
                     </span>
+                    <span aria-hidden>·</span>
+                    <OrderStatusChip status={order.status} />
+                    <span aria-hidden>·</span>
+                    <PaymentMethodLabel method={order.payment_method} />
                   </p>
                 </div>
                 <p className="price font-bold">

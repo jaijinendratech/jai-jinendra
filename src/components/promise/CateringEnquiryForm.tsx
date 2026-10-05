@@ -30,12 +30,10 @@ export function CateringEnquiryForm() {
           payload: {
             kind: "catering",
             name: String(data.get("name") ?? ""),
-            email: String(data.get("email") ?? ""),
             phone: String(data.get("phone") ?? ""),
             eventDate: String(data.get("eventDate") ?? ""),
             guests: String(data.get("guests") ?? ""),
             city: String(data.get("city") ?? ""),
-            message: String(data.get("notes") ?? ""),
           },
         }),
       });
@@ -61,8 +59,8 @@ export function CateringEnquiryForm() {
           Enquiry received
         </h3>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Our catering team will respond within one business day at{" "}
-          {siteConfig.email}. For urgent events, call {siteConfig.phone}.
+          Our catering team will call you on the number you shared within one business day. For
+          urgent events, call {siteConfig.phone}.
         </p>
       </div>
     );
@@ -78,7 +76,7 @@ export function CateringEnquiryForm() {
           Request a catering quote
         </h3>
         <p className="mt-1 text-xs text-on-surface-variant">
-          Tell us the occasion, date, guest count, and city — we will propose a menu and quantities.
+          Tell us the date, guest count and city — we will propose a menu and quantities.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -86,17 +84,6 @@ export function CateringEnquiryForm() {
           Full name
           <RequiredMark />
           <input required name="name" placeholder="Your name" className={fieldClassName} />
-        </label>
-        <label className="block text-sm font-semibold text-on-surface">
-          Email
-          <RequiredMark />
-          <input
-            required
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            className={fieldClassName}
-          />
         </label>
         <label className="block text-sm font-semibold text-on-surface">
           Phone
@@ -120,23 +107,12 @@ export function CateringEnquiryForm() {
             className={fieldClassName}
           />
         </label>
-        <label className="block text-sm font-semibold text-on-surface">
+        <label className="block text-sm font-semibold text-on-surface sm:col-span-2">
           Event city
           <RequiredMark />
           <input required name="city" placeholder="City" className={fieldClassName} />
         </label>
       </div>
-      <label className="block text-sm font-semibold text-on-surface">
-        Event details
-        <RequiredMark />
-        <textarea
-          name="notes"
-          rows={4}
-          required
-          placeholder="Wedding, puja, office party… sweets/namkeen preferences, timings"
-          className="mt-1.5 w-full rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-3 text-sm text-on-surface focus:border-primary focus:outline-none"
-        />
-      </label>
       <button
         type="submit"
         disabled={sending}

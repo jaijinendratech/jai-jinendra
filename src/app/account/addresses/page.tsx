@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Home, Star } from "lucide-react";
+import { AccountSubmitButton } from "@/components/account/AccountSubmitButton";
 import { RequiredMark } from "@/components/shared/RequiredMark";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -84,11 +86,16 @@ export default async function AccountAddressesPage({
             className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="flex gap-3">
+                <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Home className="size-4" aria-hidden />
+                </span>
+                <div>
                 <p className="font-semibold">
                   {addr.name}
                   {addr.is_default ? (
-                    <span className="ml-2 text-xs font-bold uppercase tracking-wide text-primary">
+                    <span className="ml-2 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-primary">
+                      <Star className="size-3 fill-current" aria-hidden />
                       Default
                     </span>
                   ) : null}
@@ -103,27 +110,28 @@ export default async function AccountAddressesPage({
                     .filter(Boolean)
                     .join(", ")}
                 </p>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {!addr.is_default ? (
                   <form action={setDefaultAccountAddressAction}>
                     <input type="hidden" name="id" value={addr.id} />
-                    <button
-                      type="submit"
+                    <AccountSubmitButton
+                      pendingLabel="Saving…"
                       className="rounded-lg border border-outline-variant/40 px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
                     >
                       Set default
-                    </button>
+                    </AccountSubmitButton>
                   </form>
                 ) : null}
                 <form action={deleteAccountAddressAction}>
                   <input type="hidden" name="id" value={addr.id} />
-                  <button
-                    type="submit"
+                  <AccountSubmitButton
+                    pendingLabel="Removing…"
                     className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
                   >
                     Remove
-                  </button>
+                  </AccountSubmitButton>
                 </form>
               </div>
             </div>
@@ -220,12 +228,12 @@ export default async function AccountAddressesPage({
             Set as default
           </label>
           {supabaseReady ? (
-            <button
-              type="submit"
+            <AccountSubmitButton
+              pendingLabel="Saving…"
               className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 sm:col-span-2 sm:w-fit"
             >
               Save address
-            </button>
+            </AccountSubmitButton>
           ) : (
             <p className="text-sm text-on-surface-variant sm:col-span-2">
               Connect Supabase to manage addresses.

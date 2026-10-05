@@ -147,6 +147,9 @@ export function CartView({ isAdmin = false, notice }: CartViewProps) {
             <dd className="price font-bold text-on-surface">{formatINR(cart.totalPaise / 100)}</dd>
           </div>
         </dl>
+        <p className="mt-3 text-xs font-semibold text-secondary">
+          Save ₹20 more when you pay online
+        </p>
         {isAdmin ? (
           <div className="mt-5 space-y-3">
             <button

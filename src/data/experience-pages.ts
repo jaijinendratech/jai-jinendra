@@ -34,7 +34,7 @@ export const sweetsPage: ExperiencePageConfig = {
   h1: "Sweets & Traditional Mithai",
   eyebrow: "Heritage Halwai Kitchen • Pure Cow Ghee",
   intro:
-    "Slow-simmered in bilona cow ghee and finished by hand — our mithai collection carries the same royal sweetness that has celebrated weddings, Diwali, and family tables since 1982.",
+    "Slow-simmered in bilona cow ghee and finished by hand — our mithai collection carries the same royal sweetness that has celebrated weddings, Diwali, and family tables since 1984.",
   category: "mithai",
   primaryCta: { label: "Shop All Mithai", href: "#mithai-grid" },
   secondaryCta: { label: "Build a Sweet Combo", href: "/combos" },

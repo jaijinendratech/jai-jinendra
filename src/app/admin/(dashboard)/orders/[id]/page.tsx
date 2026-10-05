@@ -180,6 +180,21 @@ export default async function AdminOrderDetailPage({
             <span>Subtotal</span>
             <span className="price">{formatINR(order.subtotal)}</span>
           </div>
+          {order.discount > 0 ? (
+            <div className="flex justify-between text-secondary">
+              <span>
+                Coupon discount
+                {order.couponCode ? ` (${order.couponCode})` : ""}
+              </span>
+              <span className="price">−{formatINR(order.discount)}</span>
+            </div>
+          ) : null}
+          {order.prepaidDiscount > 0 ? (
+            <div className="flex justify-between text-secondary">
+              <span>Prepaid discount</span>
+              <span className="price">−{formatINR(order.prepaidDiscount)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <span>Shipping</span>
             <span className="price">{formatINR(order.shipping)}</span>

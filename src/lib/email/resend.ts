@@ -28,10 +28,20 @@ export async function sendOrderConfirmationEmail(params: {
   orderNumber: string;
   totalPaise: number;
   paymentMethod: string;
+  discountPaise?: number;
+  prepaidDiscountPaise?: number;
 }) {
   const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
   const resend = getResend();
   const total = (params.totalPaise / 100).toFixed(2);
+  const coupon =
+    params.discountPaise && params.discountPaise > 0
+      ? `<p>Coupon discount: −₹${(params.discountPaise / 100).toFixed(2)}</p>`
+      : "";
+  const prepaid =
+    params.prepaidDiscountPaise && params.prepaidDiscountPaise > 0
+      ? `<p>Prepaid discount: −₹${(params.prepaidDiscountPaise / 100).toFixed(2)}</p>`
+      : "";
 
   await withRetry(() =>
     resend.emails.send({
@@ -41,6 +51,8 @@ export async function sendOrderConfirmationEmail(params: {
       html: `
       <h1>Thank you for your order!</h1>
       <p>Order <strong>${params.orderNumber}</strong> has been received.</p>
+      ${coupon}
+      ${prepaid}
       <p>Total: ₹${total} (${params.paymentMethod.toUpperCase()})</p>
       <p><a href="${getSiteUrl()}/track-order">Track your order</a></p>
     `,

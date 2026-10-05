@@ -1,3 +1,11 @@
+import { notFound } from "next/navigation";
+
+/** Public achievements page is hidden until content is ready. */
+export default function AchievementPage() {
+  notFound();
+}
+
+/*
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -89,3 +97,4 @@ export default async function AchievementPage() {
     </main>
   );
 }
+*/

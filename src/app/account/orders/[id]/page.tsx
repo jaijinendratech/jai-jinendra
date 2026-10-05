@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  OrderStatusChip,
+  PaymentMethodLabel,
+} from "@/components/account/OrderBadges";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -27,6 +31,7 @@ type OrderDetailRow = {
   payment_method: string;
   subtotal_paise: number;
   discount_paise: number;
+  prepaid_discount_paise: number;
   shipping_paise: number;
   total_paise: number;
   coupon_code: string | null;
@@ -63,7 +68,7 @@ export default async function AccountOrderDetailPage({
   const { data } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, payment_status, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, coupon_code, created_at, tracking_url, awb_code, courier_name, shipping_status, address_snapshot, order_items(id, name_snapshot, sku_snapshot, qty, unit_price_paise)",
+      "id, order_number, status, payment_status, payment_method, subtotal_paise, discount_paise, prepaid_discount_paise, shipping_paise, total_paise, coupon_code, created_at, tracking_url, awb_code, courier_name, shipping_status, address_snapshot, order_items(id, name_snapshot, sku_snapshot, qty, unit_price_paise)",
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -87,11 +92,10 @@ export default async function AccountOrderDetailPage({
         <h2 className="font-display mt-3 text-2xl font-semibold text-on-surface">
           {order.order_number}
         </h2>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          Placed {new Date(order.created_at).toLocaleString("en-IN")} ·{" "}
-          <span className="capitalize">
-            {order.status.replace(/_/g, " ")}
-          </span>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant">
+          <span>Placed {new Date(order.created_at).toLocaleString("en-IN")}</span>
+          <span aria-hidden>·</span>
+          <OrderStatusChip status={order.status} />
         </p>
       </div>
 
@@ -100,9 +104,12 @@ export default async function AccountOrderDetailPage({
           <h3 className="text-sm font-bold uppercase tracking-wide text-primary">
             Payment
           </h3>
-          <p className="mt-2 text-sm capitalize">
-            {order.payment_method.replace(/_/g, " ")} ·{" "}
-            {order.payment_status.replace(/_/g, " ")}
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <PaymentMethodLabel method={order.payment_method} />
+            <span aria-hidden>·</span>
+            <span className="capitalize">
+              {order.payment_status.replace(/_/g, " ")}
+            </span>
           </p>
           <dl className="mt-4 space-y-1 text-sm">
             <div className="flex justify-between gap-3">
@@ -119,6 +126,14 @@ export default async function AccountOrderDetailPage({
                 </dt>
                 <dd className="price font-semibold text-secondary">
                   −{formatINR(order.discount_paise / 100)}
+                </dd>
+              </div>
+            ) : null}
+            {order.prepaid_discount_paise > 0 ? (
+              <div className="flex justify-between gap-3">
+                <dt className="text-on-surface-variant">Prepaid discount</dt>
+                <dd className="price font-semibold text-secondary">
+                  −{formatINR(order.prepaid_discount_paise / 100)}
                 </dd>
               </div>
             ) : null}
