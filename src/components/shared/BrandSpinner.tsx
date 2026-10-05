@@ -60,22 +60,14 @@ export function BrandSpinner({
           />
         ))}
       </span>
-      <svg
-        viewBox="0 0 100 100"
-        className="relative"
-        style={{ width: `${px * 0.52}px`, height: `${px * 0.52}px` }}
+      {/* eslint-disable-next-line @next/next/no-img-element -- small decorative mark, any size */}
+      <img
+        src="/brand/loader-mark.png"
+        alt=""
         aria-hidden
-      >
-        <path
-          fill="currentColor"
-          className="text-primary"
-          d="M50 6 C62 22 70 36 70 48 C70 54 68 59 65 63 C74 65 82 70 88 78 C92 83 94 88 95 93
-             L71 93 C66 93 62 91 59 88 L54 83 C52 81 48 81 46 83 L41 88 C38 91 34 93 29 93
-             L5 93 C6 88 8 83 12 78 C18 70 26 65 35 63 C32 59 30 54 30 48 C30 36 38 22 50 6 Z
-             M50 40 C47 40 45 42 45 45 L45 68 C45 71 47 73 50 73 C53 73 55 71 55 68 L55 45
-             C55 42 53 40 50 40 Z"
-        />
-      </svg>
+        className="relative object-contain"
+        style={{ width: `${px * 0.52}px`, height: `${px * 0.52}px` }}
+      />
       <span className="sr-only">{label}</span>
     </span>
   );
