@@ -8,7 +8,12 @@ import { footerBrand, footerColumns, siteConfig } from "@/data/home";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M14 8.5V6.75c0-.55.45-1 1-1h1.5V3H14c-2.21 0-4 1.79-4 4v1.5H7.5V12H10v9h3.5v-9h2.75l.5-3.5H13.5V7c0-.28.22-.5.5-.5h2.5v-3H14c-1.93 0-3.5 1.57-3.5 3.5v1.5H14Z" />
     </svg>
   );
@@ -57,7 +62,9 @@ function FooterAccordionColumn({
           aria-hidden
         />
       </button>
-      <ul className={`space-y-2 pb-3 md:mt-4 md:block md:pb-0 ${open ? "block" : "hidden"}`}>
+      <ul
+        className={`space-y-2 pb-3 md:mt-4 md:block md:pb-0 ${open ? "block" : "hidden"}`}
+      >
         {links.map((link) => (
           <li key={link.label}>
             <Link
@@ -82,10 +89,7 @@ export function SiteFooter({
     column.title === "Categories" && categoryLinks.length > 0
       ? {
           ...column,
-          links: [
-            ...categoryLinks,
-            { label: "Full Catalogue", href: "/catalogue" },
-          ],
+          links: [...categoryLinks],
         }
       : column,
   );
@@ -155,10 +159,12 @@ export function SiteFooter({
       <div className="border-t border-outline-variant/30">
         <div className="container-jj flex flex-col items-start justify-between gap-2 py-4 text-[11px] text-on-surface-variant md:flex-row md:items-center md:gap-3 md:py-5 md:text-xs">
           <p>
-            © {new Date().getFullYear()} {siteConfig.legalName}. All Rights Reserved.
+            © {new Date().getFullYear()} {siteConfig.legalName}. All Rights
+            Reserved.
           </p>
           <p className="hidden md:block">
-            Pure Vegetarian (100% Shuddh). UPI · Visa / Mastercard · NetBanking · Cash on Delivery
+            Pure Vegetarian (100% Shuddh). UPI · Visa / Mastercard · NetBanking
+            · Cash on Delivery
           </p>
           <p className="md:hidden">UPI · Cards · NetBanking · COD</p>
         </div>

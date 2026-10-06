@@ -229,7 +229,7 @@ export function ThaliBuilder({
 
   return (
     <section
-      className="relative overflow-hidden border-b border-outline-variant/30 bg-[#f3ead5] py-8 md:py-20"
+      className="relative overflow-hidden border-b border-outline-variant/30 bg-[#f3ead5] pb-8 pt-2 md:pb-20 md:pt-4"
       style={{
         backgroundImage: [
           "radial-gradient(rgba(136,19,55,0.05) 1px, transparent 1px)",

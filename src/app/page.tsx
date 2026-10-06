@@ -1,6 +1,7 @@
 // import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
 import { CategorySection } from "@/components/home/CategorySection";
 import { CelebrationBanner } from "@/components/home/CelebrationBanner";
+import { DeliveryPlatformRatings } from "@/components/home/DeliveryPlatformRatings";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { NavratriSpecials } from "@/components/home/NavratriSpecials";
 import { HeritageSection } from "@/components/home/HeritageSection";
@@ -228,6 +229,7 @@ export default async function HomePage() {
       <HeritageSection />
       <SignatureCollections items={signatures} />
       <CelebrationBanner specialAttention={specialForBanner} />
+      <DeliveryPlatformRatings />
       <TestimonialsSection items={testimonials} videos={videos} />
       {/* <AchievementMediaSection content={achievementMedia} /> */}
       <NewsletterSection />

@@ -98,16 +98,6 @@ export const trustItems: TrustItem[] = [
     mobileDescription: "Small batches, served fresh.",
     icon: "fresh",
   },
-  {
-    id: "loved",
-    title: "Loved by our customers",
-    mobileTitle: "Loved by customers",
-    description: "Rated on Swiggy & Zomato.",
-    mobileDescription: "Rated on Swiggy & Zomato.",
-    icon: "loved",
-    badge: "★ 4.5+",
-    brandLogos: ["swiggy", "zomato"],
-  },
 ];
 
 export const categories: Category[] = [
