@@ -19,16 +19,18 @@ export const thaliPlateImage = {
 } as const;
 
 /**
- * Percent position (of the plate image's box) for each bowl's center, in
- * slot order. Estimated by eye from the source image; nudge these if a
- * slot's icon/photo drifts off its bowl after a design change.
+ * Bowl center as % of thali-plate.png (546×457), measured from the asset's
+ * white placeholder circles (scripts/measure-thali-bowls.mjs).
  */
 export const thaliSlotPositions = [
-  { x: 37, y: 30 },
-  { x: 63, y: 30 },
-  { x: 37, y: 63 },
-  { x: 63, y: 63 },
+  { x: 37.4, y: 30.9 },
+  { x: 64.1, y: 30.9 },
+  { x: 37.4, y: 62.8 },
+  { x: 64.1, y: 62.8 },
 ] as const;
+
+/** Circular clip diameter as % of plate width — sized to fill the brass bowl cavity. */
+export const thaliSlotWidthPercent = 23;
 
 export type ThaliCategoryGroupId = "sweets" | "namkeens" | "bakery" | "gajak";
 

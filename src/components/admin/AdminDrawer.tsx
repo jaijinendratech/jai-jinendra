@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Drawer, useOverlayState } from "@heroui/react";
+import { Drawer } from "@heroui/react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -32,32 +32,32 @@ export function AdminDrawer({
   className?: string;
   size?: AdminDrawerSize;
 }) {
-  const state = useOverlayState({
-    isOpen,
-    onOpenChange,
-  });
-
+  // Controlled open without Drawer.Trigger — put isOpen on Backdrop.
+  // <Drawer state> wraps DialogTrigger and warns without a pressable child.
   return (
-    <Drawer state={state}>
-      <Drawer.Backdrop variant="blur" isDismissable>
-        <Drawer.Content placement="right">
-          <Drawer.Dialog
-            className={cn(
-              "rounded-l-xl border border-outline-variant/30 bg-surface shadow-lg",
-              DRAWER_DIALOG_SIZE_CLASS[size],
-              className,
-            )}
-          >
-            <Drawer.CloseTrigger />
-            <Drawer.Header>
-              <Drawer.Heading className="text-on-surface">{title}</Drawer.Heading>
-            </Drawer.Header>
-            <Drawer.Body className="overflow-y-auto overflow-x-hidden pt-0">
-              {children}
-            </Drawer.Body>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
-    </Drawer>
+    <Drawer.Backdrop
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      variant="blur"
+      isDismissable
+    >
+      <Drawer.Content placement="right">
+        <Drawer.Dialog
+          className={cn(
+            "rounded-l-xl border border-outline-variant/30 bg-surface shadow-lg",
+            DRAWER_DIALOG_SIZE_CLASS[size],
+            className,
+          )}
+        >
+          <Drawer.CloseTrigger />
+          <Drawer.Header>
+            <Drawer.Heading className="text-on-surface">{title}</Drawer.Heading>
+          </Drawer.Header>
+          <Drawer.Body className="overflow-y-auto overflow-x-hidden pt-0">
+            {children}
+          </Drawer.Body>
+        </Drawer.Dialog>
+      </Drawer.Content>
+    </Drawer.Backdrop>
   );
 }

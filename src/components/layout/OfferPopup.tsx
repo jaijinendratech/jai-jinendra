@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, useOverlayState } from "@heroui/react";
+import { Modal } from "@heroui/react";
 import { Copy, X } from "lucide-react";
 import { type FormEvent, useState, useSyncExternalStore } from "react";
 import { RequiredMark } from "@/components/shared/RequiredMark";
@@ -55,13 +55,6 @@ export function OfferPopup() {
   const [claimed, setClaimed] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const state = useOverlayState({
-    isOpen: open,
-    onOpenChange: (next) => {
-      if (!next) dismiss();
-    },
-  });
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -101,99 +94,105 @@ export function OfferPopup() {
   }
 
   return (
-    <Modal state={state}>
-      <Modal.Backdrop isDismissable variant="blur">
-        <Modal.Container placement="center" size="sm">
-          <Modal.Dialog className="rounded-2xl border border-outline-variant/40 bg-background p-6 text-on-surface shadow-lg sm:max-w-md">
-            <div className="flex items-start justify-between gap-4">
-              <Modal.Heading className="font-display text-4xl font-semibold tracking-tight text-primary">
-                10% OFF
-              </Modal.Heading>
-              <button
-                type="button"
-                aria-label="Close offer"
-                onClick={() => state.close()}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-white transition hover:bg-primary-container-hover"
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </button>
-            </div>
-            <Modal.Body className="px-0 pt-3 pb-0">
-              {claimed ? (
-                <div className="space-y-4">
-                  <p className="text-base leading-6 text-on-surface">
-                    Your welcome offer is ready. Use this code at checkout.
+    // Controlled open without Modal.Trigger: put isOpen on Backdrop.
+    // Wrapping in <Modal state> creates a DialogTrigger with no pressable
+    // child and logs React Aria's PressResponder warning.
+    <Modal.Backdrop
+      isOpen={open}
+      onOpenChange={(next) => {
+        if (!next) dismiss();
+      }}
+      isDismissable
+      variant="blur"
+    >
+      <Modal.Container placement="center" size="sm">
+        <Modal.Dialog className="rounded-2xl border border-outline-variant/40 bg-background p-6 text-on-surface shadow-lg sm:max-w-md">
+          <div className="flex items-start justify-between gap-4">
+            <Modal.Heading className="font-display text-4xl font-semibold tracking-tight text-primary">
+              10% OFF
+            </Modal.Heading>
+            <Modal.CloseTrigger
+              aria-label="Close offer"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-white transition hover:bg-primary-container-hover"
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </Modal.CloseTrigger>
+          </div>
+          <Modal.Body className="px-0 pt-3 pb-0">
+            {claimed ? (
+              <div className="space-y-4">
+                <p className="text-base leading-6 text-on-surface">
+                  Your welcome offer is ready. Use this code at checkout.
+                </p>
+                <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 text-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+                    Coupon code
                   </p>
-                  <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 text-center">
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-                      Coupon code
-                    </p>
-                    <p className="mt-2 font-display text-4xl font-semibold tracking-widest text-primary">
-                      {COUPON_CODE}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={copyCode}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90"
-                  >
-                    <Copy className="h-4 w-4" aria-hidden />
-                    {copied ? "Copied" : "Copy code"}
-                  </button>
-                  {error ? (
-                    <p className="text-sm font-semibold text-red-700">{error}</p>
-                  ) : null}
+                  <p className="mt-2 font-display text-4xl font-semibold tracking-widest text-primary">
+                    {COUPON_CODE}
+                  </p>
                 </div>
-              ) : (
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <p className="text-base leading-6 text-on-surface">
-                    Share your details and claim 10% off your first order.
-                  </p>
-                  <label className="block">
-                    <span className="text-xs font-bold uppercase tracking-wider text-outline">
-                      Name
-                      <RequiredMark />
-                    </span>
-                    <input
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      autoComplete="name"
-                      className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-                      placeholder="Enter your name"
-                      required
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-bold uppercase tracking-wider text-outline">
-                      Mobile number
-                      <RequiredMark />
-                    </span>
-                    <input
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      autoComplete="tel"
-                      inputMode="tel"
-                      className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-                      placeholder="10-digit mobile number"
-                      required
-                    />
-                  </label>
-                  {error ? (
-                    <p className="text-sm font-semibold text-red-700">{error}</p>
-                  ) : null}
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {submitting ? "Claiming..." : "Claim 10% Off"}
-                  </button>
-                </form>
-              )}
-            </Modal.Body>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+                <button
+                  type="button"
+                  onClick={copyCode}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90"
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  {copied ? "Copied" : "Copy code"}
+                </button>
+                {error ? (
+                  <p className="text-sm font-semibold text-red-700">{error}</p>
+                ) : null}
+              </div>
+            ) : (
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <p className="text-base leading-6 text-on-surface">
+                  Share your details and claim 10% off your first order.
+                </p>
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-outline">
+                    Name
+                    <RequiredMark />
+                  </span>
+                  <input
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    autoComplete="name"
+                    className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    placeholder="Enter your name"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-outline">
+                    Mobile number
+                    <RequiredMark />
+                  </span>
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    autoComplete="tel"
+                    inputMode="tel"
+                    className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    placeholder="10-digit mobile number"
+                    required
+                  />
+                </label>
+                {error ? (
+                  <p className="text-sm font-semibold text-red-700">{error}</p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {submitting ? "Claiming..." : "Claim 10% Off"}
+                </button>
+              </form>
+            )}
+          </Modal.Body>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }

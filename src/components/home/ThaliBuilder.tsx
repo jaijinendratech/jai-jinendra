@@ -27,6 +27,7 @@ import {
   thaliCategoryGroups,
   thaliPlateImage,
   thaliSlotPositions,
+  thaliSlotWidthPercent,
 } from "@/data/thali-builder";
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
@@ -290,46 +291,43 @@ export function ThaliBuilder({
                   style={{
                     left: `${pos.x}%`,
                     top: `${pos.y}%`,
-                    width: "19%",
+                    width: `${thaliSlotWidthPercent}%`,
                     transform: "translate(-50%, -50%)",
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      isEmpty ? openSearch(index) : clearSlot(index)
-                    }
-                    aria-label={
-                      product
-                        ? `Remove ${product.name} from thali`
-                        : `Search and add an item to slot ${index + 1}`
-                    }
-                    className={`group relative aspect-square w-full overflow-hidden rounded-full transition ${
-                      isEmpty
-                        ? "hover:bg-primary/5 hover:ring-2 hover:ring-primary/30"
-                        : "hover:opacity-90"
-                    }`}
-                  >
-                    {product ? (
-                      <>
-                        <Image
-                          src={product.thaliImage ?? product.image}
-                          alt={product.imageAlt ?? product.name}
-                          fill
-                          sizes="80px"
-                          className="object-cover"
-                        />
-                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
-                          <X className="h-4 w-4 text-white" aria-hidden />
-                        </span>
-                      </>
-                    ) : null}
-                  </button>
-                  {product ? (
-                    <span className="mt-1 block truncate text-center text-[9px] font-bold uppercase tracking-wide text-primary/80 md:text-[10px]">
-                      {product.name}
-                    </span>
-                  ) : null}
+                  <div className="relative w-full aspect-square">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        isEmpty ? openSearch(index) : clearSlot(index)
+                      }
+                      aria-label={
+                        product
+                          ? `Remove ${product.name} from thali`
+                          : `Search and add an item to slot ${index + 1}`
+                      }
+                      className={`group absolute inset-0 overflow-hidden rounded-full transition ${
+                        isEmpty
+                          ? "hover:bg-primary/5 hover:ring-2 hover:ring-primary/30"
+                          : "hover:opacity-90"
+                      }`}
+                    >
+                      {product ? (
+                        <>
+                          <Image
+                            src={product.thaliImage ?? product.image}
+                            alt={product.imageAlt ?? product.name}
+                            fill
+                            sizes="96px"
+                            className="scale-110 object-cover object-center"
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
+                            <X className="h-4 w-4 text-white" aria-hidden />
+                          </span>
+                        </>
+                      ) : null}
+                    </button>
+                  </div>
                 </div>
               );
             })}

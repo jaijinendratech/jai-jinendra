@@ -51,6 +51,8 @@ export function HeroCarousel({ slides }: { slides: HeroCarouselSlide[] }) {
               alt={slide.alt}
               fill
               priority={i === 0}
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === 0 ? "high" : "auto"}
               sizes="100vw"
               className={HERO_BANNER_IMAGE_CLASS}
             />
