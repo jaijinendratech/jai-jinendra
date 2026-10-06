@@ -11,5 +11,5 @@ export function slugify(input: string): string {
 export function suggestTagline(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "";
-  return `Handcrafted ${trimmed} — fresh from our kitchen.`;
+  return `Handcrafted ${trimmed}, fresh from our kitchen.`;
 }

@@ -13,6 +13,7 @@ import {
   normalizeCategoryRef,
   productCategorySlug,
   resolveCategorySlug,
+  PRIMARY_NAV_CATEGORIES,
   STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
 import {
@@ -278,7 +279,7 @@ function productSelectFiltered(options: {
 }
 
 /**
- * When Supabase is configured: DB only (empty on error — never mock).
+ * When Supabase is configured: DB only (empty on error, never mock).
  * When offline: static catalogue for local demos.
  */
 export async function getPublishedProducts(): Promise<Product[]> {
@@ -422,7 +423,7 @@ type PublishedTaxonomy = {
 
 /**
  * Published category and subcategory titles.
- * Empty when Supabase is unavailable — callers must not fall back to mock catalog data.
+ * Empty when Supabase is unavailable, callers must not fall back to mock catalog data.
  */
 async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
   if (!isSupabaseConfigured()) return null;
@@ -684,7 +685,7 @@ export async function getProductSearchIndex(): Promise<
     }));
   }
 
-  // Use service-role client — this runs inside unstable_cache (no request cookies).
+  // Use service-role client, this runs inside unstable_cache (no request cookies).
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
@@ -803,7 +804,7 @@ export async function getHomeCategoryTiles(): Promise<HomeCategoryTile[]> {
   }));
 }
 
-/** Featured categories for storefront navbar + CTA (no cookies — safe in layout). */
+/** Featured categories for storefront navbar + CTA (no cookies, safe in layout). */
 export async function getSpecialAttentionCategories(): Promise<
   SpecialAttentionCategory[]
 > {
@@ -826,3 +827,50 @@ export async function getSpecialAttentionCategories(): Promise<
     href: categoryHref(c.slug),
   }));
 }
+
+/** `true` / `false` when a category row exists; omitted when there is no row. */
+export async function getCategoryPublishMap(): Promise<Map<string, boolean> | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("categories")
+    .select("slug, published");
+
+  if (error || !data) return null;
+  return new Map(data.map((row) => [row.slug, row.published]));
+}
+
+function navCategoryIsLive(
+  slug: string,
+  published: Map<string, boolean>,
+): boolean {
+  if (slug === "bakery") {
+    return BAKERY_MEMBER_SLUGS.some((member) => published.get(member) !== false);
+  }
+  if (published.has(slug)) return published.get(slug) === true;
+  return true;
+}
+
+/** Primary nav/footer links, omitting categories unpublished in admin. */
+export async function getStorefrontNavLinks(): Promise<
+  { label: string; href: string; special: boolean }[]
+> {
+  const published = await getCategoryPublishMap();
+  return PRIMARY_NAV_CATEGORIES.filter((category) =>
+    published ? navCategoryIsLive(category.slug, published) : true,
+  ).map((category) => ({
+    label: category.title,
+    href: categoryHref(category.slug),
+    special: category.special,
+  }));
+}
+
+/** False when the Gajak category row exists and is unpublished. */
+export async function isGajakCategoryPublished(): Promise<boolean> {
+  const published = await getCategoryPublishMap();
+  if (!published) return true;
+  if (!published.has(GAJAK_LISTING_SLUG)) return true;
+  return published.get(GAJAK_LISTING_SLUG) === true;
+}
+

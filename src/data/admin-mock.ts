@@ -83,7 +83,7 @@ export const mockOrders: MockOrder[] = [
     items: [
       { name: "Royal Rajasthan Heritage Box", qty: 20, price: 890 },
     ],
-    notes: "Corporate Diwali — multi-address sheet attached",
+    notes: "Corporate Diwali, multi-address sheet attached",
   },
   {
     id: "JJ-10426",
@@ -129,7 +129,7 @@ export const mockEnquiries: MockEnquiry[] = [
     quantity: 150,
     status: "new",
     receivedAt: "2026-09-14T09:30:00+05:30",
-    notes: "Diwali client gifts — Delhi, Pune, Hyderabad",
+    notes: "Diwali client gifts, Delhi, Pune, Hyderabad",
   },
   {
     id: "ENQ-220",

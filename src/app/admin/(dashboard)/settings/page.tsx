@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
         <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-on-surface-variant">
           <li>Razorpay: checks presence of RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET only.</li>
           <li>
-            Shiprocket: checks SHIPROCKET_EMAIL + SHIPROCKET_PASSWORD presence only — API
+            Shiprocket: checks SHIPROCKET_EMAIL + SHIPROCKET_PASSWORD presence only, API
             integration deferred; use order shipping fields manually.
           </li>
           <li>Supabase currently: {isSupabaseConfigured() ? "on" : "off"}.</li>

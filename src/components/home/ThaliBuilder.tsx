@@ -22,12 +22,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
 import { useCart } from "@/lib/cart/use-cart";
 import type { Product } from "@/types/catalog";
+import { htmlToPlainText } from "@/lib/sanitize-html";
 import {
   thaliBuilderMeta,
   thaliCategoryGroups,
   thaliPlateImage,
   thaliSlotPositions,
   thaliSlotWidthPercent,
+  type ThaliCategoryGroup,
 } from "@/data/thali-builder";
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
@@ -37,15 +39,15 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   crown: Crown,
 };
 
-/** Short item subtitle for the picker rows — reuses existing product copy. */
+/** Short item subtitle for the picker rows, reuses existing product copy. */
 function itemBlurb(product: Product): string {
-  const text = product.tagline || product.description;
+  const text = product.tagline || htmlToPlainText(product.description);
   if (!text) return "";
   return text.length > 36 ? `${text.slice(0, 36).trimEnd()}…` : text;
 }
 
 /**
- * Decorative corner ornament for the thali section — authored once as a
+ * Decorative corner ornament for the thali section, authored once as a
  * top-left flourish and mirrored into the other 3 corners via CSS scale
  * transforms on the className the caller passes in.
  */
@@ -84,7 +86,7 @@ function CornerFlourish({ className }: { className?: string }) {
  * into the first open slot) or by clicking an empty bowl's "+" to search
  * the pool and place an item in that exact slot. Completing every slot
  * reveals the admin-configured offer %. Adding to cart uses the same
- * `updateItem` flow as the rest of the site — items go in at their normal
+ * `updateItem` flow as the rest of the site, items go in at their normal
  * price (offer is a visual incentive, not a checkout-enforced discount,
  * matching how Combo Builder already works).
  */
@@ -93,12 +95,14 @@ export function ThaliBuilder({
   groupedIds,
   slotCount,
   discountPercent,
+  categoryGroups = thaliCategoryGroups,
 }: {
   products: Product[];
   /** Product ids per category card id (src/data/thali-builder.ts), from page.tsx. */
   groupedIds: Record<string, string[]>;
   slotCount: number;
   discountPercent: number;
+  categoryGroups?: readonly ThaliCategoryGroup[];
 }) {
   const router = useRouter();
   const { updateItem } = useCart();
@@ -125,7 +129,7 @@ export function ThaliBuilder({
   );
 
   const groups = useMemo(() => {
-    return thaliCategoryGroups.map((group) => {
+    return categoryGroups.map((group) => {
       const items = (groupedIds[group.id] ?? []).flatMap((id) => {
         const product = byId.get(id);
         return product ? [product] : [];
@@ -135,7 +139,7 @@ export function ThaliBuilder({
       ).length;
       return { group, items, selectedCount };
     });
-  }, [byId, groupedIds, selectedIds]);
+  }, [byId, categoryGroups, groupedIds, selectedIds]);
 
   const isComplete = selectedIds.length === slotCount && slotCount > 0;
   const remaining = Math.max(0, slotCount - selectedIds.length);
@@ -184,10 +188,17 @@ export function ThaliBuilder({
   const searchResults = useMemo(() => {
     if (searchSlot === null) return [];
     const q = searchQuery.trim().toLowerCase();
-    const pool = q
-      ? products.filter((p) => p.name.toLowerCase().includes(q))
-      : products;
-    return pool.slice(0, 8);
+    if (!q) return products.slice(0, 12);
+    return products
+      .filter((p) => {
+        const blurb = itemBlurb(p);
+        const haystack = [p.name, p.tagline, blurb]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      })
+      .slice(0, 12);
   }, [products, searchSlot, searchQuery]);
 
   async function addThaliToCart() {
@@ -258,7 +269,7 @@ export function ThaliBuilder({
         </div>
 
         <div className="mx-auto flex max-w-5xl flex-col items-center">
-          {/* The thali plate — real photo, slots overlaid on its bowls */}
+          {/* The thali plate, real photo, slots overlaid on its bowls */}
           <div
             className="relative mx-auto w-full max-w-96 sm:max-w-md"
             style={{
@@ -275,7 +286,7 @@ export function ThaliBuilder({
               // Next's image optimizer re-encodes this transparent PNG as an
               // indexed/palette PNG, which some Chromium builds render with a
               // visible checkerboard instead of true transparency. Serving
-              // the original (non-palette) file directly avoids that — the
+              // the original (non-palette) file directly avoids that, the
               // source is already small (546×457) so there's no real
               // optimization to lose at this display size.
               unoptimized
@@ -336,7 +347,7 @@ export function ThaliBuilder({
           {isComplete ? (
             <div className="mt-6 flex items-center gap-2 rounded-full bg-secondary-container/50 px-4 py-2 text-sm font-bold text-on-secondary-container">
               <Check className="h-4 w-4" aria-hidden />
-              Thali complete — {discountPercent}% OFF unlocked
+              Thali complete, {discountPercent}% OFF unlocked
             </div>
           ) : (
             <div className="mt-6 flex items-center gap-2 rounded-full border border-[#caa43d]/50 bg-white px-4 py-2 text-sm font-semibold text-primary">
@@ -345,7 +356,7 @@ export function ThaliBuilder({
             </div>
           )}
 
-          {/* Category picker cards — column count/width track how many cards actually
+          {/* Category picker cards, column count/width track how many cards actually
               have items, so 1-3 cards sit centered instead of left-aligned in a fixed
               4-col grid with an empty trailing column. */}
           {(() => {
@@ -498,13 +509,13 @@ export function ThaliBuilder({
           </button>
           <p className="mt-2 text-center text-xs text-on-surface-variant">
             {isComplete
-              ? "All slots filled — enjoy your offer!"
+              ? "All slots filled, enjoy your offer!"
               : `Fill all ${slotCount} slots to unlock the offer (${remaining} remaining).`}
           </p>
         </div>
       </div>
 
-      {/* Per-slot search — pick an item for the bowl that was clicked */}
+      {/* Per-slot search, pick an item for the bowl that was clicked */}
       {searchSlot !== null ? (
         <div
           className="fixed inset-0 z-100 flex items-start justify-center bg-black/40 p-4 pt-24"

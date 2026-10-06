@@ -41,7 +41,7 @@ export function SearchField({
       if (local !== value) onChange(local);
     }, debounceMs);
     return () => window.clearTimeout(id);
-    // Only re-run when the typed value or delay changes — not when parent value catches up.
+    // Only re-run when the typed value or delay changes, not when parent value catches up.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: debounce local → parent
   }, [local, debounceMs]);
 

@@ -225,7 +225,7 @@ type AssignAwbResponse = {
 
 /**
  * Create a Shiprocket adhoc order and attempt AWB assignment.
- * Admin-triggered only — does not auto-run on payment.
+ * Admin-triggered only, does not auto-run on payment.
  */
 export async function createShiprocketShipment(params: {
   orderNumber: string;

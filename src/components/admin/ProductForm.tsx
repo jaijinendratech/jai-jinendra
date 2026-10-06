@@ -45,6 +45,12 @@ import { suggestTagline } from "@/lib/admin/slug";
 import { variantPresetsForCategory } from "@/lib/catalog/variant-presets";
 import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 import { formatINR } from "@/lib/format";
+import {
+  type AdminImageUploadGuide,
+  productImageUploadGuide,
+  thaliProductImageUploadGuide,
+} from "@/data/thali-builder";
+import { purityFilters } from "@/data/catalogue";
 import { cn } from "@/lib/cn";
 import type { SellingUnit } from "@/types/catalog";
 
@@ -85,7 +91,8 @@ function ProductImagesField({
   );
 
   return (
-    <div>
+    <div className="space-y-3">
+      <AdminImageUploadGuideNote guide={productImageUploadGuide} />
       <input type="hidden" name="images" value={payload} />
       <MediaUploader
         name="imageUploads"
@@ -98,10 +105,30 @@ function ProductImagesField({
           onDirtyChange?.(true);
         }}
       />
-      <p className="mt-2 text-xs text-on-surface-variant">
-        Select several images at once. The first image is the main product
-        image — use the star to make any image first.
+      <p className="text-xs text-on-surface-variant">
+        Select several images at once. The first image is the main product image, use the star
+        to make any image first.
       </p>
+    </div>
+  );
+}
+
+function AdminImageUploadGuideNote({ guide }: { guide: AdminImageUploadGuide }) {
+  return (
+    <div
+      className="rounded-lg border border-outline-variant/30 bg-surface-container-low px-3 py-3 text-xs text-on-surface-variant"
+      role="note"
+    >
+      <p className="font-semibold text-on-surface">Image format (read before uploading)</p>
+      <p className="mt-1">{guide.summary}</p>
+      <ul className="mt-2 list-disc space-y-1 pl-4">
+        {guide.specs.map((row) => (
+          <li key={row.label}>
+            <span className="font-medium text-on-surface">{row.label}:</span> {row.value}
+          </li>
+        ))}
+      </ul>
+      {guide.footer ? <p className="mt-2">{guide.footer}</p> : null}
     </div>
   );
 }
@@ -122,19 +149,16 @@ function ThaliImageField({
   );
 
   return (
-    <div>
+    <div className="space-y-3">
+      <AdminImageUploadGuideNote guide={thaliProductImageUploadGuide} />
       <MediaUploader
         name="thali_image"
         folder="products"
-        label="Thali plate image (landing page only)"
+        label="Upload thali bowl image"
         defaultItems={initial}
         disabled={disabled}
         disabledReason="Uploads require Supabase Storage."
       />
-      <p className="mt-2 text-xs text-on-surface-variant">
-        Shown only in the homepage thali plate. A square, top-down photo or a
-        transparent PNG works best. Remove it to use the regular product image.
-      </p>
     </div>
   );
 }
@@ -416,7 +440,7 @@ export function ProductForm({
                 ? isNew
                   ? "Create the product, then add variants and images."
                   : "Update the story, pricing, and details shoppers see."
-                : "Preview the form — saving needs a live connection."}
+                : "Preview the form, saving needs a live connection."}
             </p>
           </div>
           <AdminIconButton
@@ -507,7 +531,7 @@ export function ProductForm({
                   }}
                   className={fieldClassName()}
                 >
-                  <option value="">— Select —</option>
+                  <option value="">,  Select , </option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.title}
@@ -524,7 +548,7 @@ export function ProductForm({
                     onChange={(e) => setSubcategoryId(e.target.value)}
                     className={fieldClassName()}
                   >
-                    <option value="">— None —</option>
+                    <option value="">,  None , </option>
                     {filteredSubcategories.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.title}
@@ -601,7 +625,7 @@ export function ProductForm({
                   label="Highlights"
                   mode="multi"
                   defaultValue={product?.highlights ?? []}
-                  placeholder="No palm oil — press Enter"
+                  placeholder="No palm oil, press Enter"
                 />
               </AdminFieldFull>
               <label className="flex items-center gap-2 text-sm font-semibold">
@@ -615,7 +639,7 @@ export function ProductForm({
                   mode="multi"
                   defaultValue={product ? tagsFromFlags(product) : []}
                   suggestions={[...MERCHANDISING_TAGS]}
-                  placeholder="Featured — press Enter"
+                  placeholder="Featured, press Enter"
                 />
               </AdminFieldFull>
             </AdminFieldGrid>
@@ -655,7 +679,8 @@ export function ProductForm({
                   label="Dietary tags"
                   mode="multi"
                   defaultValue={product?.dietary ?? []}
-                  placeholder="e.g. Jain — press Enter"
+                  suggestions={[...purityFilters.map((item) => item.label)]}
+                  placeholder="e.g. Jain, press Enter"
                 />
               </AdminFieldFull>
               <AdminFieldFull>
@@ -664,7 +689,7 @@ export function ProductForm({
                   label="Ingredients"
                   mode="multi"
                   defaultValue={product?.ingredients ?? []}
-                  placeholder="Add ingredient — press Enter"
+                  placeholder="Add ingredient, press Enter"
                 />
               </AdminFieldFull>
             </AdminFieldGrid>
@@ -789,7 +814,7 @@ export function ProductForm({
                 presetDraft.length > 0 ? (
                   <div className="space-y-3">
                     <p className="text-sm text-on-surface-variant">
-                      Preset rows — fill prices and save each variant.
+                      Preset rows, fill prices and save each variant.
                     </p>
                     {presetDraft.map((preset) => (
                       <VariantEditor

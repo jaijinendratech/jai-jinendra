@@ -44,13 +44,13 @@ export async function POST(request: Request) {
       payload = JSON.parse(text) as ShippingWebhookPayload;
     }
   } catch {
-    // Shiprocket "Test Webhook" may send empty / non-JSON — still ack 200 after auth.
+    // Shiprocket "Test Webhook" may send empty / non-JSON, still ack 200 after auth.
     return NextResponse.json({ received: true, test: true });
   }
 
   const awb = payload.awb != null ? String(payload.awb).trim() : "";
   if (!awb) {
-    // Auth OK but no AWB (connection test) — acknowledge so dashboard Save works.
+    // Auth OK but no AWB (connection test), acknowledge so dashboard Save works.
     return NextResponse.json({ received: true, unmatched: true });
   }
 

@@ -1,4 +1,4 @@
-/** Structured logs for payment paths — no PII/secrets. */
+/** Structured logs for payment paths, no PII/secrets. */
 export function logPaymentEvent(
   event: string,
   fields: Record<string, string | number | boolean | null | undefined>,

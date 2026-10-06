@@ -3,7 +3,7 @@ import type { CategoryUspBadge } from "@/components/catalogue/CategoryUspBadges"
 
 /**
  * Bakery-only USP strip: a header bar plus 4 circular "medallion" seal cards.
- * Visual redesign only — the seals are not clickable filters (see plan notes
+ * Visual redesign only, the seals are not clickable filters (see plan notes
  * in the session this was built from); purely a trust/quality display.
  */
 export function PuritySealCertification({ items }: { items: CategoryUspBadge[] }) {

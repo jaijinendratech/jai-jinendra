@@ -44,7 +44,7 @@ export type ProductAttribute = {
 };
 
 export type ProductVariant = {
-  /** Variant UUID — cart must use this. */
+  /** Variant UUID, cart must use this. */
   id: string;
   label: string;
   sellingUnit?: SellingUnit;
@@ -110,7 +110,7 @@ export type Category = {
   href: string;
   image: string;
   imageAlt: string;
-  /** Featured / special-attention — show star badge on cards & nav. */
+  /** Featured / special-attention, show star badge on cards & nav. */
   specialAttention?: boolean;
 };
 
@@ -134,9 +134,11 @@ export type TrustItem = {
   mobileTitle?: string;
   description: string;
   mobileDescription?: string;
-  icon: "eco" | "package" | "veg" | "shipping" | "swiggy" | "zomato";
+  icon: "eco" | "package" | "veg" | "shipping" | "swiggy" | "zomato" | "palm" | "falahaar" | "fresh" | "loved";
   /** Small pill shown next to the title, e.g. "100% Pure", "★ 4.5+". */
   badge?: string;
+  /** Brand marks shown beside the title (homepage “loved by customers” USP). */
+  brandLogos?: ("swiggy" | "zomato")[];
 };
 
 export type PurityPillar = {

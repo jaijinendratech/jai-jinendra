@@ -70,7 +70,7 @@ export default async function AdminDashboardPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Dashboard"
-        description="A quick look at today’s shop — orders, stock, and what’s moving."
+        description="A quick look at today’s shop, orders, stock, and what’s moving."
         actions={
           <div className="flex gap-2 text-xs">
             {[7, 14, 30].map((d) => (

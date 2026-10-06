@@ -1,4 +1,4 @@
-/** Next.js `redirect()` throws a special error — rethrow so navigation still works. */
+/** Next.js `redirect()` throws a special error, rethrow so navigation still works. */
 export function isNextRedirectError(error: unknown): boolean {
   return (
     typeof error === "object" &&

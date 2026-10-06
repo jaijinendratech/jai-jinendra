@@ -35,7 +35,7 @@ export default async function AdminLoginPage({
             Admin sign in
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Supabase Auth — admin role required.
+            Supabase Auth, admin role required.
           </p>
         </div>
 

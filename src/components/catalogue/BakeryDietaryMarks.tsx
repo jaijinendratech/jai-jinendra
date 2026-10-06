@@ -1,4 +1,4 @@
-const BAKERY_MARKS = ["100% Eggless", "100% Vegetarian"] as const;
+const BAKERY_MARKS = ["100% Vegetarian"] as const;
 
 /** Dietary marks for the Bakery hero and the All-page Bakery block. */
 export function BakeryDietaryMarks({ className = "" }: { className?: string }) {

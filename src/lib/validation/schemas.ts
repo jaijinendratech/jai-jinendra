@@ -182,7 +182,7 @@ export const profileUpdateSchema = z.object({
   phone: z.string().trim().max(20).optional(),
 });
 
-/** Admin customer profile edit — Indian phone + optional real email. */
+/** Admin customer profile edit, Indian phone + optional real email. */
 export const adminCustomerProfileSchema = z.object({
   id: z.string().uuid("Invalid customer id."),
   fullName: z

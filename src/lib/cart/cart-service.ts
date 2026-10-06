@@ -294,7 +294,7 @@ export async function clearCart() {
   await admin.from("cart_items").delete().eq("cart_id", cartId);
 }
 
-/** Clear cart by user id (webhook / payment success — no cookie session). */
+/** Clear cart by user id (webhook / payment success, no cookie session). */
 export async function clearCartForUser(userId: string) {
   if (!isSupabaseConfigured() || !userId) return;
   const admin = createAdminClient();

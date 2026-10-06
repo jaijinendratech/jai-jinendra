@@ -12,7 +12,7 @@ export async function GET() {
       discountPaise: 0,
       shippingPaise: 0,
       totalPaise: 0,
-      warnings: ["Database not configured — cart unavailable"],
+      warnings: ["Database not configured, cart unavailable"],
     });
   }
 

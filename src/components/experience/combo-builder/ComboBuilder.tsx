@@ -29,6 +29,7 @@ import {
   type ComboFilterId,
 } from "@/data/combo-builder";
 import { formatINR } from "@/lib/format";
+import { htmlToPlainText } from "@/lib/sanitize-html";
 import { SafeHtml } from "@/components/shared/SafeHtml";
 
 type QtyMap = Record<string, number>;
@@ -288,7 +289,7 @@ export function ComboBuilder({ products }: { products: Product[] }) {
             </div>
           </section>
 
-          {/* Product grid — progressive reveal */}
+          {/* Product grid, progressive reveal */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
             {visibleProducts.map((product, index) => {
               const count = qty[product.id] ?? 0;
@@ -341,7 +342,7 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                         {product.name}
                       </h3>
                       <p className="mt-1 line-clamp-2 text-xs text-on-surface-variant">
-                        {product.description}
+                        {htmlToPlainText(product.description)}
                       </p>
                     </div>
 

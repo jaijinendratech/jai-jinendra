@@ -41,7 +41,7 @@ export const STOREFRONT_CATALOGUE_SECTIONS = [
 /**
  * Primary nav/footer category links, in the exact order the storefront shows
  * them. Deliberately curated rather than a 1:1 map over whatever rows are
- * `published` in the `categories` table — "Bakery" groups the three sibling
+ * `published` in the `categories` table, "Bakery" groups the three sibling
  * bakery categories (see `BAKERY_MEMBER_SLUGS`) under one link, and "Sweets"
  * is included even before it has a category row / products in Supabase.
  * `special` carries forward today's DB `featured` flags for Namkeen/Gifting.

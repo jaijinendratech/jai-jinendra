@@ -15,7 +15,7 @@ const ADMIN_CHECKOUT_NOTICE =
 type CartViewProps = {
   /** Soft-guard: admin still hits server redirect if they navigate to /checkout. */
   isAdmin?: boolean;
-  /** From `?notice=` — latched so the banner survives SearchParamToasts URL cleanup. */
+  /** From `?notice=`, latched so the banner survives SearchParamToasts URL cleanup. */
   notice?: string;
 };
 

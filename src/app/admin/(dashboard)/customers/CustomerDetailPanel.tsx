@@ -85,7 +85,7 @@ export function CustomerDetailPanel({
               Name
               <input
                 name="fullName"
-                defaultValue={customer.name === "—" ? "" : customer.name}
+                defaultValue={customer.name === ", " ? "" : customer.name}
                 className={fieldClassName()}
                 disabled={!supabase}
                 maxLength={120}

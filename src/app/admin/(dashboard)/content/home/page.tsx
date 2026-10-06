@@ -42,7 +42,7 @@ export default async function AdminHomeContentPage({
     <div className="mx-auto max-w-6xl space-y-6">
       <AdminPageHeader
         title="Homepage content"
-        description="Tune the welcome — announcements and celebration moments."
+        description="Tune the welcome, announcements and celebration moments."
       />
       <NoticeBanner notice={notice} />
 

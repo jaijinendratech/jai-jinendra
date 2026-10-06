@@ -53,18 +53,18 @@ export default async function AccountOverviewPage() {
           <div>
             <dt className="text-xs text-on-surface-variant">Phone</dt>
             <dd className="font-semibold">
-              {profile?.phone ?? user?.phone ?? "—"}
+              {profile?.phone ?? user?.phone ?? ", "}
             </dd>
           </div>
           <div>
             <dt className="text-xs text-on-surface-variant">Email</dt>
             <dd className="font-semibold">
-              {profile?.email ?? user?.email ?? "—"}
+              {profile?.email ?? user?.email ?? ", "}
             </dd>
           </div>
           <div>
             <dt className="text-xs text-on-surface-variant">Name</dt>
-            <dd className="font-semibold">{profile?.full_name ?? "—"}</dd>
+            <dd className="font-semibold">{profile?.full_name ?? ", "}</dd>
           </div>
         </dl>
       </section>

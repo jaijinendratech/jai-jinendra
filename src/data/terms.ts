@@ -135,7 +135,9 @@ export const termsContent = {
         [
           `Delivery areas, dispatch times, shipping charges, the crispness warranty, and returns are set out in our `,
           { text: "Shipping & Returns", href: "/shipping-returns" },
-          ` policy, which forms part of these Terms for every order.`,
+          ` policy. Refunds and category-specific return rules are in our `,
+          { text: "Refund & Return Policy", href: "/refund-return-policy" },
+          `, which also forms part of these Terms for every order.`,
         ],
         [
           `Our products are perishable food. Shelf life is short compared with packaged groceries, and texture depends on handling after delivery. Risk in the goods passes to you on delivery to the address you gave, or to a person who accepts the parcel there. Until then we remain responsible for loss or damage in transit, subject to the claims window in the Shipping & Returns policy.`,

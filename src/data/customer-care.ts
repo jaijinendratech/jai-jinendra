@@ -26,7 +26,7 @@ export const shippingReturnsContent = {
       title: "Packaging & Freshness",
       paragraphs: [
         `Namkeens and mithai are sealed with food-grade nitrogen to lock in crispness without artificial preservatives. Please store airtight in a cool, dry place on arrival.`,
-        `Mithai with shorter shelf life is labelled clearly — refrigerate where indicated and consume within the printed window.`,
+        `Mithai with shorter shelf life is labelled clearly, refrigerate where indicated and consume within the printed window.`,
       ],
     },
     {
@@ -76,7 +76,7 @@ export const supportFaqs = [
     id: "shipping-cost",
     question: "Do you offer free shipping?",
     answer:
-      "Yes — free pan-India delivery on orders above ₹999. Smaller orders show a flat shipping fee at checkout before you pay.",
+      "Yes, free pan-India delivery on orders above ₹999. Smaller orders show a flat shipping fee at checkout before you pay.",
   },
   {
     id: "corporate",
@@ -88,7 +88,7 @@ export const supportFaqs = [
     id: "payment",
     question: "Which payment methods do you accept?",
     answer:
-      "UPI, Visa / Mastercard, net banking, and Cash on Delivery (where enabled). Card and UPI payments are processed by PCI-compliant gateways — we never store full card numbers.",
+      "UPI, Visa / Mastercard, net banking, and Cash on Delivery (where enabled). Card and UPI payments are processed by PCI-compliant gateways. We never store full card numbers.",
   },
   {
     id: "support-hours",
@@ -135,7 +135,7 @@ export const termsPrivacyContent = {
     {
       id: "collect",
       title: "Information We Collect",
-      body: "Name, delivery address, phone, email, order history, and limited device / analytics data needed to run the storefront. Payment card details are handled by our PCI-compliant payment partners — we do not store full card numbers.",
+      body: "Name, delivery address, phone, email, order history, and limited device / analytics data needed to run the storefront. Payment card details are handled by our PCI-compliant payment partners. We do not store full card numbers.",
     },
     {
       id: "use-data",

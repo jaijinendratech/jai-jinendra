@@ -190,7 +190,7 @@ export function CheckoutForm() {
           },
           modal: {
             ondismiss: () => {
-              setError("Payment cancelled. Your order is saved — you can retry from your account.");
+              setError("Payment cancelled. Your order is saved, you can retry from your account.");
               setSubmitting(false);
             },
           },

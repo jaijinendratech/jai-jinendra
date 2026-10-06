@@ -161,7 +161,7 @@ export function VideoUploader({
             Drag & drop a video here
           </p>
           <p className="mt-1 text-xs text-on-surface-variant">
-            MP4 or WebM — uploaded directly to storage (max 50MB)
+            MP4 or WebM, uploaded directly to storage (max 50MB)
           </p>
           <button
             type="button"

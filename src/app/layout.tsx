@@ -10,8 +10,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
 import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
 import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
-import { getSpecialAttentionCategories } from "@/lib/catalog/queries";
-import { categoryHref, PRIMARY_NAV_CATEGORIES } from "@/lib/catalog/aliases";
+import { getSpecialAttentionCategories, getStorefrontNavLinks } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -20,7 +19,7 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
   display: "swap",
-  // Admin shell does not use display headings — avoid unused preload warnings.
+  // Admin shell does not use display headings, avoid unused preload warnings.
   preload: false,
 });
 
@@ -91,11 +90,7 @@ export default async function RootLayout({
   const isAdmin = pathname.startsWith("/admin");
   const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
   const specialAttention = isAdmin ? [] : await getSpecialAttentionCategories();
-  const categoryLinks = PRIMARY_NAV_CATEGORIES.map((category) => ({
-    label: category.title,
-    href: categoryHref(category.slug),
-    special: category.special,
-  }));
+  const categoryLinks = isAdmin ? [] : await getStorefrontNavLinks();
 
   const fontClasses = isAdmin
     ? jakarta.variable

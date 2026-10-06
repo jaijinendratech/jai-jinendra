@@ -18,9 +18,9 @@ export const siteConfig = {
   legalName: "Jai Jinendra Sweets & Namkeens",
   tagline: "Artisanal Savouries & Royal Sweets",
   description:
-    "Authentic Rajasthani namkeens, mithai, and festive hampers — freshly fried, nitrogen-sealed, and delivered pan-India. 100% shuddh vegetarian since 1984, Aerodrome Circle, Kota.",
+    "Authentic Rajasthani namkeens, mithai, and festive hampers, freshly fried, nitrogen-sealed, and delivered pan-India. 100% shuddh vegetarian since 1984, Aerodrome Circle, Kota.",
   url: "https://jaijinendra.com",
-  phone: "+91 98288 02183",
+  phone: "+91 98288 02188",
   email: "jainamfoods.kota@gmail.com",
   fssai: "10020014002931",
   founded: 1984,
@@ -32,9 +32,10 @@ export const siteConfig = {
   announcement:
     "FREE PAN-INDIA DELIVERY ON ORDERS ABOVE ₹999 • Freshly Handcrafted & Nitrogen Packed • 100% Shuddh Shakahari (Pure Vegetarian)",
   announcementMobile: "Free delivery above ₹999 · Fresh & nitrogen-packed · 100% Pure Veg",
+  announcementColor: "#EF6113",
   logo: {
     src: "/brand/logo-namkeens.png",
-    alt: "Jai Jinendra Namkeens — Sweets, Namkeens, Bakery",
+    alt: "Jai Jinendra Namkeens, Sweets, Namkeens, Bakery",
     width: 1774,
     height: 887,
   },
@@ -46,7 +47,7 @@ export const siteConfig = {
   },
   brandLogo: {
     src: "/brand/logo.png",
-    alt: "Jai Jinendra — Sweets, Namkeens, Bakery",
+    alt: "Jai Jinendra, Sweets, Namkeens, Bakery",
     width: 1774,
     height: 887,
   },
@@ -55,7 +56,6 @@ export const siteConfig = {
 export const navLinks: NavLink[] = [
   { label: "Namkeen", href: "/catalogue/namkeen" },
   { label: "Bakery", href: "/catalogue/bakery" },
-  { label: "Gajak", href: "/catalogue/gajak" },
   { label: "Gifting", href: "/catalogue/gifting" },
   { label: "Catering", href: "/catering" },
 ];
@@ -75,40 +75,38 @@ export const heroSlides = [
 
 export const trustItems: TrustItem[] = [
   {
-    id: "ingredients",
-    title: "Premium Ingredients",
-    mobileTitle: "Pure Ingredients",
-    description: "Single-origin spices & 100% pure desi ghee.",
-    mobileDescription: "Desi ghee & single-origin spices",
-    icon: "eco",
-    badge: "100% Pure",
+    id: "no-palm",
+    title: "No Palm Oil",
+    mobileTitle: "No Palm Oil",
+    description: "Not in our namkeen, sweets or bakery. Ever.",
+    mobileDescription: "Never in namkeen, sweets or bakery.",
+    icon: "palm",
   },
   {
-    id: "swiggy",
-    title: "Swiggy Verified",
-    mobileTitle: "Swiggy Verified",
-    description: "98K+ reviews & orders",
-    mobileDescription: "98K+ reviews & orders",
-    icon: "swiggy",
+    id: "falahaar",
+    title: "Wide Falahaar Range",
+    mobileTitle: "Falahaar Range",
+    description: "A full fasting/vrat-friendly range, all in one place.",
+    mobileDescription: "Full fasting / vrat-friendly range.",
+    icon: "falahaar",
+  },
+  {
+    id: "fresh",
+    title: "Fresh Batches Daily",
+    mobileTitle: "Fresh Daily",
+    description: "Made in small batches to serve fresh.",
+    mobileDescription: "Small batches, served fresh.",
+    icon: "fresh",
+  },
+  {
+    id: "loved",
+    title: "Loved by our customers",
+    mobileTitle: "Loved by customers",
+    description: "Rated on Swiggy & Zomato.",
+    mobileDescription: "Rated on Swiggy & Zomato.",
+    icon: "loved",
     badge: "★ 4.5+",
-  },
-  {
-    id: "zomato",
-    title: "Zomato Dining",
-    mobileTitle: "Zomato Dining",
-    description: "14K+ reviews & ratings",
-    mobileDescription: "14K+ reviews & ratings",
-    icon: "zomato",
-    badge: "★ 4.3+",
-  },
-  {
-    id: "shipping",
-    title: "Pan-India Express",
-    mobileTitle: "Pan-India",
-    description: "Dispatched in 24 hrs to 26,000+ pin codes.",
-    mobileDescription: "Dispatched in 24 hrs",
-    icon: "shipping",
-    badge: "⚡ 24h",
+    brandLogos: ["swiggy", "zomato"],
   },
 ];
 
@@ -265,7 +263,7 @@ export const heritage = {
   mobileTitle: "Rooted in tradition. Made for today.",
   body: "Started in 1984 at Aerodrome Circle, Kota, Jai Jinendra Sweets & Namkeens was founded on a simple sacred vow: uncompromised purity, freshly cold-pressed oils, hand-pounded spices, and zero preservatives. Every single batch of our signature Ratlami Sev, Hing Kachori, and Pure Ghee Mithai is prepared under strict shuddh vegetarian protocols in dedicated cleanrooms. When you open a packet anywhere in India, you savour the exact crisp crunch of our halwai ovens on the day it was fried.",
   mobileBody:
-    "Since 1984 at Aerodrome Circle, Kota — pure oils, hand-pounded spices, zero preservatives. Fresh crispness sealed for pan-India delivery.",
+    "Since 1984 at Aerodrome Circle, Kota, pure oils, hand-pounded spices, zero preservatives. Fresh crispness sealed for pan-India delivery.",
   cta: { label: "Our Story & Purity Standards", href: "/heritage" },
   mobileCta: "Our Story",
   image: images.heritage,
@@ -327,7 +325,7 @@ export const celebrationBanner = {
   mobileTitle: "Make every celebration sweeter.",
   body: "Corporate gifting, wedding favours, and festive hampers customized with personalized brass seals, greeting cards, and bespoke sweet & savory combinations. Delivered directly to your clients and guests anywhere across India.",
   mobileBody:
-    "Festive hampers & corporate gifts — custom seals, delivered pan-India.",
+    "Festive hampers & corporate gifts, custom seals, delivered pan-India.",
   backgroundImage: images.banner,
   primaryCta: { label: "Explore Gift Hampers", href: "/hampers", mobileLabel: "Shop Hampers" },
   secondaryCta: { label: "Corporate Enquiries", href: "/corporate", mobileLabel: "Corporate" },
@@ -381,7 +379,7 @@ export const testimonials: Testimonial[] = [
     quote:
       "Finding authentic Ratlami Sev that has that genuine kick of clove and pure hing in Bengaluru was impossible until I ordered from Jai Jinendra. The nitrogen sealing keeps it crunchier than local stores.",
     mobileQuote:
-      "Authentic Ratlami Sev with real hing kick — nitrogen seal keeps it crunchier than local stores.",
+      "Authentic Ratlami Sev with real hing kick, nitrogen seal keeps it crunchier than local stores.",
     name: "Ananya Kulkarni",
     location: "Bengaluru, Karnataka",
     rating: 5,
@@ -391,7 +389,7 @@ export const testimonials: Testimonial[] = [
     quote:
       "We ordered 120 custom hamper boxes for our corporate Diwali gifts across 14 cities. Every box reached safely without a single damaged kachori or cracked sweet. Unbelievable standard of packing!",
     mobileQuote:
-      "120 Diwali hampers across 14 cities — every box arrived safe. Outstanding packing.",
+      "120 Diwali hampers across 14 cities. Every box arrived safe. Outstanding packing.",
     name: "Rajesh Singhania",
     location: "Gurugram, Delhi NCR",
     rating: 5,
@@ -401,7 +399,7 @@ export const testimonials: Testimonial[] = [
     quote:
       "The Kaju Katli melts instantly on your tongue. Knowing that their vark is 100% certified vegetarian and prepared in a strict shuddh shakahari environment gives my elderly parents complete peace of mind.",
     mobileQuote:
-      "Kaju Katli melts on the tongue — certified veg vark gives our parents peace of mind.",
+      "Kaju Katli melts on the tongue, certified veg vark gives our parents peace of mind.",
     name: "Pooja Chhabra",
     location: "South Mumbai",
     rating: 5,
@@ -411,7 +409,7 @@ export const testimonials: Testimonial[] = [
 export const achievementMedia: AchievementMedia = {
   eyebrow: "Achievements & Media",
   title: "Recognition, moments, and media from our kitchens",
-  body: "From festive coverage to community milestones — a living gallery of Jai Jinendra.",
+  body: "From festive coverage to community milestones, a living gallery of Jai Jinendra.",
   ctaLabel: "See Achievements",
   items: [],
 };
@@ -486,7 +484,7 @@ export const newsletter = {
 
 export const footerBrand = {
   body: "Authentic generational craftsmanship from Rajasthan, bringing pure desi ghee sweets, hand-pounded spices, and nitrogen-sealed namkeens directly to discerning homes across India.",
-  mobileBody: "Rajasthani namkeens & mithai — pure ghee, nitrogen-sealed, pan-India.",
+  mobileBody: "Rajasthani namkeens & mithai, pure ghee, nitrogen-sealed, pan-India.",
 } as const;
 
 export const footerColumns: FooterColumn[] = [
@@ -496,7 +494,6 @@ export const footerColumns: FooterColumn[] = [
       { label: "Sweets", href: "/catalogue/sweets" },
       { label: "Namkeen", href: "/catalogue/namkeen" },
       { label: "Bakery", href: "/catalogue/bakery" },
-      { label: "Gajak", href: "/catalogue/gajak" },
       { label: "Gifting", href: "/catalogue/gifting" },
       { label: "Full Catalogue", href: "/catalogue" },
     ],
@@ -508,6 +505,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "Our Outlets", href: "/outlets" },
       { label: "Contact us", href: "/contact" },
       { label: "Terms & Conditions", href: "/terms" },
+      { label: "Refund & Return Policy", href: "/refund-return-policy" },
     ],
   },
 ];

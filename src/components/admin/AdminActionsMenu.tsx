@@ -21,7 +21,7 @@ import {
   duplicateProductAction,
 } from "@/lib/admin/actions";
 
-/** Stable keys — resolve server actions inside this client module so form bindings stay valid after HMR. */
+/** Stable keys, resolve server actions inside this client module so form bindings stay valid after HMR. */
 export const adminFormActions = {
   deleteProduct: deleteProductAction,
   duplicateProduct: duplicateProductAction,

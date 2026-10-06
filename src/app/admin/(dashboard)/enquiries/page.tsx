@@ -47,7 +47,7 @@ export default async function AdminEnquiriesPage() {
                     {enquiry.company || enquiry.name}
                   </h2>
                   <p className="text-sm text-on-surface-variant">
-                    {[enquiry.name, enquiry.email].filter(Boolean).join(" · ") || "—"}
+                    {[enquiry.name, enquiry.email].filter(Boolean).join(" · ") || ", "}
                   </p>
                 </div>
                 {supabase ? (

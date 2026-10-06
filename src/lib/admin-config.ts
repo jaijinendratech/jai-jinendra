@@ -5,7 +5,7 @@ export const ADMIN_EMAIL =
   process.env.ADMIN_EMAIL ?? "admin@jaijinendranamkeens.com";
 
 /**
- * Require ADMIN_PASSWORD from env — no hardcoded fallback.
+ * Require ADMIN_PASSWORD from env, no hardcoded fallback.
  * Throws if unset so local demo and create-admin fail closed.
  */
 export function getAdminPassword(): string {

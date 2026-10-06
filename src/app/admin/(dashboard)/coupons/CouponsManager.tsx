@@ -329,7 +329,7 @@ export function CouponsManager({
                   <td className="px-4 py-3 text-on-surface-variant">
                     {coupon.minOrderPaise > 0
                       ? formatINR(coupon.minOrderPaise / 100)
-                      : "—"}
+                      : ", "}
                   </td>
                   <td className="px-4 py-3 text-on-surface-variant">
                     {coupon.usedCount}
@@ -338,7 +338,7 @@ export function CouponsManager({
                   <td className="px-4 py-3 text-xs text-on-surface-variant">
                     {coupon.expiresAt
                       ? new Date(coupon.expiresAt).toLocaleString("en-IN")
-                      : "—"}
+                      : ", "}
                   </td>
                   <td className="px-4 py-3">
                     {supabase ? (

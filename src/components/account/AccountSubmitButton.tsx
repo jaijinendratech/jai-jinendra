@@ -5,7 +5,7 @@ import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { cn } from "@/lib/cn";
 
 /**
- * Must be rendered inside the form it reports on — useFormStatus reads the
+ * Must be rendered inside the form it reports on, useFormStatus reads the
  * nearest parent <form>.
  */
 export function AccountSubmitButton({

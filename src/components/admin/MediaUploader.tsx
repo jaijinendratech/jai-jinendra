@@ -124,7 +124,7 @@ export function MediaUploader({
             Drag & drop images here
           </p>
           <p className="mt-1 text-xs text-on-surface-variant">
-            PNG, JPG, WebP — optimized automatically on upload
+            PNG, JPG, WebP, optimized automatically on upload
           </p>
           <button
             type="button"

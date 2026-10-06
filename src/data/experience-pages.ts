@@ -30,18 +30,18 @@ export const sweetsPage: ExperiencePageConfig = {
   stitchTitle: "Jai Jinendra Namkeens - Sweets & Traditional Mithai",
   metaTitle: "Sweets & Traditional Mithai",
   metaDescription:
-    "Shop pure ghee mithai — Silver Vark Kaju Katli, Motichoor Laddu, Pista Gulab Jamun, and royal festive sweets from Jai Jinendra Namkeens.",
+    "Shop pure ghee mithai, Silver Vark Kaju Katli, Motichoor Laddu, Pista Gulab Jamun, and royal festive sweets from Jai Jinendra Namkeens.",
   h1: "Sweets & Traditional Mithai",
   eyebrow: "Heritage Halwai Kitchen • Pure Cow Ghee",
   intro:
-    "Slow-simmered in bilona cow ghee and finished by hand — our mithai collection carries the same royal sweetness that has celebrated weddings, Diwali, and family tables since 1984.",
+    "Slow-simmered in bilona cow ghee and finished by hand. Our mithai collection carries the same royal sweetness that has celebrated weddings, Diwali, and family tables since 1984.",
   category: "mithai",
   primaryCta: { label: "Shop All Mithai", href: "#mithai-grid" },
   secondaryCta: { label: "Build a Sweet Combo", href: "/combos" },
   highlights: [
     {
       title: "100% Pure Cow Ghee",
-      body: "Every laddu, katli, and jamun is slow-cooked in fragrant bilona ghee — never vanaspati.",
+      body: "Every laddu, katli, and jamun is slow-cooked in fragrant bilona ghee, not vanaspati.",
     },
     {
       title: "Festive Ready Packs",
@@ -75,7 +75,7 @@ export const kachorisPage: ExperiencePageConfig = {
   h1: "Kachori & Hot Snacks",
   eyebrow: "Fresh Batch Today • Ready to Reheat",
   intro:
-    "Multilayer desi-ghee dough, slow-roasted moong dal, and Hathras hing — our khasta kachoris and hot snacks arrive kitchen-fresh, ready for chai, thalis, and festive spreads.",
+    "Multilayer desi-ghee dough, slow-roasted moong dal, and Hathras hing. Our khasta kachoris and hot snacks arrive kitchen-fresh, ready for chai, thalis, and festive spreads.",
   category: "kachoris",
   primaryCta: { label: "Shop Hot Snacks", href: "#kachori-grid" },
   secondaryCta: { label: "Pair with Namkeens", href: "/catalogue/namkeens" },
@@ -86,11 +86,11 @@ export const kachorisPage: ExperiencePageConfig = {
     },
     {
       title: "Freeze & Reheat",
-      body: "Packs stay crisp after gentle oven or air-fryer reheating — party-ready in minutes.",
+      body: "Packs stay crisp after gentle oven or air-fryer reheating, party-ready in minutes.",
     },
     {
       title: "Jain Friendly Fillings",
-      body: "No onion, no garlic — hing, coriander, and saunf for authentic Rajasthani heat.",
+      body: "No onion, no garlic, hing, coriander, and saunf for authentic Rajasthani heat.",
     },
   ],
   slides: [
@@ -116,7 +116,7 @@ export const hampersPage: ExperiencePageConfig = {
   h1: "Gift Hampers & Festive Keepsakes",
   eyebrow: "Diwali • Weddings • Corporate Gifting",
   intro:
-    "Embossed tins, silk-ribbon trunks, and bespoke brass-sealed hampers — curated assortments of mithai, namkeens, and dry fruits for the celebrations that matter.",
+    "Embossed tins, silk-ribbon trunks, and bespoke brass-sealed hampers, curated assortments of mithai, namkeens, and dry fruits for the celebrations that matter.",
   category: "gifts",
   primaryCta: { label: "Browse Hampers", href: "#hamper-grid" },
   secondaryCta: { label: "Build a Custom Combo", href: "/combos" },
@@ -153,11 +153,11 @@ export const combosPage: ExperiencePageConfig = {
   stitchTitle: "Jai Jinendra Namkeens - Custom Combo Builder",
   metaTitle: "Custom Combo Builder",
   metaDescription:
-    "Build a custom chai-nashta combo or festive tasting box — mix namkeens, mithai, and kachoris with instant price totals from Jai Jinendra Namkeens.",
+    "Build a custom chai-nashta combo or festive tasting box, mix namkeens, mithai, and kachoris with instant price totals from Jai Jinendra Namkeens.",
   h1: "Custom Combo Builder",
   eyebrow: "Compose Your Own Tasting Box",
   intro:
-    "Pick your favourites across savories, sweets, and hot snacks. Watch the embossed gift tray fill and the price reconcile instantly — then add your bespoke combo to cart.",
+    "Pick your favourites across savories, sweets, and hot snacks. Watch the embossed gift tray fill and the price reconcile instantly, then add your bespoke combo to cart.",
   category: "combos",
   primaryCta: { label: "Start Building", href: "#combo-builder" },
   secondaryCta: { label: "Browse Ready Combos", href: "#ready-combos" },
@@ -168,7 +168,7 @@ export const combosPage: ExperiencePageConfig = {
     },
     {
       title: "Live Price Tray",
-      body: "Quantity steppers update gram weights and totals as you curate — no surprises at checkout.",
+      body: "Quantity steppers update gram weights and totals as you curate, with no surprises at checkout.",
     },
     {
       title: "Gift-Ready Finish",

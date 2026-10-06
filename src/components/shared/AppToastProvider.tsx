@@ -2,7 +2,7 @@
 
 import { Toast } from "@heroui/react";
 
-/** Global HeroUI toast host — mount once in the root layout. */
+/** Global HeroUI toast host, mount once in the root layout. */
 export function AppToastProvider() {
   return (
     <Toast.Provider

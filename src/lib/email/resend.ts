@@ -47,7 +47,7 @@ export async function sendOrderConfirmationEmail(params: {
     resend.emails.send({
       from,
       to: params.to,
-      subject: `Order confirmed — ${params.orderNumber}`,
+      subject: `Order confirmed, ${params.orderNumber}`,
       html: `
       <h1>Thank you for your order!</h1>
       <p>Order <strong>${params.orderNumber}</strong> has been received.</p>
@@ -72,7 +72,7 @@ export async function sendOrderStatusEmail(params: {
     resend.emails.send({
       from,
       to: params.to,
-      subject: `Order ${params.orderNumber} — ${params.status}`,
+      subject: `Order ${params.orderNumber}, ${params.status}`,
       html: `
       <p>Your order <strong>${params.orderNumber}</strong> is now <strong>${params.status}</strong>.</p>
       <p><a href="${getSiteUrl()}/track-order">Track your order</a></p>

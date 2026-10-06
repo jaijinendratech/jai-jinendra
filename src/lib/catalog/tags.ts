@@ -4,6 +4,7 @@ export const MERCHANDISING_TAGS = [
   "Bestseller",
   "New arrival",
   "Seasonal",
+  "Navratri",
 ] as const;
 
 export const DEFAULT_SHIPPING_TITLE = "Pan-India Express";

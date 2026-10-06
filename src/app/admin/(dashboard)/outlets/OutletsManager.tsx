@@ -202,10 +202,10 @@ export function OutletsManager({
                   ) : null}
                 </td>
                 <td className="px-4 py-3 text-on-surface-variant">
-                  {outlet.phone || "—"}
+                  {outlet.phone || ", "}
                 </td>
                 <td className="px-4 py-3 text-on-surface-variant">
-                  {outlet.hours || "—"}
+                  {outlet.hours || ", "}
                 </td>
                 <td className="px-4 py-3">
                   {supabase ? (

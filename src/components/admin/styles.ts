@@ -1,4 +1,4 @@
-/** Shared Tailwind class helpers — safe for Server and Client Components. */
+/** Shared Tailwind class helpers, safe for Server and Client Components. */
 
 export function fieldClassName() {
   return "mt-1.5 w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:outline-none";

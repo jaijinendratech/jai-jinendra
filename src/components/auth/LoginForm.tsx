@@ -30,7 +30,7 @@ type LoginFormProps = {
   notice?: string;
 };
 
-/** Must live inside the <Form> it reports on — useFormStatus reads the nearest parent form. */
+/** Must live inside the <Form> it reports on, useFormStatus reads the nearest parent form. */
 function EmailSubmitButton({
   creating,
   acceptedTerms,

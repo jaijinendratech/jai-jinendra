@@ -9,6 +9,7 @@ import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { productTagLabels } from "@/lib/catalog/tags";
 import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
+import { htmlToPlainText } from "@/lib/sanitize-html";
 import { useWishlist } from "@/lib/wishlist/use-wishlist";
 import { useCart } from "@/lib/cart/use-cart";
 
@@ -31,6 +32,7 @@ export function ProductCard({
   const { updateItem } = useCart();
   const favourited = hydrated && has(product.id);
   const tags = productTagLabels(product);
+  const descriptionPreview = htmlToPlainText(product.description);
   const missingPhoto =
     !product.image || product.image.endsWith("/images/prod0.jpg");
 
@@ -130,9 +132,11 @@ export function ProductCard({
               {product.name}
             </Link>
           </h3>
-          <p className="mt-0.5 hidden line-clamp-2 text-xs leading-snug text-on-surface-variant md:block">
-            {product.description}
-          </p>
+          {descriptionPreview ? (
+            <p className="mt-0.5 hidden line-clamp-2 text-xs leading-snug text-on-surface-variant md:block">
+              {descriptionPreview}
+            </p>
+          ) : null}
         </div>
 
         {product.variants.length > 0 ? (

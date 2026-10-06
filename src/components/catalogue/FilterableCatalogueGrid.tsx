@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { LazyProductGrid } from "@/components/products/LazyProductGrid";
 import { CatalogueGiftBanner } from "@/components/catalogue/CatalogueGiftBanner";
-import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { CataloguePagination } from "@/components/catalogue/CatalogueToolbar";
 import { productMatchesAttribute } from "@/lib/catalog/filters";
 import type { Product } from "@/types/catalog";
@@ -67,7 +66,6 @@ export function FilterableCatalogueGrid({ products }: { products: Product[] }) {
         />
       )}
 
-      <CatalogueQualityStrip />
       <CataloguePagination shown={filtered.length} total={filtered.length} />
     </section>
   );

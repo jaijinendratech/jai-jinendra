@@ -656,7 +656,7 @@ export async function getAdminOrderById(idOrNumber: string) {
         line1: `${order.city} delivery address`,
         line2: order.notes ? "Landmark noted in order notes" : "",
         city: order.city,
-        state: "—",
+        state: ", ",
         pincode: "000000",
       },
       courierName: null as string | null,
@@ -1235,7 +1235,7 @@ export async function getCategoryAttributeRules(
 
 export async function getAdminInventory() {
   if (!isSupabaseConfigured()) {
-    // Catalogue variant ids (e.g. "400g", "6") are reused across products —
+    // Catalogue variant ids (e.g. "400g", "6") are reused across products , 
     // use a composite id so React keys stay unique.
     return catalogueProducts.flatMap((p) =>
       p.variants.map((v) => ({
@@ -1346,7 +1346,7 @@ function toAdminCustomer(
   const stats = counts.get(p.id) ?? counts.get(p.email ?? "") ?? { count: 0, spent: 0 };
   return {
     id: p.id,
-    name: p.full_name ?? "—",
+    name: p.full_name ?? ", ",
     email: p.email ?? "",
     phone: p.phone ?? "",
     role: p.role,
@@ -1497,7 +1497,7 @@ export async function getAdminEnquiries() {
       type: e.type,
       status: e.status,
       createdAt: e.created_at,
-      name: String(payload.name ?? payload.full_name ?? "—"),
+      name: String(payload.name ?? payload.full_name ?? ", "),
       company: String(payload.company ?? ""),
       email: String(payload.email ?? ""),
       quantity: Number(payload.quantity ?? payload.qty ?? 0),

@@ -138,7 +138,7 @@ export function ProductFormModal({
   );
 }
 
-/** @deprecated Use ProductFormModal — kept as a thin alias for edit-only call sites. */
+/** @deprecated Use ProductFormModal, kept as a thin alias for edit-only call sites. */
 export function ProductEditModal({
   productId,
   categories,

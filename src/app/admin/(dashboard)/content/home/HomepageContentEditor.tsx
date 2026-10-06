@@ -88,7 +88,7 @@ export function HomepageContentEditor({
           </label>
           <p className="mt-2 text-xs text-on-surface-variant">
             Shown as a badge on the home page once every thali slot is
-            filled. Items still add to the cart at their regular price — see
+            filled. Items still add to the cart at their regular price, see
             the launch notes before relying on this as an enforced discount.
           </p>
         </AdminCard>

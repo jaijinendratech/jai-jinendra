@@ -12,13 +12,33 @@ import { SafeHtml } from "@/components/shared/SafeHtml";
 import { useCart } from "@/lib/cart/use-cart";
 import { toast } from "@heroui/react";
 import { productTagLabels } from "@/lib/catalog/tags";
-import type { Product } from "@/types/catalog";
 import { formatINR } from "@/lib/format";
+import type { Product } from "@/types/catalog";
+import { purityFilters, spiceFilters } from "@/data/catalogue";
 
 function hallmarkLabels(product: Product): string[] {
   return (product.attributes ?? [])
     .filter((attr) => attr.dataType === "boolean" && attr.value === true)
     .map((attr) => attr.label);
+}
+
+function spiceNoteLabel(note: string): string {
+  const key = note.trim().toLowerCase();
+  return spiceFilters.find((item) => item.id === key)?.label ?? note;
+}
+
+function dietaryLabels(tags: string[]): string[] {
+  return tags
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .map((tag) => {
+      const key = tag.toLowerCase();
+      return (
+        purityFilters.find(
+          (item) => item.id === key || item.label.toLowerCase() === key,
+        )?.label ?? tag
+      );
+    });
 }
 
 function AccordionBlock({
@@ -86,6 +106,11 @@ export function ProductDetailView({
   const highlights = (product.highlights ?? []).filter(Boolean);
   const tags = productTagLabels(product);
   const hallmarks = hallmarkLabels(product);
+  const spiceLabel = product.spiceNote?.trim()
+    ? spiceNoteLabel(product.spiceNote)
+    : null;
+  const dietLabels = dietaryLabels(product.dietary ?? []);
+  const showDietBlock = Boolean(spiceLabel || dietLabels.length || hallmarks.length);
   const showShipping = Boolean(product.shippingTitle || product.shippingNote);
   const showFreshness = Boolean(product.shelfLife || product.origin);
 
@@ -185,6 +210,24 @@ export function ProductDetailView({
           <h1 className="mt-2 text-2xl font-semibold text-on-surface md:mt-3 md:text-4xl">
             {product.name}
           </h1>
+
+          {spiceLabel || dietLabels.length ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {spiceLabel ? (
+                <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                  Spice: {spiceLabel}
+                </span>
+              ) : null}
+              {dietLabels.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-full border border-secondary/20 bg-secondary-container/40 px-2.5 py-1 text-[11px] font-semibold text-on-secondary-container"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
           <div className="mt-3 flex flex-wrap items-baseline gap-2 md:mt-5 md:gap-3">
             <p className="price text-2xl font-bold text-on-surface md:text-3xl">
@@ -299,7 +342,7 @@ export function ProductDetailView({
               onClick={() => void addToCart(false)}
               className="hidden h-12 min-h-12 flex-1 rounded bg-primary-container px-6 text-sm font-semibold text-white hover:bg-primary sm:flex-none sm:min-w-48 md:inline-flex"
             >
-              {adding ? "Adding…" : "Add to Cart"} —{" "}
+              {adding ? "Adding…" : "Add to Cart"} , {" "}
               <span className="price">{formatINR(unitPrice * quantity)}</span>
             </Button>
             <Button
@@ -365,6 +408,20 @@ export function ProductDetailView({
                 />
               </AccordionBlock>
             ) : null}
+            {spiceLabel ? (
+              <AccordionBlock title="Spice note">
+                <p className="text-xs text-on-surface-variant">{spiceLabel}</p>
+              </AccordionBlock>
+            ) : null}
+            {dietLabels.length ? (
+              <AccordionBlock title="Dietary tags" defaultOpen>
+                <ul className="space-y-1.5 text-xs text-on-surface-variant">
+                  {dietLabels.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </AccordionBlock>
+            ) : null}
             {hallmarks.length ? (
               <AccordionBlock title="Dietary Hallmarks">
                 <ul className="space-y-1.5 text-xs text-on-surface-variant">
@@ -385,12 +442,16 @@ export function ProductDetailView({
             ) : null}
           </div>
 
-          {(hallmarks.length || product.ingredients?.length) && (
+          {showDietBlock || product.ingredients?.length ? (
             <div className="mt-8 hidden gap-4 sm:grid-cols-2 md:grid">
-              {hallmarks.length ? (
+              {showDietBlock ? (
                 <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4">
-                  <h2 className="text-sm font-bold text-on-surface">Dietary Hallmarks</h2>
+                  <h2 className="text-sm font-bold text-on-surface">Taste & diet</h2>
                   <ul className="mt-2 space-y-1.5 text-xs text-on-surface-variant">
+                    {spiceLabel ? <li>• Spice note: {spiceLabel}</li> : null}
+                    {dietLabels.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
                     {hallmarks.map((item) => (
                       <li key={item}>• {item}</li>
                     ))}
@@ -408,7 +469,7 @@ export function ProductDetailView({
                 </div>
               ) : null}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

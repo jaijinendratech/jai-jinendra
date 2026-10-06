@@ -76,7 +76,7 @@ export function SiteHeader({
       <div
         className={`pointer-events-auto mx-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           pill
-            ? "mt-3 max-w-5xl rounded-full border-[1.5px] border-on-surface bg-white/50 shadow-lg backdrop-blur-xl backdrop-saturate-150"
+            ? "mt-3 max-w-5xl rounded-full bg-white/50 shadow-lg backdrop-blur-xl backdrop-saturate-150"
             : "mt-0 w-full max-w-none rounded-none border-b border-outline-variant/30 bg-surface/90 shadow-[0_4px_20px_-4px_rgba(30,27,25,0.03)] backdrop-blur-md"
         }`}
       >
@@ -174,51 +174,51 @@ export function SiteHeader({
             id="mobile-nav"
             className="pointer-events-auto absolute top-full right-0 z-50 w-max max-w-[calc(100vw-1.5rem)] origin-right animate-[nav-slide-in_220ms_ease-out] rounded-bl-2xl border-b border-l border-outline-variant/30 bg-surface-container-lowest px-2 py-3 shadow-lg xl:hidden"
           >
-          <nav className="flex w-max flex-col gap-0.5" aria-label="Mobile">
-            {links.map((link) => {
-              const active = isActiveHref(pathname, link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active ? "page" : undefined}
-                  className={`whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors ${
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : "text-on-surface hover:bg-surface-container-low hover:text-primary"
-                  }`}
-                >
-                  {link.label}
-                  {link.special ? (
-                    <Image
-                      src="/images/special-star.png"
-                      alt=""
-                      width={16}
-                      height={16}
-                      unoptimized
-                      className="ml-2 inline-block h-4 w-4 object-contain align-text-top"
-                      aria-hidden
-                    />
-                  ) : null}
-                </Link>
-              );
-            })}
-            <Link
-              href="/account"
-              onClick={() => setOpen(false)}
-              className="mt-1 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low hover:text-primary sm:hidden"
-            >
-              My Account
-            </Link>
-            <Link
-              href="/catalogue"
-              onClick={() => setOpen(false)}
-              className="whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-surface-container-low"
-            >
-              Shop Now
-            </Link>
-          </nav>
+            <nav className="flex w-max flex-col gap-0.5" aria-label="Mobile">
+              {links.map((link) => {
+                const active = isActiveHref(pathname, link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className={`whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors ${
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-on-surface hover:bg-surface-container-low hover:text-primary"
+                    }`}
+                  >
+                    {link.label}
+                    {link.special ? (
+                      <Image
+                        src="/images/special-star.png"
+                        alt=""
+                        width={16}
+                        height={16}
+                        unoptimized
+                        className="ml-2 inline-block h-4 w-4 object-contain align-text-top"
+                        aria-hidden
+                      />
+                    ) : null}
+                  </Link>
+                );
+              })}
+              <Link
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="mt-1 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low hover:text-primary sm:hidden"
+              >
+                My Account
+              </Link>
+              <Link
+                href="/catalogue"
+                onClick={() => setOpen(false)}
+                className="whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-surface-container-low"
+              >
+                Shop Now
+              </Link>
+            </nav>
           </div>
         </>
       ) : null}

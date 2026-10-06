@@ -107,31 +107,31 @@ export default async function AdminOrderDetailPage({
           </div>
           <div>
             <dt className="text-on-surface-variant">Phone</dt>
-            <dd className="font-semibold">{order.phone || order.address.phone || "—"}</dd>
+            <dd className="font-semibold">{order.phone || order.address.phone || ", "}</dd>
           </div>
           <div>
             <dt className="text-on-surface-variant">Email</dt>
-            <dd className="font-semibold">{order.email || "—"}</dd>
+            <dd className="font-semibold">{order.email || ", "}</dd>
           </div>
           <div>
             <dt className="text-on-surface-variant">Pincode</dt>
-            <dd className="font-semibold">{order.address.pincode || "—"}</dd>
+            <dd className="font-semibold">{order.address.pincode || ", "}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-on-surface-variant">Address line 1</dt>
-            <dd className="font-semibold">{order.address.line1 || "—"}</dd>
+            <dd className="font-semibold">{order.address.line1 || ", "}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-on-surface-variant">Address line 2</dt>
-            <dd className="font-semibold">{order.address.line2 || "—"}</dd>
+            <dd className="font-semibold">{order.address.line2 || ", "}</dd>
           </div>
           <div>
             <dt className="text-on-surface-variant">City</dt>
-            <dd className="font-semibold">{order.address.city || order.city || "—"}</dd>
+            <dd className="font-semibold">{order.address.city || order.city || ", "}</dd>
           </div>
           <div>
             <dt className="text-on-surface-variant">State</dt>
-            <dd className="font-semibold">{order.address.state || "—"}</dd>
+            <dd className="font-semibold">{order.address.state || ", "}</dd>
           </div>
         </dl>
         {order.notes ? (
@@ -149,11 +149,11 @@ export default async function AdminOrderDetailPage({
           </div>
           <div>
             <dt className="text-on-surface-variant">Razorpay order</dt>
-            <dd className="break-all font-mono text-xs">{order.razorpayOrderId || "—"}</dd>
+            <dd className="break-all font-mono text-xs">{order.razorpayOrderId || ", "}</dd>
           </div>
           <div>
             <dt className="text-on-surface-variant">Razorpay payment</dt>
-            <dd className="break-all font-mono text-xs">{order.razorpayPaymentId || "—"}</dd>
+            <dd className="break-all font-mono text-xs">{order.razorpayPaymentId || ", "}</dd>
           </div>
         </dl>
       </AdminCard>
@@ -225,7 +225,7 @@ export default async function AdminOrderDetailPage({
             ) : null}
             {!integrations.shiprocket ? (
               <p className="mb-4 text-xs text-amber-800">
-                Shiprocket env not set — enter courier/AWB manually below.
+                Shiprocket env not set, enter courier/AWB manually below.
               </p>
             ) : order.shipmentId || order.awbCode ? (
               <p className="mb-4 text-xs text-on-surface-variant">

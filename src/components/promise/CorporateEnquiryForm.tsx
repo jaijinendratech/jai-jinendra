@@ -70,7 +70,7 @@ export function CorporateEnquiryForm() {
           Request a corporate quote
         </h3>
         <p className="mt-1 text-xs text-on-surface-variant">
-          Tell us volume, cities, and branding needs — we will propose hamper mixes and timelines.
+          Tell us volume, cities, and branding needs. We will propose hamper mixes and timelines.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

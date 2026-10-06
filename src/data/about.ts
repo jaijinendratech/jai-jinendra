@@ -3,11 +3,11 @@ import { heritage } from "@/data/home";
 export const aboutPage = {
   metaTitle: "About Jai Jinendra Sweets & Namkeens",
   metaDescription:
-    "Established in 1984 at Aerodrome Circle, Kota — a legacy of traditional taste, quality ingredients, Jain catering, and trusted sweets & namkeens.",
+    "Established in 1984 at Aerodrome Circle, Kota, a legacy of traditional taste, quality ingredients, Jain catering, and trusted sweets & namkeens.",
   eyebrow: "A Legacy of Taste Since 1984",
   title: "About Jai Jinendra Sweets & Namkeens",
   intro:
-    "Established in 1984 at Aerodrome Circle, Kota, Rajasthan, Jai Jinendra Sweets & Namkeens began its journey with our much-loved Kota Kachoris and Namkeens, we soon became a trusted name among families across Kota and Rajasthan for our distinctive taste, quality and consistency.",
+    "Established in 1984 at Aerodrome Circle, Kota, Rajasthan, Jai Jinendra Sweets & Namkeens began its journey with our much-loved Kota Kachoris and Namkeens. We soon became a trusted name among families across Kota and Rajasthan for our distinctive taste, quality and consistency.",
   image: heritage.image,
   imageAlt: heritage.imageAlt,
   sections: [
@@ -32,7 +32,7 @@ export const aboutPage = {
       title: "From a Small Beginning to a Trusted Food Brand",
       paragraphs: [
         "What started as a humble outlet in Kota, Rajasthan, in 1984 has grown into a cherished food brand built on generations of customer trust and appreciation. Our journey has been shaped by our commitment to taste, quality, authenticity and customer satisfaction.",
-        "Today, Jai Jinendra Sweets & Namkeens continues to carry forward its legacy with the same passion that inspired us at the beginning. As we grow, our goal remains unchanged — to serve delicious Indian sweets, crunchy Namkeens, Kota Kachoris, Gajak and catering delicacies that bring people together and create moments worth remembering.",
+        "Today, Jai Jinendra Sweets & Namkeens continues to carry forward its legacy with the same passion that inspired us at the beginning. As we grow, our goal remains unchanged: to serve delicious Indian sweets, crunchy Namkeens, Kota Kachoris, Gajak and catering delicacies that bring people together and create moments worth remembering.",
       ],
     },
   ],

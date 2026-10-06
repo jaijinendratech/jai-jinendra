@@ -19,15 +19,15 @@ function CustomerContactCell({ customer }: { customer: AdminCustomer }) {
   if (isSyntheticPhoneEmail(customer.email)) {
     return (
       <>
-        <p className="font-medium">{customer.phone || "—"}</p>
+        <p className="font-medium">{customer.phone || ", "}</p>
         <p className="text-xs text-on-surface-variant">Phone login</p>
       </>
     );
   }
   return (
     <>
-      <p>{customer.email || "—"}</p>
-      <p className="text-xs text-on-surface-variant">{customer.phone || "—"}</p>
+      <p>{customer.email || ", "}</p>
+      <p className="text-xs text-on-surface-variant">{customer.phone || ", "}</p>
     </>
   );
 }

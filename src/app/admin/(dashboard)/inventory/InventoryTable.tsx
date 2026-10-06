@@ -69,7 +69,7 @@ export function InventoryTable({
                     {supabase ? (
                       <InventoryAdjustForm variantId={row.id} />
                     ) : (
-                      <span className="text-xs text-on-surface-variant">—</span>
+                      <span className="text-xs text-on-surface-variant">, </span>
                     )}
                   </td>
                 </tr>

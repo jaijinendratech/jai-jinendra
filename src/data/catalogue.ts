@@ -49,7 +49,7 @@ export const catalogueMeta = {
   description:
     "Over 60+ authentic recipes handcrafted daily in pure desi ghee, cold-pressed oils, and freshly ground spices. Vacuum nitrogen-sealed immediately upon batch frying for guaranteed pan-India doorstep crispness.",
   mobileDescription:
-    "60+ recipes in pure ghee & cold-pressed oils — nitrogen-sealed for pan-India crispness.",
+    "60+ recipes in pure ghee & cold-pressed oils, nitrogen-sealed for pan-India crispness.",
   totalCount: 64,
   freshnessNote: "Fresh Batches Packaged 3 Hours Ago",
   freshnessNoteMobile: "Packed fresh today",
@@ -100,11 +100,11 @@ export const catalogueMeta = {
 export const bakeryUspBadges: CategoryUspBadge[] = [
   {
     id: "veg",
-    label: "100% Veg.",
+    label: "100% Vegetarian",
     veg: true,
-    medallionLabel: "100% Eggless",
+    medallionLabel: "100% Vegetarian",
     description:
-      "Sacred eggless baking tradition crafted strictly per pure vegetarian Sattvic vows.",
+      "Sacred vegetarian baking tradition crafted strictly per pure vegetarian Sattvic vows.",
   },
   {
     id: "no-palm-oil",
@@ -297,7 +297,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Jain-friendly khasta shells stuffed with roasted dal, crushed pepper, and digestive Hathras hing.",
     longDescription:
-      "A temple-friendly kachori without onion or garlic — hing-forward filling wrapped in multilayer desi-ghee dough, ideal for fasting days and everyday chai.",
+      "A temple-friendly kachori without onion or garlic, hing-forward filling wrapped in multilayer desi-ghee dough, ideal for fasting days and everyday chai.",
     image: images.cat1,
     imageAlt: "Golden hing kachoris with green chutney on a brass plate",
     price: 220,
@@ -322,7 +322,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     name: "Mini Party Samosa Pack",
     slug: "mini-party-samosa-pack",
     description:
-      "Bite-size flaky samosas filled with spiced potato and peas — oven-ready for festive platters.",
+      "Bite-size flaky samosas filled with spiced potato and peas, oven-ready for festive platters.",
     longDescription:
       "Cocktail-size samosas with a crisp pastry shell and classic spiced filling. Arrive frozen-ready for quick oven finishing before guests arrive.",
     image: images.prod1,
@@ -379,7 +379,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Originating from desert stone mills, authentic moth bean flour and freshly crushed spices.",
     longDescription:
-      "Fine moth-dal bhujia strands fried to an extra-crisp finish with black pepper and green cardamom — the everyday Bikaneri classic.",
+      "Fine moth-dal bhujia strands fried to an extra-crisp finish with black pepper and green cardamom. The everyday Bikaneri classic.",
     image: images.prod4,
     imageAlt: "Golden Bikaneri bhujia strands in an engraved brass bowl",
     price: 180,
@@ -405,7 +405,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Slow hand-pressed whole wheat crisps infused with sweet pungent Mathania chillies.",
     longDescription:
-      "Paper-thin whole wheat khakhras pressed by hand and roasted with Mathania chilli flakes and cumin — light, spicy, and tea-ready.",
+      "Paper-thin whole wheat khakhras pressed by hand and roasted with Mathania chilli flakes and cumin, light, spicy, and tea-ready.",
     image: images.prod5,
     imageAlt: "Stacked Mathania mirch wheat khakhra wafers with cumin seeds",
     price: 320,
@@ -431,7 +431,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Assortment of 4 gold-embossed tins: Shahi Mixture, Ratlami Sev, Ajwaini Mathri & Kaju Katli.",
     longDescription:
-      "A curated festive hamper with four gold-embossed tins spanning savory classics and royal mithai — ideal for Diwali, weddings, and corporate gifting.",
+      "A curated festive hamper with four gold-embossed tins spanning savory classics and royal mithai, ideal for Diwali, weddings, and corporate gifting.",
     image: images.sig0,
     imageAlt: "Royal Rajasthan Heritage gift box with bhujia, mathri, and ghevar",
     price: 890,
@@ -503,7 +503,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Golden flaky savory biscuits infused with fragrant ajwain seeds. The eternal evening companion.",
     longDescription:
-      "Flaky ajwain mathri and crispy nimki fried fresh for chai o'clock — aromatic, light, and endlessly snackable.",
+      "Flaky ajwain mathri and crispy nimki fried fresh for chai o'clock, aromatic, light, and endlessly snackable.",
     image: images.prod8,
     imageAlt: "Ajwaini mathri crackers stacked beside masala chai",
     price: 190,
@@ -550,7 +550,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     description:
       "Bespoke keepsake trunk with 6 assorted luxury confections, pistachios, and saffron almonds.",
     longDescription:
-      "A grand wooden trunk filled with six luxury confections, pistachio barfi, roasted dry fruits, and festive brass accents — our top-tier gift.",
+      "A grand wooden trunk filled with six luxury confections, pistachio barfi, roasted dry fruits, and festive brass accents. Our top-tier gift.",
     image: images.sig1,
     imageAlt: "Aristocrat Mithai Trunk with kaju katli and kesar peda",
     price: 1450,
@@ -571,7 +571,7 @@ export const catalogueProducts: MockCatalogProduct[] = [
     name: "Diwali Corporate Tin Set",
     slug: "diwali-corporate-tin-set",
     description:
-      "Three embossed tins — Ratlami Sev, Kaju Katli, and Ajwaini Mathri — ready for multi-address corporate dispatch.",
+      "Three embossed tins, Ratlami Sev, Kaju Katli, and Ajwaini Mathri, ready for multi-address corporate dispatch.",
     longDescription:
       "A scalable corporate gifting set with brass-finish embossed tins, optional wax-seal cards, and vacuum-sealed contents chosen for travel-safe freshness.",
     image: images.catalogueGift,

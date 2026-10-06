@@ -76,7 +76,7 @@ export function CateringEnquiryForm() {
           Request a catering quote
         </h3>
         <p className="mt-1 text-xs text-on-surface-variant">
-          Tell us the date, guest count and city — we will propose a menu and quantities.
+          Tell us the date, guest count and city. We will propose a menu and quantities.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

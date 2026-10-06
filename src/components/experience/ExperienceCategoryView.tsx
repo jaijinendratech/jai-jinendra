@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { LazyProductGrid } from "@/components/products/LazyProductGrid";
-import { CatalogueQualityStrip } from "@/components/catalogue/CatalogueQualityStrip";
 import { PageHeroCarousel } from "@/components/shared/PageHeroCarousel";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import type {
@@ -84,8 +83,6 @@ export function ExperienceCategoryView({
             </p>
           )}
         </section>
-
-        <CatalogueQualityStrip />
       </main>
     </>
   );

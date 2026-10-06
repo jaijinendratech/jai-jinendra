@@ -32,7 +32,7 @@ export function AdminDrawer({
   className?: string;
   size?: AdminDrawerSize;
 }) {
-  // Controlled open without Drawer.Trigger — put isOpen on Backdrop.
+  // Controlled open without Drawer.Trigger, put isOpen on Backdrop.
   // <Drawer state> wraps DialogTrigger and warns without a pressable child.
   return (
     <Drawer.Backdrop

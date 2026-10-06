@@ -73,7 +73,7 @@ export default function AboutPage() {
           Explore our promise
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-on-surface-variant md:text-base">
-          Heritage, purity, freshness, corporate gifting, and our Kota outlets — each promise in
+          Heritage, purity, freshness, corporate gifting, and our Kota outlets, each promise in
           full.
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

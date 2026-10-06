@@ -24,7 +24,7 @@ export const FEATURED_OPTIONS: AdminStatusOption[] = [
   { value: "false", label: "Standard" },
 ];
 
-/** Category “special attention” — shown in storefront navbar + CTA. */
+/** Category “special attention”, shown in storefront navbar + CTA. */
 export const SPECIAL_ATTENTION_OPTIONS: AdminStatusOption[] = [
   { value: "true", label: "Special attention" },
   { value: "false", label: "Normal" },

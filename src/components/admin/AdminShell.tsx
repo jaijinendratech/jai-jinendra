@@ -59,7 +59,7 @@ const navIcons: Record<string, IconType> = {
   "/admin/settings": LuSettings,
 };
 
-/** High-traffic admin routes — warm the RSC/client chunks early. */
+/** High-traffic admin routes, warm the RSC/client chunks early. */
 const PREFETCH_HREFS = [
   "/admin",
   "/admin/products",

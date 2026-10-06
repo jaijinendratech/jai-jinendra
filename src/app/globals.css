@@ -272,7 +272,7 @@
 }
 
 .jj-toast-region .toast {
-  /* Don't stretch to the full region — size to copy */
+  /* Don't stretch to the full region, size to copy */
   inset-inline-start: auto;
   inset-inline-end: 0;
   width: max-content;

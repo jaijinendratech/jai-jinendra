@@ -11,6 +11,7 @@ import {
   getCatalogueSpecialtyFilters,
   getCategoryListingProducts,
   getStorefrontCategoryChildren,
+  isGajakCategoryPublished,
 } from "@/lib/catalog/queries";
 import {
   CATEGORY_ROUTE_ALIASES,
@@ -78,6 +79,9 @@ export default async function CatalogueCategoryPage({
   const { category: raw } = await params;
   const resolved = resolveCategorySlug(raw);
   if (!resolved) notFound();
+  if (resolved === GAJAK_LISTING_SLUG && !(await isGajakCategoryPublished())) {
+    notFound();
+  }
 
   const query = await searchParams;
   const requestedSub = readParam(query.sub);

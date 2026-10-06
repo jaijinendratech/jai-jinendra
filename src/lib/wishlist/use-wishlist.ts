@@ -47,7 +47,7 @@ function getSnapshot() {
   return memoryIds;
 }
 
-/** Stable empty array — React requires getServerSnapshot to return a cached value. */
+/** Stable empty array, React requires getServerSnapshot to return a cached value. */
 const EMPTY_IDS: string[] = [];
 
 function getServerSnapshot() {

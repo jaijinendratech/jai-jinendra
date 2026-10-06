@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-jj-pathname", pathname);
-  // Always overwrite — never trust a client-supplied admin flag.
+  // Always overwrite, never trust a client-supplied admin flag.
   requestHeaders.set(ADMIN_REQUEST_HEADER, "0");
 
   if (!isSupabaseConfigured()) {

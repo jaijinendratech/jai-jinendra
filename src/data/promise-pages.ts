@@ -43,7 +43,7 @@ export const heritagePage = {
     {
       year: "1984",
       title: "Founded at Aerodrome Circle, Kota",
-      body: "Established at Aerodrome Circle, Kota, Rajasthan, with much-loved Kota Kachoris and Namkeens — a trusted name among families across Kota and Rajasthan for distinctive taste, quality and consistency.",
+      body: "Established at Aerodrome Circle, Kota, Rajasthan, with much-loved Kota Kachoris and Namkeens, a trusted name among families across Kota and Rajasthan for distinctive taste, quality and consistency.",
     },
     {
       year: "1998",
@@ -83,13 +83,13 @@ export const purityPage = {
     "Learn how Jai Jinendra Sweets & Namkeens maintains 100% shuddh vegetarian kitchens, cold-pressed oils, lab-tested batches, and FSSAI certification.",
   eyebrow: "The Promise",
   title: "Purity & Lab Testing",
-  intro: `Every batch from ${siteConfig.name} follows dedicated cleanroom protocols — pure vegetarian, cold-pressed oils, and nitrogen-sealed freshness.`,
+  intro: `Every batch from ${siteConfig.name} follows dedicated cleanroom protocols, pure vegetarian, cold-pressed oils, and nitrogen-sealed freshness.`,
   pillars: purityPillars,
   badges: purityBadges,
   labChecks: [
     {
       title: "Oil Integrity",
-      body: "Cold-pressed kacchi ghani and A2 bilona ghee verified for freshness — never recycled frying oils.",
+      body: "Cold-pressed kacchi ghani and A2 bilona ghee verified for freshness. We never use recycled frying oils.",
     },
     {
       title: "Moisture Barrier",
@@ -115,7 +115,7 @@ export const freshnessPage = {
   eyebrow: "Pan-India Promise",
   title: "Pan-India Freshness Guarantee",
   intro:
-    "Fresh batches are fried, nitrogen-packed, and air-couriered so the crunch that leaves our kadhai arrives intact at your doorstep — from metros to tier-2 towns.",
+    "Fresh batches are fried, nitrogen-packed, and air-couriered so the crunch that leaves our kadhai arrives intact at your doorstep, from metros to tier-2 towns.",
   image: images.banner,
   imageAlt: "Festive gift boxes and fresh Indian snacks ready for pan-India dispatch",
   guarantees: [
@@ -133,7 +133,7 @@ export const freshnessPage = {
     },
     {
       title: "100% Crispness Warranty",
-      body: "If transit compromises crispness, we ship a free replacement — no questions asked.",
+      body: "If transit compromises crispness, we ship a free replacement with no questions asked.",
     },
   ],
   sla: [
@@ -164,7 +164,7 @@ export const corporatePage = {
     },
     {
       title: "Volume & MOQ Guidance",
-      body: "Dedicated desk for 25+ unit programmes — Diwali, weddings, onboarding, and client appreciation.",
+      body: "Dedicated desk for 25+ unit programmes, Diwali, weddings, onboarding, and client appreciation.",
     },
     {
       title: "Quality SLAs",
@@ -181,7 +181,7 @@ export const corporatePage = {
 export const cateringPage = {
   metaTitle: "Jain Catering by Jai Jinendra",
   metaDescription:
-    "Authentic Jain catering for weddings, religious functions, and special events — no onion, no garlic, no potato. Pure Jain food with magical taste from Jai Jinendra Sweets & Namkeens.",
+    "Authentic Jain catering for weddings, religious functions, and special events. No onion, no garlic, no potato. Pure Jain food with magical taste from Jai Jinendra Sweets & Namkeens.",
   eyebrow: "Events & Celebrations",
   title: "Jain Catering by Jai Jinendra – Pure Jain Food, Magical Taste",
   intro:
@@ -261,7 +261,7 @@ export const flagshipOutlets: FlagshipOutlet[] = [
 export const outletsPage = {
   metaTitle: "Our Outlets in Kota",
   metaDescription:
-    "Visit Jai Jinendra Sweets & Namkeens outlets in Kota — Aerodrome Circle flagship, Rangbari, and Bundi Road.",
+    "Visit Jai Jinendra Sweets & Namkeens outlets in Kota, Aerodrome Circle flagship, Rangbari, and Bundi Road.",
   eyebrow: "Visit Us",
   title: "Our Outlets in Kota",
   intro:

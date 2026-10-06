@@ -177,7 +177,7 @@ export function ProductAttributesField({
                       }
                       className={fieldClassName()}
                     >
-                      <option value="">— Select —</option>
+                      <option value="">,  Select , </option>
                       {row.options.map((option) => (
                         <option key={option} value={option}>
                           {option}
@@ -285,7 +285,7 @@ export function ProductAttributesField({
                   <ChipInput
                     label="Choices"
                     mode="multi"
-                    placeholder="Add a choice — press Enter"
+                    placeholder="Add a choice, press Enter"
                     onChange={(options) =>
                       setDraft((current) => ({
                         ...current,
@@ -355,7 +355,7 @@ export function ProductAttributesField({
                   }
                   className={fieldClassName()}
                 >
-                  <option value="">— Select —</option>
+                  <option value="">,  Select , </option>
                   {draft.options.map((option) => (
                     <option key={option} value={option}>
                       {option}

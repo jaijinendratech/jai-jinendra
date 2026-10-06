@@ -21,7 +21,7 @@ export function AdminModal({
   size?: ModalSize;
   className?: string;
 }) {
-  // Controlled open without Modal.Trigger — put isOpen on Backdrop.
+  // Controlled open without Modal.Trigger, put isOpen on Backdrop.
   // <Modal state> wraps DialogTrigger and warns without a pressable child.
   return (
     <Modal.Backdrop
