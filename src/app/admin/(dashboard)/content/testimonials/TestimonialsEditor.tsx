@@ -122,7 +122,7 @@ export function TestimonialsEditor({
                     name={`video-${item.id}`}
                     posterName={`poster-${item.id}`}
                     includePoster
-                    label="MP4 video"
+                    label="Video"
                     defaultValue={
                       item.videoUrl || item.posterUrl
                         ? {

@@ -9,6 +9,9 @@ import { ADMIN_REQUEST_HEADER } from "@/lib/admin-request-header";
  * Auth gate for `/api/admin/*` route handlers.
  * Prefer the proxy header when present; otherwise verify the Supabase session
  * and resolve role via the service-role client (avoids RLS edge cases).
+ *
+ * Every rejection path logs a reason tag so a 401 here is diagnosable from
+ * server/function logs instead of being a silent black box.
  */
 export async function assertAdminApiAccess(): Promise<boolean> {
   const headerList = await headers();
@@ -18,14 +21,27 @@ export async function assertAdminApiAccess(): Promise<boolean> {
 
   if (!isSupabaseConfigured()) {
     const jar = await cookies();
-    return jar.get(ADMIN_SESSION_COOKIE)?.value === "1";
+    const ok = jar.get(ADMIN_SESSION_COOKIE)?.value === "1";
+    if (!ok) {
+      console.error(
+        "[assertAdminApiAccess] rejected: Supabase not configured and no dev admin session cookie",
+      );
+    }
+    return ok;
   }
 
   const supabase = await createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
-  if (!user) return false;
+  if (!user) {
+    console.error(
+      "[assertAdminApiAccess] rejected: no authenticated Supabase user on request",
+      userError ? { authError: userError.message } : undefined,
+    );
+    return false;
+  }
 
   try {
     // Service role bypasses RLS so a missing/failed profiles SELECT cannot
@@ -37,8 +53,11 @@ export async function assertAdminApiAccess(): Promise<boolean> {
       .eq("id", user.id)
       .maybeSingle();
     if (profile?.role === "admin") return true;
-  } catch {
-    // Fall through to the user-scoped check when the service role key is missing.
+  } catch (err) {
+    console.error(
+      "[assertAdminApiAccess] service-role profile lookup failed, falling back to RLS-scoped check",
+      err instanceof Error ? err.message : err,
+    );
   }
 
   const { data: profile } = await supabase
@@ -46,5 +65,11 @@ export async function assertAdminApiAccess(): Promise<boolean> {
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
-  return profile?.role === "admin";
+  if (profile?.role !== "admin") {
+    console.error(
+      `[assertAdminApiAccess] rejected: user ${user.id} has role "${profile?.role ?? "none"}", not admin`,
+    );
+    return false;
+  }
+  return true;
 }

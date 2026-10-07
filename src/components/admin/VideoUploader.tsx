@@ -17,7 +17,6 @@ export type VideoAsset = {
   posterUrl?: string;
 };
 
-const ALLOWED_TYPES = new Set(["video/mp4", "video/webm"]);
 const MAX_BYTES = 50 * 1024 * 1024;
 
 export function VideoUploader({
@@ -58,8 +57,8 @@ export function VideoUploader({
     if (!file || disabled) return;
     setError(null);
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      setError("Only MP4 and WebM videos are allowed");
+    if (!file.type.startsWith("video/")) {
+      setError("Only video files are allowed");
       return;
     }
     if (file.size > MAX_BYTES) {
@@ -161,7 +160,7 @@ export function VideoUploader({
             Drag & drop a video here
           </p>
           <p className="mt-1 text-xs text-on-surface-variant">
-            MP4 or WebM, uploaded directly to storage (max 50MB)
+            Any video format, uploaded directly to storage (max 50MB)
           </p>
           <button
             type="button"
@@ -174,7 +173,7 @@ export function VideoUploader({
           <input
             ref={inputRef}
             type="file"
-            accept="video/mp4,video/webm"
+            accept="video/*"
             className="hidden"
             onChange={(e) => {
               void uploadFile(e.target.files?.[0]);

@@ -3,13 +3,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import { assertAdminApiAccess } from "@/lib/admin-api-auth";
 
-const ALLOWED_TYPES = new Set(["video/mp4", "video/webm"]);
 const MAX_BYTES = 50 * 1024 * 1024;
+/** Extensions that are unsafe or meaningless to keep as a storage file extension. */
+const UNSAFE_EXTENSIONS = new Set(["", "php", "exe", "sh", "js", "html"]);
 
-function extensionFor(contentType: string): "mp4" | "webm" | null {
-  if (contentType === "video/mp4") return "mp4";
-  if (contentType === "video/webm") return "webm";
-  return null;
+/** Prefer the extension from the original filename; fall back to the MIME subtype. */
+function extensionFor(contentType: string, fileName: string): string {
+  const fromName = fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (fromName && !UNSAFE_EXTENSIONS.has(fromName)) return fromName;
+
+  const subtype = contentType.split("/")[1]?.toLowerCase() ?? "";
+  const fromMime = subtype.replace(/[^a-z0-9]/g, "");
+  return fromMime || "mp4";
 }
 
 export async function POST(request: Request) {
@@ -42,13 +47,14 @@ export async function POST(request: Request) {
   const contentType = String(body.contentType ?? "")
     .trim()
     .toLowerCase();
-  const ext = extensionFor(contentType);
-  if (!ALLOWED_TYPES.has(contentType) || !ext) {
+  const fileName = String(body.fileName ?? "video").trim() || "video";
+  if (!contentType.startsWith("video/")) {
     return NextResponse.json(
-      { error: "Only MP4 and WebM videos are allowed" },
+      { error: "Only video files are allowed" },
       { status: 400 },
     );
   }
+  const ext = extensionFor(contentType, fileName);
 
   const size = Number(body.size);
   if (Number.isFinite(size) && size > MAX_BYTES) {
@@ -59,7 +65,6 @@ export async function POST(request: Request) {
   }
 
   const folder = String(body.folder ?? "videos").replace(/[^a-z0-9/_-]/gi, "");
-  const fileName = String(body.fileName ?? "video").trim() || "video";
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   const admin = createAdminClient();
@@ -70,7 +75,7 @@ export async function POST(request: Request) {
   if (error || !data) {
     return NextResponse.json(
       {
-        error: `Could not create upload URL: ${error?.message ?? "unknown error"}. Ensure the Storage bucket named "media" exists, is public, and allows video/mp4 and video/webm.`,
+        error: `Could not create upload URL: ${error?.message ?? "unknown error"}. Ensure the Storage bucket named "media" exists and is public.`,
       },
       { status: 500 },
     );
