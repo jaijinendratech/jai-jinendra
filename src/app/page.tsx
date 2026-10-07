@@ -32,6 +32,11 @@ import {
 import { siteConfig, testimonials, trustItems } from "@/data/home";
 import { thaliBuilderMeta, thaliCategoryGroups } from "@/data/thali-builder";
 import { productTagLabels } from "@/lib/catalog/tags";
+import {
+  festiveTagSlug,
+  parseFestiveSpecial,
+} from "@/lib/catalog/festive";
+import type { Product } from "@/types/catalog";
 
 function categoryKeyFromHref(href: string): string {
   const cleaned = href.replace(/\/$/, "");
@@ -51,6 +56,7 @@ export default async function HomePage() {
     // achievementMedia,
     videos,
     thaliOfferBlock,
+    festiveBlock,
     thaliByGroup,
     gajakLive,
     giftingAll,
@@ -62,6 +68,7 @@ export default async function HomePage() {
     // getAchievementMediaContent(),
     getVideoTestimonials(),
     getContentBlock("home", "thali_offer"),
+    getContentBlock("home", "festive_special"),
     Promise.all(
       thaliCategoryGroups.map((group) =>
         getCategoryListingProducts(group.categorySlug, null),
@@ -75,11 +82,18 @@ export default async function HomePage() {
   const thaliGroups = gajakLive
     ? thaliCategoryGroups
     : thaliCategoryGroups.filter((group) => group.id !== "gajak");
+  const festive = parseFestiveSpecial(festiveBlock?.content);
+  const festiveTagLower = (festive.collectionTag || "navratri").toLowerCase();
   const navratriProducts = allProducts.filter((product) =>
-    productTagLabels(product).some((tag) => tag.toLowerCase() === "navratri"),
+    productTagLabels(product).some((tag) => tag.toLowerCase() === festiveTagLower),
   );
+  const pickedFestive = festive.productIds
+    .map((id) => allProducts.find((product) => product.id === id))
+    .filter((product): product is Product => Boolean(product));
   const navratriPicks =
-    navratriProducts.length > 0
+    pickedFestive.length > 0
+      ? pickedFestive
+      : navratriProducts.length > 0
       ? navratriProducts
       : allProducts.filter(
         (product) =>
@@ -223,7 +237,16 @@ export default async function HomePage() {
         categoryGroups={thaliGroups}
       />
       <CategorySection categories={homeCategories} />
-      <NavratriSpecials products={navratriPicks} />
+      <NavratriSpecials
+        products={navratriPicks}
+        content={{
+          ...festive,
+          buttonHref:
+            festive.collectionTag && festive.buttonHref === "/catalogue"
+              ? `/catalogue/${festiveTagSlug(festive.collectionTag)}`
+              : festive.buttonHref,
+        }}
+      />
       <FeaturedProducts products={allProducts} />
       <HeritageSection />
       <SignatureCollections products={giftingProducts} />

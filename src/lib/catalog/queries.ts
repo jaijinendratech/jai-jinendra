@@ -1,4 +1,5 @@
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
+import { festiveTagSlug, isFestiveTag } from "@/lib/catalog/festive";
 import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -548,7 +549,7 @@ export async function getCatalogueOverview(): Promise<CatalogueSection[]> {
     children: taxonomy ? childrenForResolvedSlug(tile.slug, taxonomy) : [],
     products: products
       .filter((product) => productCategorySlug(product) === tile.slug)
-      .slice(0, 3),
+      .slice(0, 4),
   }));
 }
 
@@ -710,9 +711,13 @@ export type SpecialAttentionCategory = {
   href: string;
 };
 
-export type CatalogueSpecialtyFilter = CatalogueFilterOption & { href: string };
+export type CatalogueSpecialtyFilter = CatalogueFilterOption & {
+  href: string;
+  /** Parent category title shown as a group heading; null for standalone categories. */
+  group?: string | null;
+};
 
-/** Published categories with live product counts for the catalogue sidebar. */
+/** Subcategories (or the category itself when it has none) with live product counts for the catalogue sidebar. */
 export async function getCatalogueSpecialtyFilters(): Promise<
   CatalogueSpecialtyFilter[]
 > {
@@ -735,27 +740,78 @@ export async function getCatalogueSpecialtyFilters(): Promise<
   }
 
   const supabase = await createClient();
-  const [categoriesResult, productsResult] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("id, slug, title")
-      .eq("published", true)
-      .order("sort_order"),
-    supabase.from("products").select("category_id").eq("published", true),
-  ]);
+  const [categoriesResult, subcategoriesResult, productsResult] =
+    await Promise.all([
+      supabase
+        .from("categories")
+        .select("id, slug, title")
+        .eq("published", true)
+        .order("sort_order"),
+      supabase
+        .from("subcategories")
+        .select("id, category_id, slug, title")
+        .eq("published", true)
+        .order("sort_order"),
+      supabase
+        .from("products")
+        .select("category_id, subcategory_id")
+        .eq("published", true),
+    ]);
 
-  const counts = new Map<string, number>();
+  const categoryCounts = new Map<string, number>();
+  const subCounts = new Map<string, number>();
   for (const row of productsResult.data ?? []) {
-    if (!row.category_id) continue;
-    counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+    if (row.category_id) {
+      categoryCounts.set(row.category_id, (categoryCounts.get(row.category_id) ?? 0) + 1);
+    }
+    if (row.subcategory_id) {
+      subCounts.set(row.subcategory_id, (subCounts.get(row.subcategory_id) ?? 0) + 1);
+    }
   }
 
-  return (categoriesResult.data ?? []).map((category) => ({
-    id: category.slug,
-    label: category.title,
-    count: counts.get(category.id) ?? 0,
-    href: categoryHref(category.slug),
-  }));
+  const filters: CatalogueSpecialtyFilter[] = [];
+  for (const category of categoriesResult.data ?? []) {
+    const subs = (subcategoriesResult.data ?? []).filter(
+      (sub) => sub.category_id === category.id,
+    );
+    if (subs.length === 0) {
+      filters.push({
+        id: category.slug,
+        label: category.title,
+        count: categoryCounts.get(category.id) ?? 0,
+        href: categoryHref(category.slug),
+        group: null,
+      });
+      continue;
+    }
+    for (const sub of subs) {
+      filters.push({
+        id: `${category.slug}/${sub.slug}`,
+        label: sub.title,
+        count: subCounts.get(sub.id) ?? 0,
+        href: `${categoryHref(category.slug)}?sub=${sub.slug}`,
+        group: category.title,
+      });
+    }
+  }
+  return filters;
+}
+
+/** Products tagged with a festive tag ("... Special") whose slug matches, e.g. `diwali-special`. */
+export async function getFestiveCollection(
+  slug: string,
+): Promise<{ title: string; products: Product[] } | null> {
+  const products = await getPublishedProducts();
+  let title: string | null = null;
+  const matched = products.filter((product) =>
+    (product.tags ?? []).some((tag) => {
+      if (!isFestiveTag(tag) || festiveTagSlug(tag) !== slug) return false;
+      title ??= tag.trim();
+      return true;
+    }),
+  );
+  if (!title || matched.length === 0) return null;
+  return { title, products: matched };
 }
 
 export type HomeCategoryTile = {

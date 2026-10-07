@@ -211,13 +211,8 @@ export function ProductDetailView({
             {product.name}
           </h1>
 
-          {spiceLabel || dietLabels.length ? (
+          {dietLabels.length ? (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {spiceLabel ? (
-                <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
-                  Spice: {spiceLabel}
-                </span>
-              ) : null}
               {dietLabels.map((label) => (
                 <span
                   key={label}

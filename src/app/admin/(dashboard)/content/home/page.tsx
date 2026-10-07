@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import {
+  getAdminProducts,
   getContentBlock,
   getHeroCarouselContent,
 } from "@/lib/admin/queries";
+import { parseFestiveSpecial } from "@/lib/catalog/festive";
 import { siteConfig, celebrationBanner } from "@/data/home";
 import { thaliBuilderMeta } from "@/data/thali-builder";
 import { AdminPageHeader, NoticeBanner } from "@/components/admin/ui";
@@ -23,6 +25,17 @@ export default async function AdminHomeContentPage({
   const announcementBlock = await getContentBlock("home", "announcement");
   const celebrationBlock = await getContentBlock("home", "celebration");
   const thaliOfferBlock = await getContentBlock("home", "thali_offer");
+  const festive = parseFestiveSpecial(
+    (await getContentBlock("home", "festive_special"))?.content,
+  );
+  const productOptions = (await getAdminProducts())
+    .filter((product) => product.published)
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      image: product.image,
+    }));
 
   const announcement =
     (announcementBlock?.content as { text?: string } | null)?.text ??
@@ -51,6 +64,8 @@ export default async function AdminHomeContentPage({
         celebrationTitle={celebration.title ?? ""}
         celebrationBody={celebration.body ?? ""}
         thaliDiscountPercent={thaliDiscountPercent}
+        festive={festive}
+        productOptions={productOptions}
         slides={slides}
       />
     </div>

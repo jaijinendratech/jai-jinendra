@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import { getAdminOrderById, getIntegrationStatus } from "@/lib/admin/queries";
 import {
-  createShiprocketShipmentAction,
   updateOrderPaymentStatusAction,
   updateOrderShippingAction,
   updateOrderStatusAction,
@@ -19,6 +18,7 @@ import {
   labelClassName,
 } from "@/components/admin/ui";
 import { AdminFormSubmitButton } from "@/components/admin/AdminIconButton";
+import { CreateShipmentForm } from "@/components/admin/CreateShipmentForm";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
   ORDER_STATUSES,
@@ -209,19 +209,22 @@ export default async function AdminOrderDetailPage({
       {supabase ? (
         <AdminCard title="Shipping">
             {integrations.shiprocket && !order.shipmentId && !order.awbCode ? (
-              <form action={createShiprocketShipmentAction} className="mb-6">
-                <input type="hidden" name="orderId" value={order.dbId} />
+              <div className="mb-6">
+                {order.shippingError ? (
+                  <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Automatic shipment failed: {order.shippingError}
+                  </p>
+                ) : null}
                 <p className="mb-3 text-xs text-on-surface-variant">
-                  Creates a Shiprocket order for this address and assigns an AWB when
-                  a courier is available. Requires a valid Shiprocket API user in env.
+                  A Shiprocket order is created automatically once the order is
+                  paid (or placed as COD). If it failed, fix the cause and retry
+                  here. Requires a valid Shiprocket API user in env.
                 </p>
-                <AdminFormSubmitButton
-                  label="Create Shiprocket shipment"
-                  pendingLabel="Creating…"
-                  icon="truck"
-                  variant="primary"
+                <CreateShipmentForm
+                  orderId={order.dbId}
+                  label={order.shippingError ? "Retry Shiprocket shipment" : "Create Shiprocket shipment"}
                 />
-              </form>
+              </div>
             ) : null}
             {!integrations.shiprocket ? (
               <p className="mb-4 text-xs text-amber-800">

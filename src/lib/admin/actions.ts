@@ -1,12 +1,12 @@
 "use server";
 
+import { FESTIVE_SPECIAL_MAX_PRODUCTS } from "@/lib/catalog/festive";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { OrderStatus } from "@/types/database";
 import { slugify } from "@/lib/admin/slug";
 import { tagFlags } from "@/lib/catalog/tags";
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
@@ -432,130 +432,26 @@ export async function updateOrderShippingAction(formData: FormData) {
   revalidateAdmin("/admin/orders", `/admin/orders/${parsed.data.orderId}`);
 }
 
-/** Create Shiprocket shipment for a paid/COD order (admin-triggered). */
-export async function createShiprocketShipmentAction(formData: FormData) {
+/** Create (or retry) the Shiprocket shipment for an order. Returns the error instead of throwing. */
+export async function createShiprocketShipmentAction(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
-  if (!isSupabaseConfigured()) {
-    throw new Error("Supabase is required for Shiprocket.");
-  }
-
-  const {
-    createShiprocketShipment,
-    isShiprocketConfigured,
-  } = await import("@/lib/shiprocket");
-
-  if (!isShiprocketConfigured()) {
-    throw new Error(
-      "Shiprocket is not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD.",
-    );
-  }
-
   const orderId = String(formData.get("orderId") ?? "");
-  if (!orderId) throw new Error("Missing order id.");
+  if (!orderId) return { ok: false, error: "Missing order id." };
 
-  type OrderShipRow = {
-    id: string;
-    order_number: string;
-    created_at: string;
-    payment_method: string;
-    subtotal_paise: number;
-    discount_paise: number;
-    prepaid_discount_paise: number;
-    customer_phone: string | null;
-    customer_email: string | null;
-    status: OrderStatus;
-    shipment_id: string | null;
-    awb_code: string | null;
-    address_snapshot: Record<string, string | undefined> | null;
-    order_items: {
-      name_snapshot: string;
-      sku_snapshot: string | null;
-      qty: number;
-      unit_price_paise: number;
-    }[] | null;
-  };
+  const { ensureShiprocketShipment } = await import("@/lib/orders/shipping");
+  const result = await ensureShiprocketShipment(orderId, { markDispatched: true });
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("id", orderId)
-    .maybeSingle();
-
-  if (error || !data) throw new Error("Order not found.");
-  const row = data as unknown as OrderShipRow;
-
-  if (row.shipment_id || row.awb_code) {
-    throw new Error(
-      "This order already has a shipment. Clear AWB/shipment fields first to recreate.",
-    );
+  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`);
+  if (!result.ok) return { ok: false, error: result.error };
+  if (!result.created) {
+    return {
+      ok: false,
+      error: "This order already has a shipment (or one is being created).",
+    };
   }
-
-  const addr = (row.address_snapshot ?? {}) as {
-    name?: string;
-    phone?: string;
-    email?: string;
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-  };
-
-  const items = (row.order_items ?? []).map(
-    (item: {
-      name_snapshot: string;
-      sku_snapshot: string | null;
-      qty: number;
-      unit_price_paise: number;
-    }) => ({
-      name: item.name_snapshot,
-      sku: item.sku_snapshot || "ITEM",
-      units: item.qty,
-      sellingPriceRupees: item.unit_price_paise / 100,
-    }),
-  );
-
-  const result = await createShiprocketShipment({
-    orderNumber: row.order_number,
-    orderDate: row.created_at,
-    paymentMethod: row.payment_method,
-    subtotalRupees: row.subtotal_paise / 100,
-    couponDiscountRupees: (row.discount_paise ?? 0) / 100,
-    prepaidDiscountRupees: (row.prepaid_discount_paise ?? 0) / 100,
-    address: {
-      name: addr.name || "Customer",
-      phone: row.customer_phone || addr.phone || "",
-      email: row.customer_email || addr.email,
-      line1: addr.line1 || "",
-      line2: addr.line2,
-      city: addr.city || "",
-      state: addr.state || "",
-      pincode: addr.pincode || "",
-    },
-    items,
-  });
-
-  await admin
-    .from("orders")
-    .update({
-      shipment_id: result.shipmentId,
-      awb_code: result.awbCode,
-      courier_name: result.courierName,
-      tracking_url: result.trackingUrl,
-      shipping_status: result.shippingStatus,
-      status:
-        row.status === "pending_payment" || row.status === "cancelled"
-          ? row.status
-          : "dispatched",
-    })
-    .eq("id", orderId);
-
-  revalidateAdmin(
-    "/admin/orders",
-    `/admin/orders/${orderId}`,
-    `/admin/orders/${row.order_number}`,
-  );
+  return { ok: true };
 }
 
 export async function saveProductAction(formData: FormData) {
@@ -1610,8 +1506,42 @@ export async function saveHomepageContentAction(formData: FormData) {
     Math.max(1, Math.round(Number(formData.get("thaliDiscountPercent") ?? 10))),
   );
 
+  let festiveProductIds: string[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("festiveProductIds") ?? "[]"));
+    if (Array.isArray(parsed)) {
+      festiveProductIds = parsed
+        .filter((x): x is string => typeof x === "string")
+        .slice(0, FESTIVE_SPECIAL_MAX_PRODUCTS);
+    }
+  } catch {
+    /* keep empty: falls back to the tag rule */
+  }
+  const festiveField = (name: string) =>
+    String(formData.get(name) ?? "").trim().slice(0, 300);
+  const festiveHref = festiveField("festiveButtonHref");
+
   const admin = createAdminClient();
   await Promise.all([
+    admin.from("content_blocks").upsert(
+      {
+        page_key: "home",
+        section_key: "festive_special",
+        content: {
+          enabled: formData.get("festiveEnabled") === "on",
+          eyebrow: festiveField("festiveEyebrow"),
+          title: festiveField("festiveTitle"),
+          subtitle: festiveField("festiveSubtitle"),
+          buttonLabel: festiveField("festiveButtonLabel"),
+          // internal paths or https links only
+          buttonHref: /^(\/(?!\/)|https:\/\/)/.test(festiveHref) ? festiveHref : "/catalogue",
+          collectionTag: festiveField("festiveCollectionTag"),
+          productIds: festiveProductIds,
+        },
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "page_key,section_key" },
+    ),
     admin.from("content_blocks").upsert(
       {
         page_key: "home",

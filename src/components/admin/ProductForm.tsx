@@ -638,7 +638,7 @@ export function ProductForm({
                   label="Tags"
                   mode="multi"
                   defaultValue={product ? tagsFromFlags(product) : []}
-                  suggestions={[...MERCHANDISING_TAGS]}
+                  suggestions={[...MERCHANDISING_TAGS, "Navratri Special", "Diwali Special"]}
                   placeholder="Featured, press Enter"
                 />
               </AdminFieldFull>

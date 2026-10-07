@@ -32,13 +32,14 @@ export function CatalogueFilters({
   prices,
   activeSlug,
 }: {
-  specialty: (CatalogueFilterOption & { href: string })[];
+  specialty: (CatalogueFilterOption & { href: string; group?: string | null })[];
   products: Product[];
   prices: PriceRangeOption[];
   activeSlug: string;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const activeSub = searchParams.get("sub");
   const activeAttr = searchParams.get("attr");
   const activeSpice = searchParams.get("spice");
   const activePrice = searchParams.get("price");
@@ -68,10 +69,19 @@ export function CatalogueFilters({
           Specialty Category
         </h3>
         <ul className="space-y-2 text-sm">
-          {specialty.map((item) => {
-            const checked = activeSlug === item.id;
+          {specialty.map((item, index) => {
+            const checked = item.id.includes("/")
+              ? item.id === `${activeSlug}/${activeSub}`
+              : activeSlug === item.id && !activeSub;
+            const showGroup =
+              item.group && item.group !== specialty[index - 1]?.group;
             return (
               <li key={item.id}>
+                {showGroup ? (
+                  <p className="mb-1.5 mt-3 text-[10px] font-bold uppercase tracking-widest text-outline first:mt-0">
+                    {item.group}
+                  </p>
+                ) : null}
                 <Link
                   href={item.href}
                   className={`flex items-center justify-between transition hover:text-primary ${
