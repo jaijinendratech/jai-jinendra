@@ -553,6 +553,7 @@ export type Database = {
           shipment_id: string | null;
           tracking_url: string | null;
           shipping_status: string | null;
+          shipping_error: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -581,6 +582,7 @@ export type Database = {
           shipment_id?: string | null;
           tracking_url?: string | null;
           shipping_status?: string | null;
+          shipping_error?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -609,6 +611,7 @@ export type Database = {
           shipment_id?: string | null;
           tracking_url?: string | null;
           shipping_status?: string | null;
+          shipping_error?: string | null;
           created_at?: string;
           updated_at?: string;
         };

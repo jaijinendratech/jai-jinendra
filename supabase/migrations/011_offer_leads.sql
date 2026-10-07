@@ -1,7 +1,7 @@
 -- Welcome offer leads. Inserts go through the service-role API.
 -- Admins may read the list; there is no public insert policy.
 
-CREATE TABLE offer_leads (
+CREATE TABLE IF NOT EXISTS offer_leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name TEXT NOT NULL,
   phone TEXT NOT NULL,
@@ -10,10 +10,11 @@ CREATE TABLE offer_leads (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX offer_leads_phone_unique ON offer_leads (phone);
+CREATE UNIQUE INDEX IF NOT EXISTS offer_leads_phone_unique ON offer_leads (phone);
 
 ALTER TABLE offer_leads ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS offer_leads_admin_select ON offer_leads;
 CREATE POLICY offer_leads_admin_select ON offer_leads FOR SELECT
   USING (is_admin());
 

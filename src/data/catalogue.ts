@@ -1,4 +1,5 @@
-import { Ban, Droplets, DropletOff, Flame, ShieldCheck, Star, WheatOff } from "lucide-react";
+import { Droplets, DropletOff, Flame, ShieldCheck, Star, WheatOff } from "lucide-react";
+import { NoOnionGarlicIcon } from "@/components/catalogue/NoOnionGarlicIcon";
 import images from "@/data/image-map.json";
 import type { CategoryUspBadge } from "@/components/catalogue/CategoryUspBadges";
 import type {
@@ -133,8 +134,8 @@ export const namkeenUspBadges: CategoryUspBadge[] = [
   {
     id: "no-onion-garlic",
     label: "No Onion, No Garlic",
-    icon: Ban,
-    medallionLabel: "Jain Pure",
+    icon: NoOnionGarlicIcon,
+    medallionLabel: "No Onion · No Garlic",
     description: "Sacred Sattvic delicacy crafted per strict traditional temple vow.",
   },
   {

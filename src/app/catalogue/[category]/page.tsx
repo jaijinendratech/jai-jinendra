@@ -9,6 +9,7 @@ import {
 } from "@/data/catalogue";
 import {
   getCatalogueSpecialtyFilters,
+  getFestiveCollection,
   getCategoryListingProducts,
   getStorefrontCategoryChildren,
   isGajakCategoryPublished,
@@ -61,7 +62,15 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: raw } = await params;
   const resolved = resolveCategorySlug(raw);
-  if (!resolved) return { title: "Catalogue" };
+  if (!resolved) {
+    const festive = await getFestiveCollection(raw);
+    if (!festive) return { title: "Catalogue" };
+    return {
+      title: festive.title,
+      description: `Shop the ${festive.title} collection from ${siteConfig.name}.`,
+      alternates: { canonical: `/catalogue/${raw}` },
+    };
+  }
 
   const title = categoryTitle(resolved);
   return {
@@ -77,7 +86,21 @@ export default async function CatalogueCategoryPage({
 }: Props) {
   const { category: raw } = await params;
   const resolved = resolveCategorySlug(raw);
-  if (!resolved) notFound();
+  if (!resolved) {
+    const [festive, specialty] = await Promise.all([
+      getFestiveCollection(raw),
+      getCatalogueSpecialtyFilters(),
+    ]);
+    if (!festive) notFound();
+    return (
+      <CataloguePageView
+        products={festive.products}
+        activeCategory="all"
+        categoryTitle={festive.title}
+        specialty={specialty}
+      />
+    );
+  }
   if (resolved === GAJAK_LISTING_SLUG && !(await isGajakCategoryPublished())) {
     notFound();
   }

@@ -7,6 +7,8 @@ import {
 } from "@/lib/coupons";
 import { createRazorpayOrder } from "@/lib/payments/razorpay";
 import { sendOrderConfirmationEmail } from "@/lib/email/resend";
+import { ensureShiprocketShipment } from "@/lib/orders/shipping";
+import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"] & {
@@ -23,6 +25,16 @@ export type AddressInput = {
   pincode: string;
   email: string;
 };
+
+/**
+ * Create the Shiprocket shipment after the response is sent. Never blocks or
+ * fails the order: errors are stored on the order for the admin to retry.
+ */
+function queueShipment(orderId: string) {
+  after(async () => {
+    await ensureShiprocketShipment(orderId);
+  });
+}
 
 /** JJ- + base36 timestamp + random; retry on unique violation. */
 function generateOrderNumber() {
@@ -151,6 +163,7 @@ export async function createOrder(params: {
 
   if (params.paymentMethod === "cod") {
     await confirmOrderInventory(order.id);
+    queueShipment(order.id);
     await clearCart();
     if (params.address.email) {
       await sendOrderConfirmationEmail({
@@ -218,6 +231,8 @@ export async function handleRazorpayPaymentSuccess(params: {
     order.id,
     params.razorpayPaymentId,
   );
+
+  queueShipment(order.id);
 
   if (order.user_id) {
     await clearCartForUser(order.user_id);

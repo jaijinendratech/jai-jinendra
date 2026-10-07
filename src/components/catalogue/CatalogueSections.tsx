@@ -50,7 +50,7 @@ export function CatalogueSections({
                 No products in this collection yet.
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
                 {section.products.map((product, index) => (
                   <ProductCard
                     key={product.id}

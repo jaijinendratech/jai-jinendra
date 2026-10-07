@@ -664,6 +664,7 @@ export async function getAdminOrderById(idOrNumber: string) {
       shipmentId: null as string | null,
       trackingUrl: null as string | null,
       shippingStatus: null as string | null,
+      shippingError: null as string | null,
       items: order.items.map((i) => ({
         name: i.name,
         qty: i.qty,
@@ -695,6 +696,7 @@ export async function getAdminOrderById(idOrNumber: string) {
     courier_name: string | null;
     awb_code: string | null;
     shipment_id: string | null;
+    shipping_error: string | null;
     tracking_url: string | null;
     shipping_status: string | null;
     order_items: {
@@ -767,6 +769,7 @@ export async function getAdminOrderById(idOrNumber: string) {
     shipmentId: row.shipment_id,
     trackingUrl: row.tracking_url,
     shippingStatus: row.shipping_status,
+    shippingError: row.shipping_error,
     items: (row.order_items ?? []).map((i) => ({
       name: i.name_snapshot,
       qty: i.qty,

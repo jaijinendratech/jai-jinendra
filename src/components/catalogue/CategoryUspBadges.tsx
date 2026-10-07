@@ -1,11 +1,11 @@
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 export type CategoryUspBadge = {
   id: string;
   label: string;
   /** Renders the brand's veg-mark instead of an icon when true. */
   veg?: boolean;
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   /** Small-caps caption inside the medallion, used by PuritySealCertification only. */
   medallionLabel?: string;
   /** One-line blurb under the heading, used by PuritySealCertification only. */
