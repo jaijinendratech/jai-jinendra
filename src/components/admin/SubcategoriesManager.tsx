@@ -191,7 +191,7 @@ export function SubcategoriesManager({
             setFilterCategory(e.target.value);
             setPage(1);
           }}
-          className={fieldClassName()}
+          className={fieldClassName().replace("w-full", "w-auto")}
         >
           <option value="all">All categories</option>
           {categories.map((c) => (

@@ -1,4 +1,14 @@
-import { DropletOff, Flame, Leaf, MoonStar, Package, Truck } from "lucide-react";
+import { Fragment } from "react";
+import Image from "next/image";
+import {
+  DropletOff,
+  Flame,
+  Leaf,
+  MoonStar,
+  Package,
+  Star,
+  Truck,
+} from "lucide-react";
 import type { TrustItem } from "@/types/catalog";
 
 const iconMap = {
@@ -14,8 +24,64 @@ const iconMap = {
 } as const;
 
 function iconChipClass(icon: TrustItem["icon"]) {
-  if (icon === "veg") return "border-secondary/20 bg-surface-container-low text-secondary";
+  if (icon === "veg")
+    return "border-secondary/20 bg-surface-container-low text-secondary";
   return "border-outline-variant/30 bg-surface-container-low text-primary";
+}
+
+const platformRatings = [
+  {
+    name: "Swiggy",
+    logo: "/brand/swiggy-seeklogo.png",
+    width: 2000,
+    height: 605,
+    rating: "4.5+",
+    customers: "98k+",
+  },
+  {
+    name: "Zomato",
+    logo: "/brand/zomato-seeklogo.png",
+    width: 2000,
+    height: 423,
+    rating: "4.3+",
+    customers: "14k+",
+  },
+] as const;
+
+/** Swiggy / Zomato ratings, shown inside the USP strip. */
+function PlatformRatings({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={
+        compact
+          ? "flex shrink-0 items-center gap-3 rounded-full border border-outline-variant/40 bg-surface-container-lowest px-3 py-2 shadow-sm"
+          : "flex flex-col justify-center gap-1.5 px-2 py-1.5 md:px-4 md:py-0"
+      }
+      aria-label="Delivery platform ratings"
+    >
+      {platformRatings.map((p) => (
+        <div key={p.name} className="flex items-center gap-2">
+          <Image
+            src={p.logo}
+            alt={p.name}
+            width={600}
+            height={600}
+            className={`rounded-[3px] ${compact ? "h-5 w-5" : "h-6 w-6"}`}
+          />
+          <span className="inline-flex items-center gap-0.5 text-[12px] font-bold text-on-surface">
+            <Star
+              className="h-3 w-3 fill-[#f5a623] text-[#f5a623]"
+              aria-hidden
+            />
+            {p.rating}
+          </span>
+          <span className="text-[10px] leading-tight text-on-surface-variant">
+            {p.customers} customers
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function TrustStrip({ items }: { items: TrustItem[] }) {
@@ -58,36 +124,37 @@ export function TrustStrip({ items }: { items: TrustItem[] }) {
               </div>
             );
           })}
+          <PlatformRatings compact />
         </div>
 
-        <div className="hidden grid-cols-1 gap-4 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3.5 shadow-sm sm:grid sm:grid-cols-3 md:divide-x md:divide-outline-variant/30 md:rounded-full md:gap-0 md:px-6">
-          {trustPoints.map((item) => {
+        <div className="hidden grid-cols-1 gap-4 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3.5 shadow-sm sm:grid sm:grid-cols-4 md:divide-x md:divide-outline-variant/30 md:rounded-full md:gap-0 md:px-6">
+          {trustPoints.map((item, index) => {
             const Icon = item.icon === "veg" ? null : iconMap[item.icon];
             return (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 px-2 py-1.5 md:px-4 md:py-0"
-              >
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${iconChipClass(item.icon)}`}
-                >
-                  {item.icon === "veg" ? (
-                    <span className="veg-mark scale-110" aria-hidden>
-                      <span className="veg-mark-dot" />
-                    </span>
-                  ) : (
-                    Icon && <Icon className="h-5 w-5" aria-hidden />
-                  )}
+              <Fragment key={item.id}>
+                {index === 2 ? <PlatformRatings /> : null}
+                <div className="flex items-center gap-3 px-2 py-1.5 md:px-4 md:py-0">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${iconChipClass(item.icon)}`}
+                  >
+                    {item.icon === "veg" ? (
+                      <span className="veg-mark scale-110" aria-hidden>
+                        <span className="veg-mark-dot" />
+                      </span>
+                    ) : (
+                      Icon && <Icon className="h-5 w-5" aria-hidden />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-[13px] font-semibold leading-tight text-on-surface">
+                      {item.title}
+                    </h3>
+                    <p className="mt-0.5 text-[11px] leading-tight text-on-surface-variant">
+                      {item.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h3 className="text-[13px] font-semibold leading-tight text-on-surface">
-                    {item.title}
-                  </h3>
-                  <p className="mt-0.5 text-[11px] leading-tight text-on-surface-variant">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
+              </Fragment>
             );
           })}
         </div>

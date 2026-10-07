@@ -40,6 +40,16 @@ export function variantPresetsForCategory(
     ];
   }
 
+  if (slug === "bakery") {
+    return [
+      { label: "250 GM", sellingUnit: "g", quantityValue: 250, sortOrder: 0 },
+      { label: "500 GM", sellingUnit: "g", quantityValue: 500, sortOrder: 1 },
+      { label: "1 KG", sellingUnit: "kg", quantityValue: 1, sortOrder: 2 },
+      { label: "PACK", sellingUnit: "pack", quantityValue: null, sortOrder: 3 },
+      { label: "PC", sellingUnit: "pc", quantityValue: null, sortOrder: 4 },
+    ];
+  }
+
   if (slug === "tea-time-bites" || slug === "tea-time") {
     return [{ label: "PACK", sellingUnit: "pack", quantityValue: null, sortOrder: 0 }];
   }

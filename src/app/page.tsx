@@ -1,7 +1,8 @@
 // import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
+import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { CategorySection } from "@/components/home/CategorySection";
 import { CelebrationBanner } from "@/components/home/CelebrationBanner";
-import { DeliveryPlatformRatings } from "@/components/home/DeliveryPlatformRatings";
+// import { DeliveryPlatformRatings } from "@/components/home/DeliveryPlatformRatings";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { NavratriSpecials } from "@/components/home/NavratriSpecials";
 import { HeritageSection } from "@/components/home/HeritageSection";
@@ -18,7 +19,6 @@ import {
   getVideoTestimonials,
 } from "@/lib/admin/queries";
 import {
-  categoryHref,
   productCategorySlug,
   resolveCategorySlug,
 } from "@/lib/catalog/aliases";
@@ -29,7 +29,7 @@ import {
   getSpecialAttentionCategories,
   isGajakCategoryPublished,
 } from "@/lib/catalog/queries";
-import { signatures, siteConfig, testimonials, trustItems } from "@/data/home";
+import { siteConfig, testimonials, trustItems } from "@/data/home";
 import { thaliBuilderMeta, thaliCategoryGroups } from "@/data/thali-builder";
 import { productTagLabels } from "@/lib/catalog/tags";
 
@@ -53,6 +53,7 @@ export default async function HomePage() {
     thaliOfferBlock,
     thaliByGroup,
     gajakLive,
+    giftingAll,
   ] = await Promise.all([
     getPublishedProducts(),
     getHeroCarouselContent("home"),
@@ -67,7 +68,9 @@ export default async function HomePage() {
       ),
     ),
     isGajakCategoryPublished(),
+    getCategoryListingProducts("gifting", null),
   ]);
+  const giftingProducts = giftingAll.slice(0, 4);
   const featuredProducts = allProducts.slice(0, 8);
   const thaliGroups = gajakLive
     ? thaliCategoryGroups
@@ -79,12 +82,12 @@ export default async function HomePage() {
     navratriProducts.length > 0
       ? navratriProducts
       : allProducts.filter(
-          (product) =>
-            product.seasonal ||
-            productTagLabels(product).some(
-              (tag) => tag.toLowerCase() === "seasonal",
-            ),
-        );
+        (product) =>
+          product.seasonal ||
+          productTagLabels(product).some(
+            (tag) => tag.toLowerCase() === "seasonal",
+          ),
+      );
 
   const thaliDiscountPercent =
     (thaliOfferBlock?.content as { discountPercent?: number } | null)
@@ -121,42 +124,38 @@ export default async function HomePage() {
   const homeCategories = categoryTiles
     .filter((category) => gajakLive || category.slug !== "gajak")
     .map((category) => {
-    const sample = allProducts.find(
-      (product) => productCategorySlug(product) === category.slug,
-    );
-    // "Tea Time Bites" tile shown as "Bakery" with a cleaner, circle-friendly
-    // product photo, display-only, no category/DB change (Bakery is a
-    // virtual grouping, same as the navbar; see BAKERY_MEMBER_SLUGS). Links
-    // to the grouped /catalogue/bakery route (covers Tea Time Bites + Dry
-    // Cakes + Cookies), not the raw Tea Time Bites category route.
-    const isBakeryTile = category.slug === "tea-time-bites";
-    return {
-      id: category.id,
-      title: isBakeryTile ? "Bakery" : category.title,
-      href: isBakeryTile ? categoryHref("bakery") : category.href,
-      image: isBakeryTile
-        ? "https://rsqktcygdsjfullapjrq.supabase.co/storage/v1/object/public/media/products/1790591091756-2i6qfvmo04e.webp"
-        : category.image || sample?.image || "/images/prod0.jpg",
-      imageAlt: isBakeryTile
-        ? "Bakery, Almond Biscotti"
-        : sample?.imageAlt || category.title,
-      specialAttention: category.featured || specialKeys.has(category.slug),
-    };
-  });
+      const sample = allProducts.find(
+        (product) => productCategorySlug(product) === category.slug,
+      );
+      // Bakery tile uses a cleaner, circle-friendly product photo (display-only).
+      const isBakeryTile = category.slug === "bakery";
+      return {
+        id: category.id,
+        title: category.title,
+        href: category.href,
+        image: isBakeryTile
+          ? "https://rsqktcygdsjfullapjrq.supabase.co/storage/v1/object/public/media/products/1790591091756-2i6qfvmo04e.webp"
+          : category.image || sample?.image || PRODUCT_PLACEHOLDER_IMAGE,
+        imageAlt: isBakeryTile
+          ? "Bakery, Almond Biscotti"
+          : sample?.imageAlt || category.title,
+        specialAttention: category.featured || specialKeys.has(category.slug),
+      };
+    });
 
   /** Prefer the live category route when a featured category matches. */
   const specialForBanner = specialAttention
     .filter((item) => gajakLive || categoryKeyFromHref(item.href) !== "gajak")
     .map((item) => {
-    const key = categoryKeyFromHref(item.href);
-    const match = homeCategories.find(
-      (category) => categoryKeyFromHref(category.href) === key,
-    );
-    return {
-      ...item,
-      href: match?.href ?? item.href,
-    };
-  });
+      const key = categoryKeyFromHref(item.href);
+      const match = homeCategories.find(
+        (category) => categoryKeyFromHref(category.href) === key,
+      );
+      return {
+        ...item,
+        href: match?.href ?? item.href,
+      };
+    });
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -227,9 +226,9 @@ export default async function HomePage() {
       <NavratriSpecials products={navratriPicks} />
       <FeaturedProducts products={allProducts} />
       <HeritageSection />
-      <SignatureCollections items={signatures} />
+      <SignatureCollections products={giftingProducts} />
       <CelebrationBanner specialAttention={specialForBanner} />
-      <DeliveryPlatformRatings />
+      {/* <DeliveryPlatformRatings /> */}
       <TestimonialsSection items={testimonials} videos={videos} />
       {/* <AchievementMediaSection content={achievementMedia} /> */}
       <NewsletterSection />

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { CART_SESSION_COOKIE } from "@/lib/cart/constants";
@@ -165,7 +166,7 @@ export async function getCartSummary(): Promise<CartSummary> {
     const images = [...(variant.products.product_images ?? [])].sort(
       (a, b) => a.sort_order - b.sort_order,
     );
-    const image = images[0]?.storage_path ?? "/images/prod0.jpg";
+    const image = images[0]?.storage_path ?? PRODUCT_PLACEHOLDER_IMAGE;
 
     if (row.qty > variant.stock_qty) {
       warnings.push(

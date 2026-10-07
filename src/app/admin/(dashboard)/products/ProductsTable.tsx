@@ -41,6 +41,7 @@ import {
   preloadProductForm,
   type ProductModalState,
 } from "@/components/admin/ProductEditModal";
+import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import {
   AdminTablePagination,
@@ -340,7 +341,7 @@ function SortableProductRow({
         <div className="flex items-center gap-3">
           <div className="relative h-12 w-12 overflow-hidden rounded-md bg-surface-container">
             <Image
-              src={product.image || "/images/prod0.jpg"}
+              src={product.image || PRODUCT_PLACEHOLDER_IMAGE}
               alt=""
               fill
               sizes="48px"

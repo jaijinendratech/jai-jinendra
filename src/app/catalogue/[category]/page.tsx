@@ -18,7 +18,6 @@ import {
   dbSlugToCategoryId,
   GAJAK_LISTING_SLUG,
   GAJAK_LISTING_TITLE,
-  isBakeryMemberSlug,
   resolveCategorySlug,
   STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
@@ -90,9 +89,7 @@ export default async function CatalogueCategoryPage({
     getCatalogueSpecialtyFilters(),
   ]);
   const activeSub =
-    requestedSub &&
-    (children.some((child) => child.slug === requestedSub) ||
-      (resolved === "bakery" && isBakeryMemberSlug(requestedSub)))
+    requestedSub && children.some((child) => child.slug === requestedSub)
       ? requestedSub
       : null;
 

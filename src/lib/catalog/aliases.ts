@@ -20,16 +20,6 @@ export const CANONICAL_CATEGORY_SLUGS = [
 
 export type CanonicalCategorySlug = (typeof CANONICAL_CATEGORY_SLUGS)[number];
 
-/**
- * Sibling categories grouped under the storefront Bakery page.
- * Bakery is not a database category.
- */
-export const BAKERY_MEMBER_SLUGS = [
-  "tea-time-bites",
-  "dry-cakes",
-  "cookies",
-] as const;
-
 /** All-page parent blocks, in storefront order. Gajak is a sweets subcategory, not a section. */
 export const STOREFRONT_CATALOGUE_SECTIONS = [
   { slug: "namkeen", title: "Namkeen" },
@@ -41,9 +31,7 @@ export const STOREFRONT_CATALOGUE_SECTIONS = [
 /**
  * Primary nav/footer category links, in the exact order the storefront shows
  * them. Deliberately curated rather than a 1:1 map over whatever rows are
- * `published` in the `categories` table, "Bakery" groups the three sibling
- * bakery categories (see `BAKERY_MEMBER_SLUGS`) under one link, and "Sweets"
- * is included even before it has a category row / products in Supabase.
+ * `published` in the `categories` table.
  * `special` carries forward today's DB `featured` flags for Namkeen/Gifting.
  */
 export const PRIMARY_NAV_CATEGORIES = [
@@ -64,22 +52,18 @@ export const GAJAK_LISTING_SLUG = "gajak";
 export const GAJAK_LISTING_TITLE = "Gajak";
 export const GAJAK_PARENT_SLUG = "sweets";
 
-export function isBakeryMemberSlug(slug: string): boolean {
-  return (BAKERY_MEMBER_SLUGS as readonly string[]).includes(slug);
-}
-
-/** URL / nav alias → query key. `bakery` groups sibling categories; it is not a DB row. */
+/** URL / nav alias → query key. Legacy bakery-member URLs resolve to the `bakery` category. */
 const ALIAS_TO_DB: Record<string, string> = {
   sweets: "sweets",
   mithai: "sweets",
   namkeen: "namkeen",
   namkeens: "namkeen",
   bakery: "bakery",
-  "tea-time-bites": "tea-time-bites",
-  snacks: "tea-time-bites",
-  "tea-time": "tea-time-bites",
-  "dry-cakes": "dry-cakes",
-  cookies: "cookies",
+  "tea-time-bites": "bakery",
+  snacks: "bakery",
+  "tea-time": "bakery",
+  "dry-cakes": "bakery",
+  cookies: "bakery",
   // Not "sweets": see GAJAK_LISTING_SLUG.
   gajak: "gajak",
   gifting: "gifting",
@@ -165,11 +149,6 @@ export function normalizeCategoryRef(
 
 /** Slugs to query when filtering products for a resolved category. */
 export function categoryQuerySlugs(resolvedDbSlug: string): string[] {
-  if (resolvedDbSlug === "bakery") {
-    return [
-      ...new Set(BAKERY_MEMBER_SLUGS.flatMap((slug) => categoryQuerySlugs(slug))),
-    ];
-  }
   if (resolvedDbSlug === "combos") return ["tea-time-bites", "combos", "tea-time"];
   if (resolvedDbSlug === "sweets") return ["sweets", "mithai"];
   if (resolvedDbSlug === "namkeen") return ["namkeen", "namkeens"];

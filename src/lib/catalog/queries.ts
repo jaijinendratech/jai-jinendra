@@ -1,15 +1,14 @@
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
+import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
-  BAKERY_MEMBER_SLUGS,
   categoryHref,
   categoryQuerySlugs,
   dbSlugToCategoryId,
   GAJAK_LISTING_SLUG,
   GAJAK_PARENT_SLUG,
-  isBakeryMemberSlug,
   normalizeCategoryRef,
   productCategorySlug,
   resolveCategorySlug,
@@ -166,7 +165,7 @@ function mapDbProduct(row: DbProductRow): Product {
     subcategory: row.subcategories
       ? { slug: row.subcategories.slug, title: row.subcategories.title }
       : null,
-    image: image?.storage_path ?? "/images/prod0.jpg",
+    image: image?.storage_path ?? PRODUCT_PLACEHOLDER_IMAGE,
     thaliImage: row.thali_image_path ?? undefined,
     sortOrder: row.sort_order ?? undefined,
     imageAlt: image?.alt ?? row.name,
@@ -470,16 +469,10 @@ function childrenForResolvedSlug(
   resolvedSlug: string,
   taxonomy: PublishedTaxonomy,
 ): StorefrontChild[] {
-  if (resolvedSlug === "bakery") {
-    return BAKERY_MEMBER_SLUGS.flatMap((slug) => {
-      const title = taxonomy.titles.get(slug);
-      return title ? [{ slug, title }] : [];
-    });
-  }
   return taxonomy.childrenByCategorySlug.get(resolvedSlug) ?? [];
 }
 
-/** Subcategory pills for a storefront category. Bakery children are sibling categories. */
+/** Subcategory pills for a storefront category. */
 export async function getStorefrontCategoryChildren(
   categorySlug: string,
 ): Promise<StorefrontChild[]> {
@@ -515,7 +508,7 @@ async function getGajakListingProducts(): Promise<Product[]> {
 
 /**
  * Products for a category page, honoring `?sub=`.
- * Bakery filters by member category slug; other categories use the subcategory relation.
+ * Subcategories use the subcategory relation.
  * The gajak route lists the gajak subcategory of sweets when no `?sub=` is set.
  */
 export async function getCategoryListingProducts(
@@ -523,14 +516,7 @@ export async function getCategoryListingProducts(
   subcategorySlug: string | null,
 ): Promise<Product[]> {
   const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
-  if (
-    subcategorySlug &&
-    resolved === "bakery" &&
-    isBakeryMemberSlug(subcategorySlug)
-  ) {
-    return getProductsByCategory(subcategorySlug);
-  }
-  if (subcategorySlug && resolved !== "bakery") {
+  if (subcategorySlug) {
     return getProductsBySubcategory(resolved, subcategorySlug);
   }
   if (resolved === GAJAK_LISTING_SLUG) return getGajakListingProducts();
@@ -845,9 +831,6 @@ function navCategoryIsLive(
   slug: string,
   published: Map<string, boolean>,
 ): boolean {
-  if (slug === "bakery") {
-    return BAKERY_MEMBER_SLUGS.some((member) => published.get(member) !== false);
-  }
   if (published.has(slug)) return published.get(slug) === true;
   return true;
 }
