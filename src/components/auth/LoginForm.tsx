@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff, MailCheck, X } from "lucide-react";
+import { authErrorMessage } from "@/lib/auth-messages";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +14,7 @@ import {
   Form,
   Input,
   Label,
+  Modal,
 } from "@heroui/react";
 import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { RequiredMark } from "@/components/shared/RequiredMark";
@@ -28,6 +31,7 @@ type LoginFormProps = {
   next: string;
   error?: string;
   notice?: string;
+  email?: string;
 };
 
 /** Must live inside the <Form> it reports on, useFormStatus reads the nearest parent form. */
@@ -87,227 +91,277 @@ function GoogleSubmitButton({ acceptedTerms }: { acceptedTerms: boolean }) {
   );
 }
 
-function errorMessage(error?: string): string | null {
-  switch (error) {
-    case "invalid_credentials":
-      return "Email or password is incorrect.";
-    case "email_registered":
-      return "This email is already registered. Sign in instead.";
-    case "weak_password":
-      return "Password must be at least 8 characters.";
-    case "admin_use_admin_login":
-      return "Admin accounts must sign in at the admin login page.";
-    case "too_many_attempts":
-      return "Too many attempts. Please wait and try again.";
-    case "google_failed":
-      return "Google sign-in could not start. Please try again.";
-    case "terms_required":
-      return "Please agree to the Terms & Conditions and Privacy Policy to continue.";
-    default:
-      return null;
-  }
-}
-
-export function LoginForm({ mode, next, error, notice }: LoginFormProps) {
+export function LoginForm({
+  mode,
+  next,
+  error,
+  notice,
+  email,
+}: LoginFormProps) {
+  const [confirmOpen, setConfirmOpen] = useState(notice === "confirm_email");
   const [accountMode, setAccountMode] = useState<LoginMode>(mode);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const message = errorMessage(error);
+  // The toast helper strips ?error= from the URL, so keep the message in state
+  // to leave it visible on the form.
+  const [message, setMessage] = useState<string | null>(() =>
+    authErrorMessage(error),
+  );
+  const [showPassword, setShowPassword] = useState(false);
+  useEffect(() => {
+    const next = authErrorMessage(error);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync a transient URL param into persistent state
+    if (next) setMessage(next);
+  }, [error]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reopen when a new signup redirect arrives
+    if (notice === "confirm_email") setConfirmOpen(true);
+  }, [notice, email]);
   const creating = accountMode === "signup";
 
-  if (notice === "confirm_email") {
-    return (
+  return (
+    <>
+      <Modal.Backdrop
+        isOpen={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        isDismissable
+        variant="blur"
+      >
+        <Modal.Container placement="center" size="sm">
+          <Modal.Dialog className="rounded-2xl border border-outline-variant/40 bg-background p-6 text-on-surface shadow-lg sm:max-w-md">
+            <div className="flex justify-end">
+              <Modal.CloseTrigger
+                aria-label="Close"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-white transition hover:bg-primary-container-hover"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Modal.CloseTrigger>
+            </div>
+            <Modal.Body className="flex flex-col items-center gap-3 px-0 pb-0 pt-0 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <MailCheck className="h-7 w-7" aria-hidden />
+              </span>
+              <Modal.Heading className="font-display text-2xl font-semibold text-on-surface">
+                Check your email
+              </Modal.Heading>
+              <p className="text-sm leading-6 text-on-surface-variant">
+                We&apos;ve sent a confirmation link
+                {email ? (
+                  <>
+                    {" "}
+                    to{" "}
+                    <span className="font-semibold text-on-surface">
+                      {email}
+                    </span>
+                  </>
+                ) : null}
+                . Click it to confirm your account, then sign in to continue.
+                Don&apos;t see it? Check your spam folder.
+              </p>
+              <Button
+                variant="primary"
+                onPress={() => {
+                  setConfirmOpen(false);
+                  setAccountMode("signin");
+                }}
+                className="mt-2 w-full rounded-lg bg-primary-container font-bold text-white hover:bg-primary"
+              >
+                Got it
+              </Button>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
       <Card className="w-full max-w-md border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
         <Card.Header className="flex flex-col items-start gap-2 px-8 pt-8">
           <Card.Title className="font-display text-2xl font-semibold text-on-surface">
-            Check your email
+            {creating ? "Create account" : "Sign in"}
           </Card.Title>
           <Card.Description className="text-sm text-on-surface-variant">
-            Check your email to confirm your account. After you confirm, you
-            can sign in and continue.
+            Account required before checkout.
           </Card.Description>
+          <div className="mt-2 flex w-full border-b border-outline-variant/30">
+            <button
+              type="button"
+              onClick={() => setAccountMode("signin")}
+              className={`flex-1 border-b-2 py-2 text-sm font-semibold ${
+                creating
+                  ? "border-transparent text-on-surface-variant"
+                  : "border-primary-container text-on-surface"
+              }`}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountMode("signup")}
+              className={`flex-1 border-b-2 py-2 text-sm font-semibold ${
+                creating
+                  ? "border-primary-container text-on-surface"
+                  : "border-transparent text-on-surface-variant"
+              }`}
+            >
+              Create account
+            </button>
+          </div>
         </Card.Header>
-        <Card.Content className="px-8 pb-8 pt-4">
-          <Link
-            href={`/login?next=${encodeURIComponent(next)}`}
-            className="text-sm font-semibold text-primary hover:underline"
-          >
-            Back to sign in
-          </Link>
-        </Card.Content>
-      </Card>
-    );
-  }
 
-  return (
-    <Card className="w-full max-w-md border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
-      <Card.Header className="flex flex-col items-start gap-2 px-8 pt-8">
-        <Card.Title className="font-display text-2xl font-semibold text-on-surface">
-          {creating ? "Create account" : "Sign in"}
-        </Card.Title>
-        <Card.Description className="text-sm text-on-surface-variant">
-          Account required before checkout.
-        </Card.Description>
-        <div className="mt-2 flex w-full border-b border-outline-variant/30">
-          <button
-            type="button"
-            onClick={() => setAccountMode("signin")}
-            className={`flex-1 border-b-2 py-2 text-sm font-semibold ${
-              creating
-                ? "border-transparent text-on-surface-variant"
-                : "border-primary-container text-on-surface"
-            }`}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => setAccountMode("signup")}
-            className={`flex-1 border-b-2 py-2 text-sm font-semibold ${
-              creating
-                ? "border-primary-container text-on-surface"
-                : "border-transparent text-on-surface-variant"
-            }`}
-          >
-            Create account
-          </button>
-        </div>
-      </Card.Header>
+        <Card.Content className="space-y-4 px-8 pb-8 pt-4">
+          {message ? (
+            <Alert status="danger">
+              <Alert.Description>{message}</Alert.Description>
+            </Alert>
+          ) : null}
 
-      <Card.Content className="space-y-4 px-8 pb-8 pt-4">
-        {message ? (
-          <Alert status="danger">
-            <Alert.Description>{message}</Alert.Description>
-          </Alert>
-        ) : null}
-
-        <Form
-          action={creating ? signUpWithEmailAction : signInWithEmailAction}
-          className="flex flex-col gap-4"
-        >
-          <input type="hidden" name="next" value={next} />
-          {creating ? (
+          <Form
+            action={creating ? signUpWithEmailAction : signInWithEmailAction}
+            className="flex flex-col gap-4"
+          >
+            <input type="hidden" name="next" value={next} />
+            {creating ? (
+              <div className="flex flex-col gap-1.5">
+                <Label
+                  htmlFor="full_name"
+                  className="text-sm font-semibold text-on-surface"
+                >
+                  Name (optional)
+                </Label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Your name"
+                  className="w-full"
+                />
+              </div>
+            ) : null}
             <div className="flex flex-col gap-1.5">
               <Label
-                htmlFor="full_name"
+                htmlFor="email"
                 className="text-sm font-semibold text-on-surface"
               >
-                Name (optional)
+                Email
+                <RequiredMark />
               </Label>
               <Input
-                id="full_name"
-                name="full_name"
-                type="text"
-                autoComplete="name"
-                placeholder="Your name"
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="you@email.com"
                 className="w-full"
               />
             </div>
-          ) : null}
-          <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="email"
-              className="text-sm font-semibold text-on-surface"
-            >
-              Email
-              <RequiredMark />
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="you@email.com"
-              className="w-full"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="password"
-              className="text-sm font-semibold text-on-surface"
-            >
-              Password
-              <RequiredMark />
-            </Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete={creating ? "new-password" : "current-password"}
-              placeholder="At least 8 characters"
-              className="w-full"
-            />
-          </div>
-          {acceptedTerms ? (
-            <input type="hidden" name="accept_terms" value="on" />
-          ) : null}
-          <Checkbox
-            isSelected={acceptedTerms}
-            onChange={setAcceptedTerms}
-            isRequired
-            className="w-full"
-            aria-label="Agree to Terms and Conditions and Privacy Policy"
-          >
-            <Checkbox.Content className="items-start gap-3">
-              <Checkbox.Control className="mt-0.5 size-5 shrink-0 border-2 border-outline-variant bg-white shadow-sm data-[selected=true]:border-primary data-[selected=true]:bg-primary">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <span className="text-xs leading-5 text-on-surface-variant">
-                I agree to the{" "}
-                <Link
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-primary hover:underline"
-                  onClick={(event) => event.stopPropagation()}
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-on-surface"
+              >
+                Password
+                <RequiredMark />
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete={creating ? "new-password" : "current-password"}
+                  placeholder="At least 8 characters"
+                  className="w-full pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-on-surface-variant hover:text-on-surface"
                 >
-                  Terms & Conditions
-                </Link>{" "}
-                and{" "}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
+              </div>
+            </div>
+            {acceptedTerms ? (
+              <input type="hidden" name="accept_terms" value="on" />
+            ) : null}
+            <Checkbox
+              isSelected={acceptedTerms}
+              onChange={setAcceptedTerms}
+              isRequired
+              className="w-full"
+              aria-label="Agree to Terms and Conditions and Privacy Policy"
+            >
+              <Checkbox.Content className="items-start gap-3">
+                <Checkbox.Control className="mt-0.5 size-5 shrink-0 border-2 border-outline-variant bg-white shadow-sm data-[selected=true]:border-primary data-[selected=true]:bg-primary">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <span className="text-xs leading-5 text-on-surface-variant">
+                  I agree to the{" "}
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-primary hover:underline"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Terms & Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/terms-privacy#privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-primary hover:underline"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Privacy Policy
+                  </Link>
+                </span>
+              </Checkbox.Content>
+            </Checkbox>
+            <EmailSubmitButton
+              creating={creating}
+              acceptedTerms={acceptedTerms}
+            />
+          </Form>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-outline-variant/40" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              or
+            </span>
+            <span className="h-px flex-1 bg-outline-variant/40" />
+          </div>
+
+          <Form action={signInWithGoogleAction}>
+            <input type="hidden" name="next" value={next} />
+            <GoogleSubmitButton acceptedTerms={acceptedTerms} />
+          </Form>
+
+          <p className="text-center text-xs text-on-surface-variant">
+            <Link href="/catalogue" className="text-primary hover:underline">
+              Continue browsing
+            </Link>
+            {error === "admin_use_admin_login" ? (
+              <>
+                {" · "}
                 <Link
-                  href="/terms-privacy#privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-primary hover:underline"
-                  onClick={(event) => event.stopPropagation()}
+                  href="/admin/login"
+                  className="text-primary hover:underline"
                 >
-                  Privacy Policy
+                  Admin login
                 </Link>
-              </span>
-            </Checkbox.Content>
-          </Checkbox>
-          <EmailSubmitButton creating={creating} acceptedTerms={acceptedTerms} />
-        </Form>
-
-        <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-outline-variant/40" />
-          <span className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-            or
-          </span>
-          <span className="h-px flex-1 bg-outline-variant/40" />
-        </div>
-
-        <Form action={signInWithGoogleAction}>
-          <input type="hidden" name="next" value={next} />
-          <GoogleSubmitButton acceptedTerms={acceptedTerms} />
-        </Form>
-
-        <p className="text-center text-xs text-on-surface-variant">
-          <Link href="/catalogue" className="text-primary hover:underline">
-            Continue browsing
-          </Link>
-          {error === "admin_use_admin_login" ? (
-            <>
-              {" · "}
-              <Link href="/admin/login" className="text-primary hover:underline">
-                Admin login
-              </Link>
-            </>
-          ) : null}
-        </p>
-      </Card.Content>
-    </Card>
+              </>
+            ) : null}
+          </p>
+        </Card.Content>
+      </Card>
+    </>
   );
 }

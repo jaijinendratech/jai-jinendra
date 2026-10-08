@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { RequiredMark } from "@/components/shared/RequiredMark";
+import { saveCheckoutAddressAction } from "@/lib/account/actions";
 import { useCart } from "@/lib/cart/use-cart";
 import { formatINR } from "@/lib/format";
 import { calculateOrderTotals } from "@/lib/shipping";
@@ -58,7 +59,49 @@ const INDIAN_STATES = [
   "Delhi",
 ];
 
-export function CheckoutForm() {
+export type SavedAddress = {
+  id: string;
+  name: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  is_default: boolean;
+};
+
+type AddressFields = {
+  name: string;
+  phone: string;
+  email: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pincode: string;
+};
+
+function fieldsFromSaved(a: SavedAddress, email: string): AddressFields {
+  return {
+    name: a.name,
+    phone: a.phone,
+    email,
+    line1: a.line1,
+    line2: a.line2 ?? "",
+    city: a.city,
+    state: a.state,
+    pincode: a.pincode,
+  };
+}
+
+export function CheckoutForm({
+  savedAddresses = [],
+  defaultEmail = "",
+}: {
+  savedAddresses?: SavedAddress[];
+  defaultEmail?: string;
+}) {
   const router = useRouter();
   const { cart, loading } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">(
@@ -73,6 +116,49 @@ export function CheckoutForm() {
   } | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const initialSaved = savedAddresses[0] ?? null;
+  // "new" = typing a fresh address; otherwise the id of the chosen saved one.
+  const [addressChoice, setAddressChoice] = useState<string>(
+    initialSaved?.id ?? "new",
+  );
+  const [fields, setFields] = useState<AddressFields>(
+    initialSaved
+      ? fieldsFromSaved(initialSaved, defaultEmail)
+      : {
+          name: "",
+          phone: "",
+          email: defaultEmail,
+          line1: "",
+          line2: "",
+          city: "",
+          state: INDIAN_STATES[0],
+          pincode: "",
+        },
+  );
+  const [saveAddress, setSaveAddress] = useState(true);
+
+  function setField(name: keyof AddressFields, value: string) {
+    setFields((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function chooseAddress(id: string) {
+    setAddressChoice(id);
+    const saved = savedAddresses.find((a) => a.id === id);
+    if (saved) {
+      setFields((prev) => fieldsFromSaved(saved, prev.email || defaultEmail));
+    } else {
+      setFields((prev) => ({
+        ...prev,
+        name: "",
+        phone: "",
+        line1: "",
+        line2: "",
+        city: "",
+        state: INDIAN_STATES[0],
+        pincode: "",
+      }));
+    }
+  }
 
   const totals = useMemo(
     () =>
@@ -131,6 +217,19 @@ export function CheckoutForm() {
       if (!validateRes.ok) {
         const data = await validateRes.json();
         throw new Error(data.error ?? "Validation failed");
+      }
+
+      if (addressChoice === "new" && saveAddress) {
+        // Best effort: a failed save must never block the order.
+        void saveCheckoutAddressAction({
+          name: fields.name,
+          phone: fields.phone,
+          line1: fields.line1,
+          line2: fields.line2 || null,
+          city: fields.city,
+          state: fields.state,
+          pincode: fields.pincode,
+        }).catch(() => undefined);
       }
 
       const orderRes = await fetch("/api/orders/create", {
@@ -233,40 +332,98 @@ export function CheckoutForm() {
       <div className="space-y-6 lg:col-span-7">
         <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5">
           <h2 className="font-display text-lg font-semibold">Delivery address</h2>
+          {savedAddresses.length > 0 ? (
+            <div
+              className="mt-4 space-y-2"
+              role="radiogroup"
+              aria-label="Saved addresses"
+            >
+              {savedAddresses.map((a) => (
+                <label
+                  key={a.id}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-sm ${
+                    addressChoice === a.id
+                      ? "border-primary bg-primary/5"
+                      : "border-outline-variant/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="saved_address"
+                    className="mt-1"
+                    checked={addressChoice === a.id}
+                    onChange={() => chooseAddress(a.id)}
+                  />
+                  <span>
+                    <span className="font-semibold">{a.name}</span>
+                    {a.is_default ? (
+                      <span className="ml-2 rounded-full bg-secondary/15 px-2 py-0.5 text-[11px] font-bold text-secondary">
+                        Default
+                      </span>
+                    ) : null}
+                    <span className="block text-on-surface-variant">
+                      {[a.line1, a.line2, a.city, a.state]
+                        .filter(Boolean)
+                        .join(", ")}{" "}
+                      - {a.pincode}
+                    </span>
+                    <span className="block text-on-surface-variant">
+                      {a.phone}
+                    </span>
+                  </span>
+                </label>
+              ))}
+              <label
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-semibold ${
+                  addressChoice === "new"
+                    ? "border-primary bg-primary/5"
+                    : "border-outline-variant/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="saved_address"
+                  checked={addressChoice === "new"}
+                  onChange={() => chooseAddress("new")}
+                />
+                Use a new address
+              </label>
+            </div>
+          ) : null}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold sm:col-span-2">
               Full name
               <RequiredMark />
-              <input name="name" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="name" value={fields.name} onChange={(e) => setField("name", e.target.value)} required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               Phone
               <RequiredMark />
-              <input name="phone" required type="tel" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="phone" value={fields.phone} onChange={(e) => setField("phone", e.target.value)} required type="tel" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               Email
               <RequiredMark />
-              <input name="email" required type="email" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="email" value={fields.email} onChange={(e) => setField("email", e.target.value)} required type="email" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold sm:col-span-2">
               Address line 1
               <RequiredMark />
-              <input name="line1" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="line1" value={fields.line1} onChange={(e) => setField("line1", e.target.value)} required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold sm:col-span-2">
               Address line 2 (optional)
-              <input name="line2" className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="line2" value={fields.line2} onChange={(e) => setField("line2", e.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               City
               <RequiredMark />
-              <input name="city" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              <input name="city" value={fields.city} onChange={(e) => setField("city", e.target.value)} required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none" />
             </label>
             <label className="text-sm font-semibold">
               State
               <RequiredMark />
-              <select name="state" required className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none">
+              <select name="state" required value={fields.state} onChange={(e) => setField("state", e.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none">
                 {INDIAN_STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -278,13 +435,23 @@ export function CheckoutForm() {
               Pincode
               <RequiredMark />
               <input
-                name="pincode"
+                name="pincode" value={fields.pincode} onChange={(e) => setField("pincode", e.target.value)}
                 required
                 pattern="[1-9][0-9]{5}"
                 className="mt-1 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
               />
             </label>
           </div>
+          {addressChoice === "new" ? (
+            <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={saveAddress}
+                onChange={(e) => setSaveAddress(e.target.checked)}
+              />
+              Save this address for next time
+            </label>
+          ) : null}
         </section>
 
         <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5">
@@ -313,9 +480,6 @@ export function CheckoutForm() {
                   onChange={() => setPaymentMethod("cod")}
                 />
                 <span className="text-sm font-semibold">Cash on delivery</span>
-              </span>
-              <span className="pl-7 text-xs font-normal text-on-surface-variant">
-                Pay online and save ₹20
               </span>
             </label>
           </div>

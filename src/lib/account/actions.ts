@@ -141,3 +141,54 @@ export async function setDefaultAccountAddressAction(formData: FormData) {
   revalidatePath("/account/addresses");
   redirect("/account/addresses?notice=default-set");
 }
+
+/**
+ * Save a delivery address from checkout. Skips exact duplicates, never
+ * redirects (checkout continues), and the first saved address becomes default.
+ */
+export async function saveCheckoutAddressAction(
+  input: unknown,
+): Promise<{ ok: boolean }> {
+  const user = await requireUser("/login?next=/checkout");
+  if (!isSupabaseConfigured()) return { ok: false };
+
+  const parsed = accountAddressSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const f = parsed.data;
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("addresses")
+    .select("id, name, phone, line1, line2, city, state, pincode")
+    .eq("user_id", user.id);
+
+  const norm = (v: string | null | undefined) =>
+    (v ?? "").trim().toLowerCase();
+  const duplicate = (existing ?? []).some(
+    (a) =>
+      norm(a.line1) === norm(f.line1) &&
+      norm(a.line2) === norm(f.line2) &&
+      norm(a.city) === norm(f.city) &&
+      norm(a.state) === norm(f.state) &&
+      a.pincode === f.pincode &&
+      a.phone === f.phone &&
+      norm(a.name) === norm(f.name),
+  );
+  if (duplicate) return { ok: true };
+
+  const { error } = await supabase.from("addresses").insert({
+    user_id: user.id,
+    name: f.name,
+    phone: f.phone,
+    line1: f.line1,
+    line2: f.line2 || null,
+    city: f.city,
+    state: f.state,
+    pincode: f.pincode,
+    is_default: (existing ?? []).length === 0,
+  });
+  if (error) return { ok: false };
+
+  revalidatePath("/account/addresses");
+  return { ok: true };
+}

@@ -3,6 +3,13 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@heroui/react";
+import { authErrorMessage } from "@/lib/auth-messages";
+
+/** "some_code-name" -> "Some code name" so raw codes never reach the user. */
+function humanize(code: string): string {
+  const text = code.replace(/[-_]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 function messageForNotice(notice: string): string {
   if (notice === "saved") return "Changes saved.";
@@ -11,7 +18,7 @@ function messageForNotice(notice: string): string {
   if (notice === "deleted") return "Deleted successfully.";
   if (notice === "admin_customer_required")
     return "You're logged in as admin. Please sign out and log in as a customer to complete your purchase.";
-  return notice.replace(/-/g, " ");
+  return humanize(notice);
 }
 
 function isWarningNotice(notice: string): boolean {
@@ -21,8 +28,8 @@ function isWarningNotice(notice: string): boolean {
 function messageForError(error: string): string {
   if (error === "has-products")
     return "Cannot delete a category that still has products.";
-  if (error === "1" || error === "unauthorized") return "Something went wrong.";
-  return error.replace(/-/g, " ");
+  if (error === "1") return "Something went wrong.";
+  return authErrorMessage(error) ?? humanize(error);
 }
 
 /**
@@ -38,6 +45,8 @@ export function SearchParamToasts() {
     const notice = searchParams.get("notice");
     const error = searchParams.get("error");
     if (!notice && !error) return;
+    // Shown as a modal by LoginForm, which needs the param to stay in the URL.
+    if (notice === "confirm_email" && !error) return;
 
     const key = `${pathname}?${notice ?? ""}|${error ?? ""}`;
     if (seen.current === key) return;

@@ -242,6 +242,21 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Branded auth emails (local dev). Hosted projects: paste the same HTML into
+# Dashboard -> Authentication -> Emails (see supabase/templates/README.md).
+[auth.email.template.confirmation]
+subject = "Confirm your email | Jai Jinendra Namkeens"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password | Jai Jinendra Namkeens"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your password was changed | Jai Jinendra Namkeens"
+content_path = "./supabase/templates/password_changed.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

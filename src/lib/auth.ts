@@ -406,11 +406,13 @@ function customerLoginPath(params: {
   mode?: "signin" | "signup";
   error?: string;
   notice?: string;
+  email?: string;
 }): string {
   const search = new URLSearchParams();
   if (params.mode === "signup") search.set("mode", "signup");
   if (params.error) search.set("error", params.error);
   if (params.notice) search.set("notice", params.notice);
+  if (params.email) search.set("email", params.email);
   search.set("next", params.next);
   return `/login?${search.toString()}`;
 }
@@ -517,7 +519,7 @@ export async function signInWithEmailAction(formData: FormData) {
 
   if (error || !data.user) {
     if (error && authErrorKind(error) === "confirm_email") {
-      redirect(customerLoginPath({ next, notice: "confirm_email" }));
+      redirect(customerLoginPath({ next, notice: "confirm_email", email }));
     }
     redirect(customerLoginPath({ next, error: "invalid_credentials" }));
   }
@@ -576,7 +578,7 @@ export async function signUpWithEmailAction(formData: FormData) {
   if (error) {
     const kind = authErrorKind(error);
     if (kind === "confirm_email") {
-      redirect(customerLoginPath({ next, notice: "confirm_email" }));
+      redirect(customerLoginPath({ next, notice: "confirm_email", email }));
     }
     const pageError =
       kind === "email_registered" || kind === "weak_password"
@@ -598,7 +600,7 @@ export async function signUpWithEmailAction(formData: FormData) {
   }
 
   if (!data.session) {
-    redirect(customerLoginPath({ next, notice: "confirm_email" }));
+    redirect(customerLoginPath({ next, notice: "confirm_email", email }));
   }
 
   if (data.user) {

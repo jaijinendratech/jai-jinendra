@@ -15,6 +15,7 @@ export default async function LoginPage({
     error?: string;
     mode?: string;
     notice?: string;
+    email?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -28,6 +29,7 @@ export default async function LoginPage({
         next={next}
         error={params.error}
         notice={params.notice}
+        email={params.email}
       />
     </main>
   );
