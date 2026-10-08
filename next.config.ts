@@ -39,11 +39,15 @@ const nextConfig: NextConfig = {
   // Playwright and some tools use 127.0.0.1 while `next dev` binds as localhost.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   experimental: {
+    optimizePackageImports: ["lucide-react", "@heroui/react", "react-icons"],
     // Proxy buffers request bodies; default 10MB would truncate 10MB image
     // uploads (+ multipart overhead) to /api/admin/upload.
     proxyClientMaxBodySize: "11mb",
   },
   images: {
+    formats: ["image/avif", "image/webp"],
+    // Product/hero images are immutable per upload URL; cache optimised variants for 30 days.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       {
         protocol: "https",
@@ -58,11 +62,21 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Static public assets have stable filenames, so cache for a day and
+    // revalidate in the background (default for /public is max-age=0).
+    const staticAssetCache = [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    ];
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
       },
+      { source: "/images/:path*", headers: staticAssetCache },
+      { source: "/brand/:path*", headers: staticAssetCache },
     ];
   },
 };

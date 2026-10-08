@@ -50,7 +50,7 @@ export function NavratriSpecials({
 
         <LazyProductGrid
           products={visible}
-          priorityCount={4}
+          priorityCount={0}
           className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-4 lg:gap-7"
         />
       </div>

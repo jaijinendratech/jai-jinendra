@@ -38,6 +38,28 @@ import {
 } from "@/lib/catalog/festive";
 import type { Product } from "@/types/catalog";
 
+/**
+ * ThaliBuilder is a client component, so every prop is serialised into the
+ * HTML/RSC payload. Send only the fields it reads (not attributes, images,
+ * long descriptions, or every variant).
+ */
+function slimForThali(product: Product): Product {
+  const firstVariant = product.variants[0];
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    description: product.description,
+    tagline: product.tagline,
+    image: product.image,
+    imageAlt: product.imageAlt,
+    thaliImage: product.thaliImage,
+    variants: firstVariant
+      ? [{ id: firstVariant.id, sku: firstVariant.sku } as Product["variants"][number]]
+      : [],
+  } as Product;
+}
+
 function categoryKeyFromHref(href: string): string {
   const cleaned = href.replace(/\/$/, "");
   const segment = cleaned.includes("/catalogue/")
@@ -94,14 +116,14 @@ export default async function HomePage() {
     pickedFestive.length > 0
       ? pickedFestive
       : navratriProducts.length > 0
-      ? navratriProducts
-      : allProducts.filter(
-        (product) =>
-          product.seasonal ||
-          productTagLabels(product).some(
-            (tag) => tag.toLowerCase() === "seasonal",
-          ),
-      );
+        ? navratriProducts
+        : allProducts.filter(
+          (product) =>
+            product.seasonal ||
+            productTagLabels(product).some(
+              (tag) => tag.toLowerCase() === "seasonal",
+            ),
+        );
 
   const thaliDiscountPercent =
     (thaliOfferBlock?.content as { discountPercent?: number } | null)
@@ -125,8 +147,7 @@ export default async function HomePage() {
   thaliCategoryGroups.forEach((group, i) => {
     if (!gajakLive && group.id === "gajak") return;
     const picked = (thaliByGroup[i] ?? [])
-      .filter((p) => !thaliPickedIds.has(p.id))
-      .slice(0, thaliBuilderMeta.poolItemsPerGroup);
+      .filter((p) => !thaliPickedIds.has(p.id));
     thaliGroupedIds[group.id] = picked.map((p) => p.id);
     for (const p of picked) {
       thaliPickedIds.add(p.id);
@@ -230,7 +251,7 @@ export default async function HomePage() {
       <HeroCarousel slides={heroSlides} />
       <TrustStrip items={trustItems} />
       <ThaliBuilder
-        products={allProducts}
+        products={allProducts.map(slimForThali)}
         groupedIds={thaliGroupedIds}
         slotCount={thaliBuilderMeta.slotCount}
         discountPercent={thaliDiscountPercent}
@@ -247,7 +268,7 @@ export default async function HomePage() {
               : festive.buttonHref,
         }}
       />
-      <FeaturedProducts products={allProducts} />
+      <FeaturedProducts products={featuredProducts} />
       <HeritageSection />
       <SignatureCollections products={giftingProducts} />
       <CelebrationBanner specialAttention={specialForBanner} />

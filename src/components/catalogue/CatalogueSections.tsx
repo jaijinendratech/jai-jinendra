@@ -10,7 +10,7 @@ export function CatalogueSections({
 }) {
   return (
     <div className="space-y-12 pb-10">
-      {sections.map((section) => {
+      {sections.map((section, sectionIndex) => {
         const pills = [
           ...section.children.map((child) => ({
             key: child.slug,
@@ -55,7 +55,7 @@ export function CatalogueSections({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    priority={section.slug === "sweets" && index === 0}
+                    priority={sectionIndex === 0 && index < 2}
                   />
                 ))}
               </div>

@@ -4,8 +4,6 @@ import Image from "next/image";
 import {
   Candy,
   Check,
-  ChevronDown,
-  ChevronUp,
   Crown,
   Flame,
   Gift,
@@ -110,7 +108,6 @@ export function ThaliBuilder({
     Array(slotCount).fill(null),
   );
   const [adding, setAdding] = useState(false);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [searchSlot, setSearchSlot] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -376,11 +373,7 @@ export function ThaliBuilder({
                 {groups.map(({ group, items, selectedCount }) => {
                   if (items.length === 0) return null;
                   const Icon = GROUP_ICONS[group.icon] ?? Candy;
-                  const isExpanded = expanded[group.id] ?? false;
-                  const visible = isExpanded
-                    ? items
-                    : items.slice(0, thaliBuilderMeta.cardPreviewCount);
-                  const hiddenCount = items.length - visible.length;
+                  const visible = items;
 
                   return (
                     <div
@@ -401,7 +394,7 @@ export function ThaliBuilder({
                         </span>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="max-h-56 space-y-2 overflow-y-auto overscroll-contain pr-1">
                         {visible.map((product) => {
                           const isSelected = selectedIds.includes(product.id);
                           const disabled =
@@ -455,30 +448,6 @@ export function ThaliBuilder({
                         })}
                       </div>
 
-                      {items.length > thaliBuilderMeta.cardPreviewCount ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpanded((prev) => ({
-                              ...prev,
-                              [group.id]: !isExpanded,
-                            }))
-                          }
-                          className="mt-2 flex w-full items-center justify-center gap-1 text-[11px] font-semibold text-primary hover:underline"
-                        >
-                          {isExpanded ? (
-                            <>
-                              Show less{" "}
-                              <ChevronUp className="h-3 w-3" aria-hidden />
-                            </>
-                          ) : (
-                            <>
-                              View More ({hiddenCount}){" "}
-                              <ChevronDown className="h-3 w-3" aria-hidden />
-                            </>
-                          )}
-                        </button>
-                      ) : null}
                     </div>
                   );
                 })}

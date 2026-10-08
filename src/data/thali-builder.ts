@@ -5,15 +5,13 @@ export const thaliBuilderMeta = {
   slotCount: 4,
   /** Used only until Admin → Content → Home saves a value. */
   defaultDiscountPercent: 10,
-  /** Products pulled per category card when building the pool (page.tsx). */
-  poolItemsPerGroup: 5,
   /** Item rows shown per card before "View More". */
   cardPreviewCount: 3,
 } as const;
 
 /** public/images/thali-plate.png, real pixel size, for a true-ratio aspect box. */
 export const thaliPlateImage = {
-  src: "/images/thali-plate.png",
+  src: "/images/thali-plate.webp",
   width: 546,
   height: 457,
 } as const;

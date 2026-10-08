@@ -4,7 +4,7 @@ import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { OfferPopup } from "@/components/layout/OfferPopup";
+import { OfferPopupLazy } from "@/components/layout/OfferPopupLazy";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
@@ -111,7 +111,7 @@ export default async function RootLayout({
           <div className="flex-1">{children}</div>
         ) : (
           <>
-            <OfferPopup />
+            <OfferPopupLazy />
             <AnnouncementBar />
             <SiteHeader
               searchProducts={searchProducts}

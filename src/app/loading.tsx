@@ -6,8 +6,12 @@ import { BrandLoader } from "@/components/shared/BrandLoader";
  */
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center overscroll-none bg-background">
-      <BrandLoader />
-    </div>
+    <>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center overscroll-none bg-background">
+        <BrandLoader />
+      </div>
+      {/* In-flow spacer: keeps the footer below the fold until content streams in (prevents CLS). */}
+      <div className="min-h-svh" aria-hidden />
+    </>
   );
 }

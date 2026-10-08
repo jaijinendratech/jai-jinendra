@@ -1,7 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
 import { festiveTagSlug, isFestiveTag } from "@/lib/catalog/festive";
 import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -282,7 +283,7 @@ function productSelectFiltered(options: {
  * When Supabase is configured: DB only (empty on error, never mock).
  * When offline: static catalogue for local demos.
  */
-export async function getPublishedProducts(): Promise<Product[]> {
+async function getPublishedProductsUncached(): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
     return catalogueProducts.map((p) =>
       mapMockProduct({
@@ -307,7 +308,7 @@ export async function getPublishedProducts(): Promise<Product[]> {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
@@ -320,7 +321,7 @@ export async function getPublishedProducts(): Promise<Product[]> {
   return (data as unknown as DbProductRow[]).map(mapDbProduct);
 }
 
-export async function getProductBySlug(
+async function getProductBySlugUncached(
   slug: string,
 ): Promise<Product | undefined> {
   if (!isSupabaseConfigured()) {
@@ -344,7 +345,7 @@ export async function getProductBySlug(
     } as Product);
   }
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
@@ -357,7 +358,7 @@ export async function getProductBySlug(
   return mapDbProduct(data as unknown as DbProductRow);
 }
 
-export async function getProductsByCategory(
+async function getProductsByCategoryUncached(
   category: string,
 ): Promise<Product[]> {
   const resolved = resolveCategorySlug(category) ?? category;
@@ -386,7 +387,7 @@ export async function getProductsByCategory(
       );
   }
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
@@ -416,6 +417,11 @@ export type CatalogueSection = {
   products: Product[];
 };
 
+type PublishedTaxonomySerial = {
+  titles: [string, string][];
+  children: [string, StorefrontChild[]][];
+};
+
 type PublishedTaxonomy = {
   titles: Map<string, string>;
   childrenByCategorySlug: Map<string, StorefrontChild[]>;
@@ -425,10 +431,10 @@ type PublishedTaxonomy = {
  * Published category and subcategory titles.
  * Empty when Supabase is unavailable, callers must not fall back to mock catalog data.
  */
-async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
+async function loadPublishedTaxonomyUncached(): Promise<PublishedTaxonomySerial | null> {
   if (!isSupabaseConfigured()) return null;
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [categoriesResult, subcategoriesResult] = await Promise.all([
     supabase.from("categories").select("id, slug, title").eq("published", true),
     supabase
@@ -463,7 +469,10 @@ async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
     childrenByCategorySlug.set(parentSlug, list);
   }
 
-  return { titles, childrenByCategorySlug };
+  return {
+    titles: [...titles.entries()],
+    children: [...childrenByCategorySlug.entries()],
+  };
 }
 
 function childrenForResolvedSlug(
@@ -553,14 +562,14 @@ export async function getCatalogueOverview(): Promise<CatalogueSection[]> {
   }));
 }
 
-export async function getProductsBySubcategory(
+async function getProductsBySubcategoryUncached(
   categorySlug: string,
   subcategorySlug: string,
 ): Promise<Product[]> {
   if (!isSupabaseConfigured()) return [];
 
   const resolved = resolveCategorySlug(categorySlug) ?? categorySlug;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const detailSchema = await productDetailSchemaReady(supabase);
   const categorySlugs = categoryQuerySlugs(resolved);
   const { data, error } = await supabase
@@ -605,7 +614,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim();
   if (!q) return getPublishedProducts();
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const detailSchema = await productDetailSchemaReady(supabase);
   const { data, error } = await supabase
     .from("products")
@@ -718,7 +727,7 @@ export type CatalogueSpecialtyFilter = CatalogueFilterOption & {
 };
 
 /** Subcategories (or the category itself when it has none) with live product counts for the catalogue sidebar. */
-export async function getCatalogueSpecialtyFilters(): Promise<
+async function getCatalogueSpecialtyFiltersUncached(): Promise<
   CatalogueSpecialtyFilter[]
 > {
   if (!isSupabaseConfigured()) {
@@ -739,7 +748,7 @@ export async function getCatalogueSpecialtyFilters(): Promise<
     }));
   }
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [categoriesResult, subcategoriesResult, productsResult] =
     await Promise.all([
       supabase
@@ -824,10 +833,10 @@ export type HomeCategoryTile = {
 };
 
 /** Published categories for the homepage favourites row. */
-export async function getHomeCategoryTiles(): Promise<HomeCategoryTile[]> {
+async function getHomeCategoryTilesUncached(): Promise<HomeCategoryTile[]> {
   if (!isSupabaseConfigured()) return [];
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
     .select("id, slug, title, image_url, featured")
@@ -847,7 +856,7 @@ export async function getHomeCategoryTiles(): Promise<HomeCategoryTile[]> {
 }
 
 /** Featured categories for storefront navbar + CTA (no cookies, safe in layout). */
-export async function getSpecialAttentionCategories(): Promise<
+async function getSpecialAttentionCategoriesUncached(): Promise<
   SpecialAttentionCategory[]
 > {
   if (!isSupabaseConfigured()) return [];
@@ -871,7 +880,7 @@ export async function getSpecialAttentionCategories(): Promise<
 }
 
 /** `true` / `false` when a category row exists; omitted when there is no row. */
-export async function getCategoryPublishMap(): Promise<Map<string, boolean> | null> {
+async function loadCategoryPublishEntries(): Promise<[string, boolean][] | null> {
   if (!isSupabaseConfigured()) return null;
 
   const admin = createAdminClient();
@@ -880,7 +889,7 @@ export async function getCategoryPublishMap(): Promise<Map<string, boolean> | nu
     .select("slug, published");
 
   if (error || !data) return null;
-  return new Map(data.map((row) => [row.slug, row.published]));
+  return data.map((row) => [row.slug, row.published] as [string, boolean]);
 }
 
 function navCategoryIsLive(
@@ -913,3 +922,76 @@ export async function isGajakCategoryPublished(): Promise<boolean> {
   return published.get(GAJAK_LISTING_SLUG) === true;
 }
 
+// Cached public reads: cookieless + tagged so catalog pages stop hitting
+// Postgres on every request. Admin actions call revalidateTag("products" |
+// "categories"), see lib/admin/actions.ts.
+const CATALOG_REVALIDATE_SECONDS = 60;
+
+export const getPublishedProducts = unstable_cache(
+  getPublishedProductsUncached,
+  ["catalog:published-products"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["products"] },
+);
+
+export const getProductBySlug = unstable_cache(
+  getProductBySlugUncached,
+  ["catalog:product-by-slug"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["products"] },
+);
+
+export const getProductsByCategory = unstable_cache(
+  getProductsByCategoryUncached,
+  ["catalog:products-by-category"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["products", "categories"] },
+);
+
+export const getProductsBySubcategory = unstable_cache(
+  getProductsBySubcategoryUncached,
+  ["catalog:products-by-subcategory"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["products", "categories"] },
+);
+
+export const getHomeCategoryTiles = unstable_cache(
+  getHomeCategoryTilesUncached,
+  ["catalog:home-category-tiles"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["categories"] },
+);
+
+export const getCatalogueSpecialtyFilters = unstable_cache(
+  getCatalogueSpecialtyFiltersUncached,
+  ["catalog:specialty-filters"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["products", "categories"] },
+);
+
+export const getSpecialAttentionCategories = unstable_cache(
+  getSpecialAttentionCategoriesUncached,
+  ["catalog:special-attention"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["categories"] },
+);
+
+const loadPublishedTaxonomyCached = unstable_cache(
+  loadPublishedTaxonomyUncached,
+  ["catalog:taxonomy"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["categories"] },
+);
+
+async function loadPublishedTaxonomy(): Promise<PublishedTaxonomy | null> {
+  const data = await loadPublishedTaxonomyCached();
+  if (!data) return null;
+  return {
+    titles: new Map(data.titles),
+    childrenByCategorySlug: new Map(data.children),
+  };
+}
+
+const loadCategoryPublishEntriesCached = unstable_cache(
+  loadCategoryPublishEntries,
+  ["catalog:category-publish-map"],
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["categories"] },
+);
+
+/** `true` / `false` when a category row exists; omitted when there is no row. */
+export async function getCategoryPublishMap(): Promise<Map<string, boolean> | null> {
+  const entries = await loadCategoryPublishEntriesCached();
+  return entries ? new Map(entries) : null;
+}
