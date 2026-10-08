@@ -35,17 +35,17 @@ function TestimonialCard({ item }: { item: Testimonial }) {
 
 function VideoTestimonialCard({ item }: { item: VideoTestimonial }) {
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
+    <article className="mx-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
       {item.videoUrl ? (
         <video
           controls
           preload="metadata"
           poster={item.posterUrl}
           src={item.videoUrl}
-          className="aspect-video w-full bg-black object-cover"
+          className="aspect-[9/16] w-full bg-black object-contain"
         />
       ) : (
-        <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-surface-container-low px-4 text-center">
+        <div className="flex aspect-[9/16] flex-col items-center justify-center gap-2 bg-surface-container-low px-4 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Play className="h-5 w-5 fill-current" aria-hidden />
           </span>
@@ -102,9 +102,11 @@ export function TestimonialsSection({
                 </div>
               ))}
             </div>
-            <div className="mb-6 hidden gap-6 md:mb-10 md:grid md:grid-cols-3">
+            <div className="mb-6 hidden justify-center gap-6 md:mb-10 md:flex">
               {videos.map((item) => (
-                <VideoTestimonialCard key={item.id} item={item} />
+                <div key={item.id} className="min-w-0 flex-1 basis-0 md:max-w-[360px]">
+                  <VideoTestimonialCard item={item} />
+                </div>
               ))}
             </div>
           </>

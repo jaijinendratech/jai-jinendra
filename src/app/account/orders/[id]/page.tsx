@@ -1,3 +1,4 @@
+import { orderDisplayTitle } from "@/lib/orders/display";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -90,7 +91,7 @@ export default async function AccountOrderDetailPage({
           ← Back to orders
         </Link>
         <h2 className="font-display mt-3 text-2xl font-semibold text-on-surface">
-          {order.order_number}
+          {orderDisplayTitle(order.order_items)}
         </h2>
         <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant">
           <span>Placed {new Date(order.created_at).toLocaleString("en-IN")}</span>

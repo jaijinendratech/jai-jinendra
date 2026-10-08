@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
+import { Check, ChevronDown, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
@@ -167,34 +167,30 @@ export function ProductDetailView({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-12 lg:gap-10">
-        <div className="min-w-0 lg:col-span-6">
-          <div
-            className={
-              highlights.length
-                ? "grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_11.5rem]"
-                : undefined
-            }
-          >
-            <ProductGallery
-              key={product.id}
-              images={product.images}
-              image={product.image}
-              alt={product.imageAlt ?? product.name}
-              badges={tags}
-            />
-            {highlights.length > 0 ? (
-              <ul className="space-y-2 text-sm font-medium text-on-surface">
-                {highlights.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-primary" aria-hidden>
-                      •
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
+        <div className="min-w-0 lg:sticky lg:top-28 lg:col-span-6 lg:self-start">
+          <ProductGallery
+            key={product.id}
+            images={product.images}
+            image={product.image}
+            alt={product.imageAlt ?? product.name}
+            badges={tags}
+          />
+          {highlights.length > 0 ? (
+            <ul
+              className="mt-4 flex flex-wrap gap-2"
+              aria-label="Product highlights"
+            >
+              {highlights.map((item) => (
+                <li
+                  key={item}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-secondary/20 bg-secondary-container/30 px-3 py-1.5 text-xs font-semibold text-on-secondary-container"
+                >
+                  <Check className="h-3.5 w-3.5 shrink-0 text-secondary" aria-hidden />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
 
         <div className="lg:col-span-6">

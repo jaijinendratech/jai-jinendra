@@ -40,7 +40,7 @@ export function ProductGallery({
     .filter(Boolean);
 
   return (
-    <div className="min-w-0 lg:sticky lg:top-28">
+    <div className="min-w-0">
       <div className="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
         <div className="relative aspect-square w-full">
           {labels.length > 0 ? (

@@ -78,7 +78,7 @@ function SearchPanel({
 
   return (
     <div
-      className="fixed inset-0 z-100 flex items-start justify-center bg-black/40 p-4 pt-24"
+      className="fixed inset-0 z-100 flex items-start justify-center bg-transparent p-4 pt-24"
       onClick={onClose}
     >
       <div
@@ -86,7 +86,7 @@ function SearchPanel({
         aria-modal="true"
         aria-label="Search catalog"
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-lg rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-xl"
+        className="w-full max-w-lg rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4"
       >
         <div className="flex items-center gap-2">
           <Search className="h-5 w-5 shrink-0 text-on-surface-variant" />

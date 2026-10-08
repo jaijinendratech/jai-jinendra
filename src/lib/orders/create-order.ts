@@ -5,7 +5,10 @@ import {
   redeemCouponForOrder,
   validateCouponCode,
 } from "@/lib/coupons";
-import { createRazorpayOrder } from "@/lib/payments/razorpay";
+import {
+  createRazorpayOrder,
+  RAZORPAY_UNAVAILABLE_MESSAGE,
+} from "@/lib/payments/razorpay";
 import { sendOrderConfirmationEmail } from "@/lib/email/resend";
 import { ensureShiprocketShipment } from "@/lib/orders/shipping";
 import { after } from "next/server";
@@ -75,6 +78,8 @@ export async function createOrder(params: {
   const { cart } = await validateCheckout(params.userId, params.address);
   const admin = createAdminClient();
 
+  // Nothing is written (no order row, no coupon redemption, no stock change)
+  // until every step that can fail for config/payment reasons has succeeded.
   let couponId: string | null = null;
   let couponCode: string | null = null;
   let discountPaise = 0;
@@ -87,10 +92,7 @@ export async function createOrder(params: {
     if (!preview.ok) {
       throw new Error(preview.error);
     }
-    discountPaise = await redeemCouponForOrder(
-      preview.coupon.id,
-      cart.subtotalPaise,
-    );
+    discountPaise = preview.discountPaise;
     couponId = preview.coupon.id;
     couponCode = preview.coupon.code;
   }
@@ -98,6 +100,31 @@ export async function createOrder(params: {
   const totals = calculateOrderTotals(cart.subtotalPaise, discountPaise, {
     prepaid: params.paymentMethod === "razorpay",
   });
+
+  // 1. Online payments: get the gateway order first. If keys are missing or
+  //    rejected this throws here, before anything is stored.
+  let rzOrder: Awaited<ReturnType<typeof createRazorpayOrder>> | null = null;
+  if (params.paymentMethod === "razorpay") {
+    try {
+      rzOrder = await createRazorpayOrder({
+        amountPaise: totals.totalPaise,
+        receipt: generateOrderNumber(),
+        notes: { user_id: params.userId },
+      });
+    } catch (err) {
+      // Missing/invalid keys or gateway errors are not the customer's to fix.
+      console.error("[orders/create] Razorpay order failed", err);
+      throw new Error(RAZORPAY_UNAVAILABLE_MESSAGE);
+    }
+  }
+
+  // 2. Redeem the coupon (atomic usage check) only once payment can proceed.
+  if (couponId) {
+    const redeemed = await redeemCouponForOrder(couponId, cart.subtotalPaise);
+    if (redeemed !== discountPaise) {
+      throw new Error("Coupon changed while placing the order. Please retry.");
+    }
+  }
 
   const addressSnapshot: Json = {
     ...params.address,
@@ -131,6 +158,7 @@ export async function createOrder(params: {
         customer_email: params.address.email,
         customer_phone: params.address.phone,
         notes: params.notes ?? null,
+        razorpay_order_id: rzOrder?.id ?? null,
       })
       .select("*")
       .single();
@@ -159,7 +187,14 @@ export async function createOrder(params: {
     sku_snapshot: item.sku,
   }));
 
-  await admin.from("order_items").insert(orderItems);
+  const { error: itemsError } = await admin
+    .from("order_items")
+    .insert(orderItems);
+  if (itemsError) {
+    // Never leave a half-written order behind.
+    await admin.from("orders").delete().eq("id", order.id);
+    throw itemsError;
+  }
 
   if (params.paymentMethod === "cod") {
     await confirmOrderInventory(order.id);
@@ -178,18 +213,49 @@ export async function createOrder(params: {
     return { order, razorpay: null };
   }
 
-  const rzOrder = await createRazorpayOrder({
-    amountPaise: totals.totalPaise,
-    receipt: order.order_number,
-    notes: { order_id: order.id },
-  });
-
-  await admin
-    .from("orders")
-    .update({ razorpay_order_id: rzOrder.id })
-    .eq("id", order.id);
-
   return { order, razorpay: rzOrder };
+}
+
+/**
+ * Discard an online order the customer never paid for (closed the payment
+ * window). Only unpaid, customer-owned orders are removed; the coupon use is
+ * released so it can be redeemed again.
+ */
+export async function abandonUnpaidOrder(orderId: string, userId: string) {
+  const admin = createAdminClient();
+  const { data: order } = await admin
+    .from("orders")
+    .select("id, coupon_id")
+    .eq("id", orderId)
+    .eq("user_id", userId)
+    .eq("status", "pending_payment")
+    .eq("payment_status", "pending")
+    .maybeSingle();
+  if (!order) return false;
+
+  const { data: deleted } = await admin
+    .from("orders")
+    .delete()
+    .eq("id", order.id)
+    .eq("status", "pending_payment")
+    .eq("payment_status", "pending")
+    .select("id");
+  if (!deleted?.length) return false;
+
+  if (order.coupon_id) {
+    const { data: coupon } = await admin
+      .from("coupons")
+      .select("used_count")
+      .eq("id", order.coupon_id)
+      .maybeSingle();
+    if (coupon && coupon.used_count > 0) {
+      await admin
+        .from("coupons")
+        .update({ used_count: coupon.used_count - 1 })
+        .eq("id", order.coupon_id);
+    }
+  }
+  return true;
 }
 
 /**

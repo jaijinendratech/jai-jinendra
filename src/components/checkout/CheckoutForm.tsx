@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Button, Modal } from "@heroui/react";
+import { CheckCircle2, X } from "lucide-react";
 import { BrandSpinner } from "@/components/shared/BrandSpinner";
 import { RequiredMark } from "@/components/shared/RequiredMark";
 import { saveCheckoutAddressAction } from "@/lib/account/actions";
@@ -103,7 +105,7 @@ export function CheckoutForm({
   defaultEmail?: string;
 }) {
   const router = useRouter();
-  const { cart, loading } = useCart();
+  const { cart, loading, refresh } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">(
     "razorpay",
   );
@@ -136,6 +138,7 @@ export function CheckoutForm({
         },
   );
   const [saveAddress, setSaveAddress] = useState(true);
+  const [placed, setPlaced] = useState(false);
 
   function setField(name: keyof AddressFields, value: string) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -245,14 +248,14 @@ export function CheckoutForm({
       if (!orderRes.ok) throw new Error(data.error ?? "Order failed");
 
       if (paymentMethod === "cod") {
-        router.push(
-          `/account/orders?confirmed=${encodeURIComponent(data.order.orderNumber)}`,
-        );
+        void refresh();
+        setPlaced(true);
+        setSubmitting(false);
         return;
       }
 
       if (data.razorpay && window.Razorpay) {
-        const orderNumber = data.order.orderNumber;
+        const orderId: string = data.order.id;
 
         const rzp = new window.Razorpay({
           key: data.razorpay.keyId,
@@ -275,9 +278,9 @@ export function CheckoutForm({
               if (!verifyRes.ok) {
                 throw new Error(verifyData.error ?? "Payment verification failed");
               }
-              router.push(
-                `/account/orders?confirmed=${encodeURIComponent(orderNumber)}`,
-              );
+              void refresh();
+              setPlaced(true);
+              setSubmitting(false);
             } catch (verifyErr) {
               setError(
                 verifyErr instanceof Error
@@ -289,7 +292,13 @@ export function CheckoutForm({
           },
           modal: {
             ondismiss: () => {
-              setError("Payment cancelled. Your order is saved, you can retry from your account.");
+              // Unpaid orders are not kept: drop it so only paid/COD orders exist.
+              void fetch("/api/orders/abandon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId }),
+              }).catch(() => undefined);
+              setError("Payment was cancelled and no order was placed. Your cart is still saved, you can try again.");
               setSubmitting(false);
             },
           },
@@ -312,23 +321,81 @@ export function CheckoutForm({
     }
   }
 
-  if (loading) {
+  const successModal = (
+    <Modal.Backdrop
+      isOpen={placed}
+      onOpenChange={(open) => {
+        if (!open) router.push("/account/orders");
+      }}
+      isDismissable={false}
+      variant="blur"
+    >
+      <Modal.Container placement="center" size="sm">
+        <Modal.Dialog className="rounded-2xl border border-outline-variant/40 bg-background p-6 text-on-surface shadow-lg sm:max-w-md">
+          <div className="flex justify-end">
+            <Modal.CloseTrigger
+              aria-label="Close"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-white transition hover:bg-primary-container-hover"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </Modal.CloseTrigger>
+          </div>
+          <Modal.Body className="flex flex-col items-center gap-3 px-0 pb-0 pt-0 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+              <CheckCircle2 className="h-9 w-9" aria-hidden />
+            </span>
+            <Modal.Heading className="font-display text-2xl font-semibold text-on-surface">
+              Congratulations! Your order is placed
+            </Modal.Heading>
+            <p className="text-sm leading-6 text-on-surface-variant">
+              Thank you for choosing Jai Jinendra Namkeens. We&apos;re preparing
+              your order with care, and a confirmation email is on its way.
+            </p>
+            <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row">
+              <Button
+                variant="primary"
+                onPress={() => router.push("/account/orders")}
+                className="w-full rounded-lg bg-primary-container font-bold text-white hover:bg-primary"
+              >
+                View my orders
+              </Button>
+              <Button
+                variant="secondary"
+                onPress={() => router.push("/catalogue")}
+                className="w-full rounded-lg border border-outline-variant/60 font-semibold"
+              >
+                Continue shopping
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
+  );
+
+  if (loading && !placed) {
     return <p className="text-sm text-on-surface-variant">Loading cart…</p>;
   }
 
   if (cart.items.length === 0) {
     return (
-      <p className="text-sm text-on-surface-variant">
-        Your cart is empty.{" "}
-        <Link href="/catalogue" className="text-primary hover:underline">
-          Shop catalogue
-        </Link>
-      </p>
+      <>
+        {successModal}
+        {placed ? null : (
+          <p className="text-sm text-on-surface-variant">
+            Your cart is empty.{" "}
+            <Link href="/catalogue" className="text-primary hover:underline">
+              Shop catalogue
+            </Link>
+          </p>
+        )}
+      </>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-12">
+      {successModal}
       <div className="space-y-6 lg:col-span-7">
         <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5">
           <h2 className="font-display text-lg font-semibold">Delivery address</h2>

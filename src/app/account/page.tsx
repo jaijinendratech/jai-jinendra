@@ -1,3 +1,4 @@
+import { orderDisplayTitle } from "@/lib/orders/display";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -23,7 +24,7 @@ export default async function AccountOverviewPage() {
 
   let recentOrders: {
     id: string;
-    order_number: string;
+    order_items: { name_snapshot: string; qty: number }[];
     status: string;
     total_paise: number;
     created_at: string;
@@ -33,11 +34,12 @@ export default async function AccountOverviewPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("orders")
-      .select("id, order_number, status, total_paise, created_at")
+      .select("id, status, total_paise, created_at, order_items(name_snapshot, qty)")
       .eq("user_id", user.id)
+      .neq("status", "pending_payment")
       .order("created_at", { ascending: false })
       .limit(3);
-    recentOrders = data ?? [];
+    recentOrders = (data as typeof recentOrders | null) ?? [];
   }
 
   return (
@@ -147,7 +149,7 @@ export default async function AccountOverviewPage() {
                     href={`/account/orders/${order.id}`}
                     className="font-semibold text-primary hover:underline"
                   >
-                    {order.order_number}
+                    {orderDisplayTitle(order.order_items)}
                   </Link>
                   <p className="text-on-surface-variant">
                     {new Date(order.created_at).toLocaleDateString("en-IN")} ·{" "}

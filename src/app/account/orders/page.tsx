@@ -8,23 +8,19 @@ import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatINR } from "@/lib/format";
+import { orderDisplayTitle } from "@/lib/orders/display";
 
 export const metadata: Metadata = {
   title: "Order History",
   robots: { index: false, follow: false },
 };
 
-export default async function AccountOrdersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ confirmed?: string }>;
-}) {
-  const params = await searchParams;
+export default async function AccountOrdersPage() {
   const user = await getSessionUser();
   let orders: {
     id: string;
-    order_number: string;
     status: string;
+    order_items: { name_snapshot: string; qty: number }[];
     payment_method: string;
     total_paise: number;
     created_at: string;
@@ -34,10 +30,14 @@ export default async function AccountOrdersPage({
     const supabase = await createClient();
     const { data } = await supabase
       .from("orders")
-      .select("id, order_number, status, payment_method, total_paise, created_at")
+      .select(
+        "id, status, payment_method, total_paise, created_at, order_items(name_snapshot, qty)",
+      )
       .eq("user_id", user.id)
+      // Unpaid online attempts are not orders.
+      .neq("status", "pending_payment")
       .order("created_at", { ascending: false });
-    orders = data ?? [];
+    orders = (data as typeof orders | null) ?? [];
   }
 
   return (
@@ -50,13 +50,6 @@ export default async function AccountOrdersPage({
           Your complete order history.
         </p>
       </div>
-
-      {params.confirmed ? (
-        <p className="rounded-lg border border-secondary/30 bg-secondary-container/30 px-4 py-3 text-sm">
-          Order <strong>{params.confirmed}</strong> placed successfully.
-          Confirmation email sent if configured.
-        </p>
-      ) : null}
 
       {orders.length === 0 ? (
         <p className="text-sm text-on-surface-variant">
@@ -75,7 +68,7 @@ export default async function AccountOrdersPage({
               >
                 <div>
                   <p className="font-semibold text-primary">
-                    {order.order_number}
+                    {orderDisplayTitle(order.order_items)}
                   </p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-on-surface-variant">
                     <span>
