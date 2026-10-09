@@ -225,7 +225,8 @@ type AssignAwbResponse = {
 
 /**
  * Create a Shiprocket adhoc order and attempt AWB assignment.
- * Admin-triggered only, does not auto-run on payment.
+ * Called automatically once an order is paid / COD-confirmed (pickup is NOT
+ * requested here, that happens when an admin marks the order ready to ship).
  */
 export async function createShiprocketShipment(params: {
   orderNumber: string;
@@ -310,24 +311,11 @@ export async function createShiprocketShipment(params: {
   let courierName = created.courier_name ?? null;
 
   if (!awbCode) {
+    // Non-fatal here: the order exists, admin can retry via "Ready to ship".
     try {
-      const assigned = await shiprocketFetch<AssignAwbResponse>(
-        "/courier/assign/awb",
-        {
-          method: "POST",
-          token,
-          body: JSON.stringify({ shipment_id: shipmentId }),
-        },
-      );
-      awbCode = assigned.response?.data?.awb_code ?? null;
-      courierName = assigned.response?.data?.courier_name ?? courierName;
-      if (assigned.awb_assign_error && !awbCode) {
-        // Order exists; admin can assign courier in Shiprocket panel.
-        console.warn(
-          "[shiprocket] AWB assign:",
-          assigned.awb_assign_error || assigned.message,
-        );
-      }
+      const assigned = await assignAwb(String(shipmentId), token);
+      awbCode = assigned.awbCode;
+      courierName = assigned.courierName ?? courierName;
     } catch (err) {
       console.warn(
         "[shiprocket] AWB assign failed:",
@@ -349,4 +337,102 @@ export async function createShiprocketShipment(params: {
     shippingStatus: awbCode ? "awb_assigned" : "created",
     raw: created,
   };
+}
+
+/**
+ * Assign a courier / AWB to a shipment. Throws when Shiprocket refuses so the
+ * caller can surface the reason (unlike the best-effort call at order creation).
+ */
+export async function assignAwb(
+  shipmentId: string,
+  existingToken?: string,
+): Promise<{ awbCode: string; courierName: string | null }> {
+  const token = existingToken ?? (await getShiprocketToken());
+  const assigned = await shiprocketFetch<AssignAwbResponse>(
+    "/courier/assign/awb",
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ shipment_id: shipmentId }),
+    },
+  );
+  const awbCode = assigned.response?.data?.awb_code ?? null;
+  if (!awbCode) {
+    throw new Error(
+      assigned.awb_assign_error ||
+        assigned.message ||
+        "Shiprocket could not assign a courier. Check wallet balance and serviceability in the Shiprocket panel.",
+    );
+  }
+  return {
+    awbCode,
+    courierName: assigned.response?.data?.courier_name ?? null,
+  };
+}
+
+export type PickupResult = {
+  scheduledAt: string | null;
+  token: string | null;
+};
+
+type GeneratePickupResponse = {
+  pickup_status?: number;
+  message?: string;
+  response?: {
+    pickup_scheduled_date?: string;
+    pickup_token_number?: string;
+    data?: string;
+  };
+};
+
+/** Ask Shiprocket's courier to collect the parcel from the pickup location. */
+export async function generatePickup(shipmentId: string): Promise<PickupResult> {
+  const token = await getShiprocketToken();
+  const res = await shiprocketFetch<GeneratePickupResponse>(
+    "/courier/generate/pickup",
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ shipment_id: [Number(shipmentId) || shipmentId] }),
+    },
+  );
+  if (res.pickup_status !== undefined && res.pickup_status !== 1) {
+    throw new Error(
+      res.response?.data || res.message || "Shiprocket did not schedule the pickup.",
+    );
+  }
+  return {
+    scheduledAt: res.response?.pickup_scheduled_date ?? null,
+    token: res.response?.pickup_token_number ?? null,
+  };
+}
+
+/** Shipping label PDF url for a shipment (null when Shiprocket can't produce one yet). */
+export async function generateLabel(shipmentId: string): Promise<string | null> {
+  const token = await getShiprocketToken();
+  const res = await shiprocketFetch<{ label_created?: number; label_url?: string }>(
+    "/courier/generate/label",
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ shipment_id: [Number(shipmentId) || shipmentId] }),
+    },
+  );
+  return res.label_url || null;
+}
+
+/** Pickup manifest PDF url for a shipment (null when unavailable). */
+export async function generateManifest(
+  shipmentId: string,
+): Promise<string | null> {
+  const token = await getShiprocketToken();
+  const res = await shiprocketFetch<{ status?: number; manifest_url?: string }>(
+    "/manifests/generate",
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ shipment_id: [Number(shipmentId) || shipmentId] }),
+    },
+  );
+  return res.manifest_url || null;
 }

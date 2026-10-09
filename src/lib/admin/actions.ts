@@ -16,6 +16,7 @@ import {
   adminCustomerProfileSchema,
   adminEnquiryStatusSchema,
   adminOrderShippingSchema,
+  adminBroadcastSchema,
   adminOrderStatusSchema,
   adminOutletSchema,
   adminPaymentStatusSchema,
@@ -441,7 +442,7 @@ export async function createShiprocketShipmentAction(
   if (!orderId) return { ok: false, error: "Missing order id." };
 
   const { ensureShiprocketShipment } = await import("@/lib/orders/shipping");
-  const result = await ensureShiprocketShipment(orderId, { markDispatched: true });
+  const result = await ensureShiprocketShipment(orderId);
 
   revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`);
   if (!result.ok) return { ok: false, error: result.error };
@@ -452,6 +453,129 @@ export async function createShiprocketShipmentAction(
     };
   }
   return { ok: true };
+}
+
+/** Admin marks the parcel packed: ensure AWB, then ask Shiprocket to schedule the courier pickup. */
+export async function markReadyToShipAction(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string; alreadyScheduled?: boolean }> {
+  await requireAdmin();
+  const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) return { ok: false, error: "Missing order id." };
+
+  const { markReadyToShip } = await import("@/lib/orders/shipping");
+  const result = await markReadyToShip(orderId);
+
+  revalidateAdmin("/admin/orders", `/admin/orders/${orderId}`);
+  return result.ok
+    ? { ok: true, alreadyScheduled: result.alreadyScheduled }
+    : { ok: false, error: result.error };
+}
+
+function parseBroadcast(formData: FormData) {
+  return adminBroadcastSchema.safeParse({
+    subject: String(formData.get("subject") ?? ""),
+    bodyHtml: String(formData.get("bodyHtml") ?? ""),
+    ctaLabel: String(formData.get("ctaLabel") ?? ""),
+    ctaUrl: String(formData.get("ctaUrl") ?? ""),
+  });
+}
+
+/** Send the draft campaign to the signed-in admin only, so they can check it first. */
+export async function sendBroadcastTestAction(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  const parsed = parseBroadcast(formData);
+  if (!parsed.success) return { ok: false, error: zodErrorMessage(parsed.error) };
+  const to = "email" in admin ? admin.email : null;
+  if (!to) return { ok: false, error: "Your admin account has no email address." };
+
+  try {
+    const { sendBroadcast } = await import("@/lib/email/resend");
+    const result = await sendBroadcast({
+      subject: `[Test] ${parsed.data.subject}`,
+      bodyHtml: parsed.data.bodyHtml,
+      ctaLabel: parsed.data.ctaLabel,
+      ctaUrl: parsed.data.ctaUrl,
+      recipients: [{ email: to, unsubscribeToken: "00000000-0000-0000-0000-000000000000" }],
+    });
+    if (result.failed > 0) {
+      return { ok: false, error: result.errors[0] ?? "Test email failed." };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: zodErrorMessage(err) };
+  }
+}
+
+/** Send the campaign to every active (not unsubscribed) subscriber and log it. */
+export async function sendBroadcastAction(formData: FormData): Promise<{
+  ok: boolean;
+  error?: string;
+  sent?: number;
+  failed?: number;
+}> {
+  const adminUser = await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Connect Supabase to send broadcasts." };
+  }
+  const parsed = parseBroadcast(formData);
+  if (!parsed.success) return { ok: false, error: zodErrorMessage(parsed.error) };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("subscribers")
+    .select("email, unsubscribe_token")
+    .is("unsubscribed_at", null);
+  if (error) {
+    return {
+      ok: false,
+      error: "Subscriber list could not be loaded. Has migration 017 been applied?",
+    };
+  }
+  const recipients = (data ?? []).map((row) => ({
+    email: row.email,
+    unsubscribeToken: row.unsubscribe_token,
+  }));
+  if (recipients.length === 0) {
+    return { ok: false, error: "There are no active subscribers to email." };
+  }
+  const { BROADCAST_MAX_RECIPIENTS } = await import("@/lib/email/broadcast");
+  if (recipients.length > BROADCAST_MAX_RECIPIENTS) {
+    return {
+      ok: false,
+      error: `This send is limited to ${BROADCAST_MAX_RECIPIENTS} recipients at a time (you have ${recipients.length}).`,
+    };
+  }
+
+  try {
+    const { sendBroadcast } = await import("@/lib/email/resend");
+    const result = await sendBroadcast({
+      subject: parsed.data.subject,
+      bodyHtml: parsed.data.bodyHtml,
+      ctaLabel: parsed.data.ctaLabel,
+      ctaUrl: parsed.data.ctaUrl,
+      recipients,
+    });
+
+    await admin.from("email_broadcasts").insert({
+      subject: parsed.data.subject,
+      body_html: parsed.data.bodyHtml,
+      recipient_count: recipients.length,
+      sent_count: result.sent,
+      failed_count: result.failed,
+      created_by: adminUser.id === "dev-admin" ? null : adminUser.id,
+    });
+
+    revalidateAdmin("/admin/subscribers");
+    if (result.sent === 0) {
+      return { ok: false, error: result.errors[0] ?? "No emails were sent.", sent: 0, failed: result.failed };
+    }
+    return { ok: true, sent: result.sent, failed: result.failed };
+  } catch (err) {
+    return { ok: false, error: zodErrorMessage(err) };
+  }
 }
 
 export async function saveProductAction(formData: FormData) {

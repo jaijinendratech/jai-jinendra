@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/ui";
 import { AdminFormSubmitButton } from "@/components/admin/AdminIconButton";
 import { CreateShipmentForm } from "@/components/admin/CreateShipmentForm";
+import { ReadyToShipForm } from "@/components/admin/ReadyToShipForm";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import {
   ORDER_STATUSES,
@@ -224,6 +225,68 @@ export default async function AdminOrderDetailPage({
                   orderId={order.dbId}
                   label={order.shippingError ? "Retry Shiprocket shipment" : "Create Shiprocket shipment"}
                 />
+              </div>
+            ) : null}
+            {integrations.shiprocket &&
+            (order.status === "confirmed" ||
+              order.status === "cod_confirmed" ||
+              order.status === "ready_to_ship") ? (
+              <div className="mb-6 rounded-lg border border-outline-variant/30 bg-surface-container-low p-4">
+                <p className="text-sm font-semibold text-on-surface">
+                  Ready to ship
+                </p>
+                {order.status === "ready_to_ship" && order.pickupScheduledAt ? (
+                  <div className="mt-2 space-y-1 text-xs text-on-surface-variant">
+                    <p>
+                      Pickup requested from Shiprocket for{" "}
+                      <strong>
+                        {new Date(order.pickupScheduledAt).toLocaleString("en-IN")}
+                      </strong>
+                      {order.pickupToken ? ` (${order.pickupToken})` : ""}. The
+                      order moves to Dispatched automatically once the courier
+                      collects it.
+                    </p>
+                    <p className="flex flex-wrap gap-4 pt-1">
+                      {order.labelUrl ? (
+                        <a
+                          href={order.labelUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-primary hover:underline"
+                        >
+                          Download shipping label
+                        </a>
+                      ) : null}
+                      {order.manifestUrl ? (
+                        <a
+                          href={order.manifestUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-primary hover:underline"
+                        >
+                          Download manifest
+                        </a>
+                      ) : null}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mb-3 mt-1 text-xs text-on-surface-variant">
+                      Once the parcel is packed, click below. This assigns the
+                      courier (AWB) if needed and asks Shiprocket to collect it
+                      from your pickup location.
+                    </p>
+                    {order.pickupError ? (
+                      <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        Pickup request failed: {order.pickupError}
+                      </p>
+                    ) : null}
+                    <ReadyToShipForm
+                      orderId={order.dbId}
+                      retry={Boolean(order.pickupError)}
+                    />
+                  </>
+                )}
               </div>
             ) : null}
             {!integrations.shiprocket ? (

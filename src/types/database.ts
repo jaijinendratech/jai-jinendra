@@ -12,6 +12,7 @@ export type OrderStatus =
   | "pending_payment"
   | "cod_confirmed"
   | "confirmed"
+  | "ready_to_ship"
   | "dispatched"
   | "delivered"
   | "cancelled";
@@ -554,6 +555,11 @@ export type Database = {
           tracking_url: string | null;
           shipping_status: string | null;
           shipping_error: string | null;
+          pickup_scheduled_at: string | null;
+          pickup_token: string | null;
+          pickup_error: string | null;
+          label_url: string | null;
+          manifest_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -583,6 +589,11 @@ export type Database = {
           tracking_url?: string | null;
           shipping_status?: string | null;
           shipping_error?: string | null;
+          pickup_scheduled_at?: string | null;
+          pickup_token?: string | null;
+          pickup_error?: string | null;
+          label_url?: string | null;
+          manifest_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -612,6 +623,11 @@ export type Database = {
           tracking_url?: string | null;
           shipping_status?: string | null;
           shipping_error?: string | null;
+          pickup_scheduled_at?: string | null;
+          pickup_token?: string | null;
+          pickup_error?: string | null;
+          label_url?: string | null;
+          manifest_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -703,15 +719,54 @@ export type Database = {
           id: string;
           email: string;
           created_at: string;
+          unsubscribed_at: string | null;
+          unsubscribe_token: string;
         };
         Insert: {
           id?: string;
           email: string;
           created_at?: string;
+          unsubscribed_at?: string | null;
+          unsubscribe_token?: string;
         };
         Update: {
           id?: string;
           email?: string;
+          created_at?: string;
+          unsubscribed_at?: string | null;
+          unsubscribe_token?: string;
+        };
+        Relationships: [];
+      };
+      email_broadcasts: {
+        Row: {
+          id: string;
+          subject: string;
+          body_html: string;
+          recipient_count: number;
+          sent_count: number;
+          failed_count: number;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          subject: string;
+          body_html: string;
+          recipient_count?: number;
+          sent_count?: number;
+          failed_count?: number;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          subject?: string;
+          body_html?: string;
+          recipient_count?: number;
+          sent_count?: number;
+          failed_count?: number;
+          created_by?: string | null;
           created_at?: string;
         };
         Relationships: [];

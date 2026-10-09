@@ -1,7 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
+  assignAwb,
   createShiprocketShipment,
+  generateLabel,
+  generateManifest,
+  generatePickup,
   isShiprocketConfigured,
 } from "@/lib/shiprocket";
 
@@ -54,8 +58,9 @@ export function parcelWeightKg(
  * call from several paths at once (verify-payment + webhook): the order is
  * claimed atomically before any API call.
  *
- * `markDispatched` is only for the admin button, auto-creation leaves the
- * order status alone because nothing has been dispatched yet.
+ * `markDispatched` is a legacy escape hatch; normal flow is auto-create here,
+ * then an admin marks the order ready to ship (see `markReadyToShip`), and the
+ * Shiprocket webhook moves it to dispatched once the courier collects it.
  */
 export async function ensureShiprocketShipment(
   orderId: string,
@@ -165,6 +170,116 @@ export async function ensureShiprocketShipment(
   } catch (err) {
     return await fail(
       err instanceof Error ? err.message : "Shiprocket shipment failed.",
+    );
+  }
+}
+
+export type ReadyToShipResult =
+  | { ok: true; alreadyScheduled?: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Admin says the parcel is packed: make sure a Shiprocket shipment + AWB exist,
+ * then request the courier pickup. Idempotent, and failures are stored in
+ * `pickup_error` (order status is left unchanged) so the admin can retry.
+ */
+export async function markReadyToShip(
+  orderId: string,
+): Promise<ReadyToShipResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Supabase is required for Shiprocket." };
+  }
+  if (!isShiprocketConfigured()) {
+    return {
+      ok: false,
+      error:
+        "Shiprocket is not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD.",
+    };
+  }
+
+  const admin = createAdminClient();
+  const readOrder = () =>
+    admin
+      .from("orders")
+      .select("id, status, shipment_id, awb_code, pickup_scheduled_at, pickup_token")
+      .eq("id", orderId)
+      .maybeSingle();
+
+  let { data: order } = await readOrder();
+  if (!order) return { ok: false, error: "Order not found." };
+
+  if (order.status === "ready_to_ship" && order.pickup_scheduled_at) {
+    return { ok: true, alreadyScheduled: true };
+  }
+  if (order.status !== "confirmed" && order.status !== "cod_confirmed" && order.status !== "ready_to_ship") {
+    return {
+      ok: false,
+      error: `Only confirmed orders can be marked ready to ship (this one is "${order.status}").`,
+    };
+  }
+
+  const fail = async (message: string): Promise<ReadyToShipResult> => {
+    console.error(`[shiprocket] ready-to-ship ${orderId}: ${message}`);
+    await admin
+      .from("orders")
+      .update({ pickup_error: message.slice(0, 500) })
+      .eq("id", orderId);
+    return { ok: false, error: message };
+  };
+
+  try {
+    if (!order.shipment_id) {
+      const created = await ensureShiprocketShipment(orderId);
+      if (!created.ok) return await fail(created.error);
+      ({ data: order } = await readOrder());
+      if (!order?.shipment_id) {
+        return await fail("Shiprocket shipment is still being created, try again in a moment.");
+      }
+    }
+
+    let awbCode = order.awb_code;
+    if (!awbCode) {
+      const assigned = await assignAwb(order.shipment_id);
+      awbCode = assigned.awbCode;
+      await admin
+        .from("orders")
+        .update({
+          awb_code: assigned.awbCode,
+          courier_name: assigned.courierName,
+          tracking_url: `https://shiprocket.co/tracking/${assigned.awbCode}`,
+          shipping_status: "awb_assigned",
+          shipping_error: null,
+        })
+        .eq("id", orderId);
+    }
+
+    const pickup = await generatePickup(order.shipment_id);
+
+    // Label / manifest are conveniences: never fail the pickup over them.
+    const [labelUrl, manifestUrl] = await Promise.all([
+      generateLabel(order.shipment_id).catch(() => null),
+      generateManifest(order.shipment_id).catch(() => null),
+    ]);
+
+    await admin
+      .from("orders")
+      .update({
+        status: "ready_to_ship",
+        pickup_scheduled_at: pickup.scheduledAt
+          ? new Date(pickup.scheduledAt).toISOString()
+          : new Date().toISOString(),
+        pickup_token: pickup.token,
+        pickup_error: null,
+        label_url: labelUrl,
+        manifest_url: manifestUrl,
+        shipping_status: "pickup_scheduled",
+      })
+      .eq("id", orderId);
+
+    return { ok: true };
+  } catch (err) {
+    return await fail(
+      err instanceof Error ? err.message : "Could not request the pickup.",
     );
   }
 }

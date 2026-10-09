@@ -18,9 +18,10 @@ const ORDER_RANK: Record<OrderStatus, number> = {
   pending_payment: 0,
   cod_confirmed: 1,
   confirmed: 2,
-  dispatched: 3,
-  delivered: 4,
-  cancelled: 5,
+  ready_to_ship: 3,
+  dispatched: 4,
+  delivered: 5,
+  cancelled: 6,
 };
 
 function norm(value: string | null | undefined): string {

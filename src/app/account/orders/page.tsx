@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import {
   OrderStatusChip,
   PaymentMethodLabel,
@@ -61,10 +62,13 @@ export default async function AccountOrdersPage() {
       ) : (
         <ul className="divide-y divide-outline-variant/20 rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
           {orders.map((order) => (
-            <li key={order.id}>
+            <li
+              key={order.id}
+              className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm transition hover:bg-surface-container-low/60"
+            >
               <Link
                 href={`/account/orders/${order.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm transition hover:bg-surface-container-low/60"
+                className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3"
               >
                 <div>
                   <p className="font-semibold text-primary">
@@ -84,6 +88,15 @@ export default async function AccountOrdersPage() {
                   {formatINR(order.total_paise / 100)}
                 </p>
               </Link>
+              <a
+                href={`/api/orders/${order.id}/invoice`}
+                download
+                aria-label="Download invoice"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+              >
+                <Download className="size-3.5" aria-hidden />
+                Invoice
+              </a>
             </li>
           ))}
         </ul>

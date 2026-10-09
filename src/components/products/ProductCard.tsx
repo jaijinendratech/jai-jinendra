@@ -3,7 +3,7 @@
 import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { Button, toast } from "@heroui/react";
 import { BrandSpinner } from "@/components/shared/BrandSpinner";
@@ -30,10 +30,18 @@ export function ProductCard({
   const activeVariantData = product.variants.find((v) => v.id === activeVariant);
   const activePrice = activeVariantData?.price ?? product.price;
   const { has, toggle, hydrated } = useWishlist();
-  const { updateItem } = useCart();
+  const { cart, setQuantity } = useCart();
   const favourited = hydrated && has(product.id);
   const tags = productTagLabels(product);
   const descriptionPreview = htmlToPlainText(product.description);
+
+  const cartLine = activeVariantData
+    ? cart.items.find((i) => i.variantId === activeVariantData.id)
+    : undefined;
+  const inCartQty = cartLine?.qty ?? 0;
+  const stockQty = activeVariantData?.stockQty;
+  const outOfStock = stockQty !== undefined && stockQty <= 0;
+  const atStockLimit = stockQty !== undefined && inCartQty >= stockQty;
 
   const activeOriginalPrice = activeVariantData?.originalPrice ?? product.originalPrice;
 
@@ -45,23 +53,34 @@ export function ProductCard({
     else toast("Removed from favourites", { description: product.name });
   }
 
-  async function onAddToCart() {
+  async function changeQuantity(nextQty: number, firstAdd = false) {
     const variant = activeVariantData ?? product.variants[0];
     if (!variant) {
       toast.danger("No variant available");
       return;
     }
-    setAdding(true);
+    if (firstAdd) setAdding(true);
     try {
-      const sku = variant.sku ?? `${product.slug}-${variant.id}`;
-      await updateItem({ sku, qty: 1 });
-      toast.success("Added to cart", { description: product.name });
+      await setQuantity(
+        {
+          variantId: variant.id,
+          sku: variant.sku ?? `${product.slug}-${variant.id}`,
+          label: variant.label,
+          productName: product.name,
+          productSlug: product.slug,
+          image: product.image || PRODUCT_PLACEHOLDER_IMAGE,
+          unitPricePaise: Math.round((variant.price ?? product.price) * 100),
+          stockQty: variant.stockQty ?? 999,
+        },
+        nextQty,
+      );
+      if (firstAdd) toast.success("Added to cart", { description: product.name });
     } catch (err) {
       toast.danger(
-        err instanceof Error ? err.message : "Could not add to cart",
+        err instanceof Error ? err.message : "Could not update cart",
       );
     } finally {
-      setAdding(false);
+      if (firstAdd) setAdding(false);
     }
   }
 
@@ -172,17 +191,51 @@ export function ProductCard({
             ) : null}
           </div>
 
-          <Button
-            isDisabled={adding || !product.variants.length}
-            onPress={() => void onAddToCart()}
-            className="h-8 min-h-8 shrink-0 rounded-lg bg-primary-container px-2.5 text-xs font-semibold text-white hover:bg-primary sm:h-9 sm:min-h-9 sm:px-3 sm:text-sm"
-          >
-            {adding ? (
-              <BrandSpinner size="sm" label="Adding to cart" />
-            ) : (
-              "Add"
-            )}
-          </Button>
+          {inCartQty > 0 ? (
+            <div
+              className="flex h-8 shrink-0 items-center overflow-hidden rounded-lg bg-primary-container text-white sm:h-9"
+              role="group"
+              aria-label={`Quantity of ${product.name} in cart`}
+            >
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                onClick={() => void changeQuantity(inCartQty - 1)}
+                className="flex h-full w-7 items-center justify-center transition hover:bg-primary sm:w-8"
+              >
+                <Minus className="h-3.5 w-3.5" aria-hidden />
+              </button>
+              <span
+                className="min-w-5 text-center text-xs font-semibold tabular-nums sm:text-sm"
+                aria-live="polite"
+              >
+                {inCartQty}
+              </span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                disabled={atStockLimit}
+                onClick={() => void changeQuantity(inCartQty + 1)}
+                className="flex h-full w-7 items-center justify-center transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50 sm:w-8"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <Button
+              isDisabled={adding || outOfStock || !product.variants.length}
+              onPress={() => void changeQuantity(1, true)}
+              className="h-8 min-h-8 shrink-0 rounded-lg bg-primary-container px-2.5 text-xs font-semibold text-white hover:bg-primary sm:h-9 sm:min-h-9 sm:px-3 sm:text-sm"
+            >
+              {adding ? (
+                <BrandSpinner size="sm" label="Adding to cart" />
+              ) : outOfStock ? (
+                "Sold out"
+              ) : (
+                "Add"
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </article>

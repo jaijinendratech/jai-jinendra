@@ -35,3 +35,18 @@ describe("shiprocket webhook mapping", () => {
     ).toBe("shipping:1:20:t");
   });
 });
+
+describe("ready_to_ship ordering", () => {
+  it("advances confirmed and COD orders to ready_to_ship", () => {
+    expect(shouldAdvanceOrderStatus("confirmed", "ready_to_ship")).toBe(true);
+    expect(shouldAdvanceOrderStatus("cod_confirmed", "ready_to_ship")).toBe(true);
+  });
+
+  it("lets a picked-up parcel move on to dispatched", () => {
+    expect(shouldAdvanceOrderStatus("ready_to_ship", "dispatched")).toBe(true);
+  });
+
+  it("never downgrades dispatched back to ready_to_ship", () => {
+    expect(shouldAdvanceOrderStatus("dispatched", "ready_to_ship")).toBe(false);
+  });
+});

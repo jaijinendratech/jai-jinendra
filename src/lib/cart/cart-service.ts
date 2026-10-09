@@ -49,7 +49,7 @@ async function getOrCreateSessionId(): Promise<string> {
 async function resolveCartId(
   admin: ReturnType<typeof createAdminClient>,
   userId: string | null,
-  sessionId: string,
+  sessionId: string | null,
 ): Promise<string> {
   if (userId) {
     const { data: existing } = await admin
@@ -59,26 +59,29 @@ async function resolveCartId(
       .maybeSingle();
 
     if (existing) {
-      // Merge session cart into user cart if present
-      const { data: sessionCart } = await admin
-        .from("carts")
-        .select("id")
-        .eq("session_id", sessionId)
-        .maybeSingle();
+      // Merge a guest session cart into the user cart, only when a guest
+      // session cookie exists (otherwise there is nothing to look up).
+      const { data: sessionCart } = sessionId
+        ? await admin
+            .from("carts")
+            .select("id")
+            .eq("session_id", sessionId)
+            .maybeSingle()
+        : { data: null };
 
       if (sessionCart && sessionCart.id !== existing.id) {
         const { data: sessionItems } = await admin
           .from("cart_items")
-          .select("*")
+          .select("variant_id, qty")
           .eq("cart_id", sessionCart.id);
 
-        for (const item of sessionItems ?? []) {
+        if (sessionItems?.length) {
           await admin.from("cart_items").upsert(
-            {
+            sessionItems.map((item) => ({
               cart_id: existing.id,
               variant_id: item.variant_id,
               qty: item.qty,
-            },
+            })),
             { onConflict: "cart_id,variant_id" },
           );
         }
@@ -97,6 +100,8 @@ async function resolveCartId(
     return created.id;
   }
 
+  if (!sessionId) throw new Error("Cart session missing");
+
   const { data: existing } = await admin
     .from("carts")
     .select("id")
@@ -114,19 +119,42 @@ async function resolveCartId(
   return created.id;
 }
 
+/**
+ * Resolve who is shopping once per request: the signed-in user (if any) and
+ * the cart they own. Callers reuse this instead of repeating auth + lookups.
+ */
+async function resolveCartContext(
+  admin: ReturnType<typeof createAdminClient>,
+): Promise<{ cartId: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const jar = await cookies();
+  const existingSession = jar.get(CART_SESSION_COOKIE)?.value ?? null;
+  // Guests need a session cookie; signed-in users only have one if they
+  // shopped as a guest before logging in.
+  const sessionId = user
+    ? existingSession
+    : (existingSession ?? (await getOrCreateSessionId()));
+  const cartId = await resolveCartId(admin, user?.id ?? null, sessionId);
+  return { cartId };
+}
+
 export async function getCartSummary(): Promise<CartSummary> {
   if (!isSupabaseConfigured()) {
     return emptyCart();
   }
 
   const admin = createAdminClient();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const sessionId = await getOrCreateSessionId();
-  const cartId = await resolveCartId(admin, user?.id ?? null, sessionId);
+  const { cartId } = await resolveCartContext(admin);
+  return loadCartSummary(admin, cartId);
+}
 
+async function loadCartSummary(
+  admin: ReturnType<typeof createAdminClient>,
+  cartId: string,
+): Promise<CartSummary> {
   const { data: rows, error } = await admin
     .from("cart_items")
     .select(
@@ -223,31 +251,25 @@ export async function upsertCartItem(input: {
   if (!isSupabaseConfigured()) {
     throw new Error("Supabase not configured");
   }
-
-  const admin = createAdminClient();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const sessionId = await getOrCreateSessionId();
-  const cartId = await resolveCartId(admin, user?.id ?? null, sessionId);
-
-  let variantId = input.variantId;
-  if (!variantId && input.sku) {
-    const { data: variant } = await admin
-      .from("product_variants")
-      .select("id, stock_qty")
-      .eq("sku", input.sku)
-      .maybeSingle();
-    if (!variant) throw new Error("Variant not found");
-    variantId = variant.id;
-
-    if (input.qty > variant.stock_qty) {
-      throw new Error(`Only ${variant.stock_qty} available`);
-    }
+  if (!input.variantId && !input.sku) {
+    throw new Error("variantId or sku required");
   }
 
-  if (!variantId) throw new Error("variantId or sku required");
+  const admin = createAdminClient();
+
+  // Auth/cart resolution and the variant lookup are independent: run together.
+  const variantQuery = admin
+    .from("product_variants")
+    .select("id, stock_qty");
+  const [{ cartId }, { data: variant }] = await Promise.all([
+    resolveCartContext(admin),
+    input.variantId
+      ? variantQuery.eq("id", input.variantId).maybeSingle()
+      : variantQuery.eq("sku", input.sku!).maybeSingle(),
+  ]);
+
+  if (!variant) throw new Error("Variant not found");
+  const variantId = variant.id;
 
   if (input.qty <= 0) {
     await admin
@@ -255,43 +277,35 @@ export async function upsertCartItem(input: {
       .delete()
       .eq("cart_id", cartId)
       .eq("variant_id", variantId);
-    return getCartSummary();
+    return loadCartSummary(admin, cartId);
   }
 
-  const { data: variant } = await admin
-    .from("product_variants")
-    .select("stock_qty")
-    .eq("id", variantId)
-    .single();
-
-  if (!variant || input.qty > variant.stock_qty) {
-    throw new Error(
-      variant ? `Only ${variant.stock_qty} available` : "Variant not found",
-    );
+  if (input.qty > variant.stock_qty) {
+    throw new Error(`Only ${variant.stock_qty} available`);
   }
 
-  await admin.from("cart_items").upsert(
-    { cart_id: cartId, variant_id: variantId, qty: input.qty },
-    { onConflict: "cart_id,variant_id" },
-  );
+  // The timestamp bump is bookkeeping: write it alongside, don't serialise.
+  const [{ error: upsertError }] = await Promise.all([
+    admin
+      .from("cart_items")
+      .upsert(
+        { cart_id: cartId, variant_id: variantId, qty: input.qty },
+        { onConflict: "cart_id,variant_id" },
+      ),
+    admin
+      .from("carts")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", cartId),
+  ]);
+  if (upsertError) throw upsertError;
 
-  await admin
-    .from("carts")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", cartId);
-
-  return getCartSummary();
+  return loadCartSummary(admin, cartId);
 }
 
 export async function clearCart() {
   if (!isSupabaseConfigured()) return;
   const admin = createAdminClient();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const sessionId = await getOrCreateSessionId();
-  const cartId = await resolveCartId(admin, user?.id ?? null, sessionId);
+  const { cartId } = await resolveCartContext(admin);
   await admin.from("cart_items").delete().eq("cart_id", cartId);
 }
 

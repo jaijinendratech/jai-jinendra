@@ -324,10 +324,47 @@ export const adminOrderStatusSchema = z.enum([
   "pending_payment",
   "cod_confirmed",
   "confirmed",
+  "ready_to_ship",
   "dispatched",
   "delivered",
   "cancelled",
 ]);
+
+/** Admin broadcast to newsletter subscribers. CTA is optional but both fields travel together. */
+export const adminBroadcastSchema = z
+  .object({
+    subject: z.string().trim().min(3, "Subject is too short").max(150),
+    bodyHtml: z
+      .string()
+      .trim()
+      .min(1, "Write a message first")
+      .max(50_000, "Message is too long"),
+    ctaLabel: z.string().trim().max(40).optional().or(z.literal("")),
+    ctaUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .or(z.literal("")),
+  })
+  .superRefine((value, ctx) => {
+    const hasLabel = Boolean(value.ctaLabel);
+    const hasUrl = Boolean(value.ctaUrl);
+    if (hasLabel !== hasUrl) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Add both a button label and a link, or leave both empty.",
+        path: ["ctaUrl"],
+      });
+    }
+    if (hasUrl && !/^https:\/\//i.test(value.ctaUrl ?? "")) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Button link must start with https://",
+        path: ["ctaUrl"],
+      });
+    }
+  });
 
 export const adminPaymentStatusSchema = z.enum([
   "pending",

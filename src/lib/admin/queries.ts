@@ -665,6 +665,11 @@ export async function getAdminOrderById(idOrNumber: string) {
       trackingUrl: null as string | null,
       shippingStatus: null as string | null,
       shippingError: null as string | null,
+      pickupScheduledAt: null as string | null,
+      pickupToken: null as string | null,
+      pickupError: null as string | null,
+      labelUrl: null as string | null,
+      manifestUrl: null as string | null,
       items: order.items.map((i) => ({
         name: i.name,
         qty: i.qty,
@@ -697,6 +702,11 @@ export async function getAdminOrderById(idOrNumber: string) {
     awb_code: string | null;
     shipment_id: string | null;
     shipping_error: string | null;
+    pickup_scheduled_at: string | null;
+    pickup_token: string | null;
+    pickup_error: string | null;
+    label_url: string | null;
+    manifest_url: string | null;
     tracking_url: string | null;
     shipping_status: string | null;
     order_items: {
@@ -770,6 +780,11 @@ export async function getAdminOrderById(idOrNumber: string) {
     trackingUrl: row.tracking_url,
     shippingStatus: row.shipping_status,
     shippingError: row.shipping_error,
+    pickupScheduledAt: row.pickup_scheduled_at,
+    pickupToken: row.pickup_token,
+    pickupError: row.pickup_error,
+    labelUrl: row.label_url,
+    manifestUrl: row.manifest_url,
     items: (row.order_items ?? []).map((i) => ({
       name: i.name_snapshot,
       qty: i.qty,
@@ -1245,6 +1260,7 @@ export async function getAdminInventory() {
         id: `${p.id}__${v.id}`,
         productId: p.id,
         productName: p.name,
+        category: String(p.category),
         label: v.label,
         sku: v.sku ?? `${p.slug}-${v.id}`,
         stockQty: v.stockQty ?? 12,
@@ -1259,7 +1275,7 @@ export async function getAdminInventory() {
   const { data } = await admin
     .from("product_variants")
     .select(
-      "id, label, sku, stock_qty, low_stock_threshold, available, price_paise, product_id, products(name)",
+      "id, label, sku, stock_qty, low_stock_threshold, available, price_paise, product_id, products(name, categories(title))",
     )
     .order("sku");
 
@@ -1272,13 +1288,14 @@ export async function getAdminInventory() {
     low_stock_threshold: number;
     available: boolean;
     price_paise: number;
-    products: { name: string } | null;
+    products: { name: string; categories: { title: string } | null } | null;
   };
 
   return ((data ?? []) as unknown as Row[]).map((v) => ({
     id: v.id,
     productId: v.product_id,
     productName: v.products?.name ?? "Product",
+    category: v.products?.categories?.title ?? "Uncategorised",
     label: v.label,
     sku: v.sku,
     stockQty: v.stock_qty,
@@ -1510,20 +1527,59 @@ export async function getAdminEnquiries() {
   });
 }
 
-export async function getAdminSubscribers() {
-  if (!isSupabaseConfigured()) return [];
+export type AdminSubscriber = {
+  id: string;
+  email: string;
+  createdAt: string;
+  unsubscribedAt: string | null;
+  unsubscribeToken: string | null;
+};
+
+/**
+ * `broadcastsReady` is false until migration 017 (unsubscribe columns) is on the
+ * database; the list still loads so the page never breaks mid-deploy.
+ */
+export async function getAdminSubscribers(): Promise<{
+  subscribers: AdminSubscriber[];
+  broadcastsReady: boolean;
+}> {
+  if (!isSupabaseConfigured()) {
+    return { subscribers: [], broadcastsReady: false };
+  }
 
   const admin = createAdminClient();
-  const { data } = await admin
+  const full = await admin
+    .from("subscribers")
+    .select("id, email, created_at, unsubscribed_at, unsubscribe_token")
+    .order("created_at", { ascending: false });
+
+  if (!full.error) {
+    return {
+      broadcastsReady: true,
+      subscribers: (full.data ?? []).map((row) => ({
+        id: row.id,
+        email: row.email,
+        createdAt: row.created_at,
+        unsubscribedAt: row.unsubscribed_at,
+        unsubscribeToken: row.unsubscribe_token,
+      })),
+    };
+  }
+
+  const basic = await admin
     .from("subscribers")
     .select("id, email, created_at")
     .order("created_at", { ascending: false });
-
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    email: row.email,
-    createdAt: row.created_at,
-  }));
+  return {
+    broadcastsReady: false,
+    subscribers: (basic.data ?? []).map((row) => ({
+      id: row.id,
+      email: row.email,
+      createdAt: row.created_at,
+      unsubscribedAt: null,
+      unsubscribeToken: null,
+    })),
+  };
 }
 
 export async function getAdminOfferLeads() {

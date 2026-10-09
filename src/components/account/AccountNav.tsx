@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,11 +8,13 @@ import {
   LogOut,
   MapPin,
   Package,
+  Store,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
 import { signOutAction } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 
 const NAV: {
   href: string;
@@ -27,6 +30,8 @@ const NAV: {
 
 export function AccountNav() {
   const pathname = usePathname();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const signOutForm = useRef<HTMLFormElement>(null);
 
   return (
     <nav aria-label="Account" className="space-y-4">
@@ -53,17 +58,41 @@ export function AccountNav() {
             </li>
           );
         })}
+        <li className="shrink-0">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low hover:text-primary"
+          >
+            <Store className="size-[18px] shrink-0" aria-hidden />
+            Back to store
+          </Link>
+        </li>
       </ul>
 
-      <form action={signOutAction} className="hidden md:block">
+      <form ref={signOutForm} action={signOutAction}>
         <button
-          type="submit"
+          type="button"
+          onClick={() => setConfirmOpen(true)}
           className="flex w-full items-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2 text-sm font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
         >
           <LogOut className="size-[18px] shrink-0" aria-hidden />
           Sign out
         </button>
       </form>
+
+      <AdminConfirmDialog
+        isOpen={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Sign out?"
+        message="You will need to sign in again to view your orders or check out."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        danger={false}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          signOutForm.current?.requestSubmit();
+        }}
+      />
     </nav>
   );
 }

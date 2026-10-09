@@ -30,6 +30,13 @@ export async function POST(request: Request) {
 
     if (error) {
       if (error.code === "23505") {
+        // Signing up again re-subscribes someone who had unsubscribed.
+        // Best effort: the column only exists once migration 017 is applied.
+        await admin
+          .from("subscribers")
+          .update({ unsubscribed_at: null })
+          .eq("email", body.email)
+          .not("unsubscribed_at", "is", null);
         return NextResponse.json({ ok: true, already: true });
       }
       return NextResponse.json({ error: error.message }, { status: 500 });

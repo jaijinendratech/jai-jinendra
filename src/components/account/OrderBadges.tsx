@@ -12,6 +12,7 @@ function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case "cancelled":
       return <XCircle className={className} aria-hidden />;
+    case "ready_to_ship":
     case "dispatched":
     case "shipped":
       return <Truck className={className} aria-hidden />;
@@ -24,11 +25,16 @@ function StatusIcon({ status }: { status: string }) {
   }
 }
 
+const CUSTOMER_STATUS_LABELS: Record<string, string> = {
+  ready_to_ship: "Packed, ready for pickup",
+  cod_confirmed: "Confirmed (Cash on delivery)",
+};
+
 export function OrderStatusChip({ status }: { status: string }) {
   return (
     <span className="inline-flex items-center gap-1 capitalize">
       <StatusIcon status={status} />
-      {status.replace(/_/g, " ")}
+      {CUSTOMER_STATUS_LABELS[status] ?? status.replace(/_/g, " ")}
     </span>
   );
 }

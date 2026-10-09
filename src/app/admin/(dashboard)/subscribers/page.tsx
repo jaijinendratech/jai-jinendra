@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
 import { getAdminSubscribers } from "@/lib/admin/queries";
 import { AdminEmpty, AdminPageHeader } from "@/components/admin/ui";
+import { SubscribersTable } from "./SubscribersTable";
 
 export const metadata: Metadata = {
   title: "Admin · Subscribers",
   robots: { index: false, follow: false },
 };
 
+// Sending a campaign (server action on this page) batches through Resend.
+export const maxDuration = 60;
+
 export default async function AdminSubscribersPage() {
-  const subscribers = await getAdminSubscribers();
+  const { subscribers, broadcastsReady } = await getAdminSubscribers();
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Subscribers"
-        description="Emails collected from the Welcome Offer."
+        description="Emails collected from the Welcome Offer. Send announcements and offers to everyone who has not unsubscribed."
       />
 
       {!subscribers.length ? (
@@ -23,21 +27,10 @@ export default async function AdminSubscribersPage() {
           description="Welcome Offer signups will show here."
         />
       ) : (
-        <div className="space-y-3">
-          {subscribers.map((subscriber) => (
-            <article
-              key={subscriber.id}
-              className="rounded-xl border border-outline-variant/25 bg-white p-5 shadow-sm"
-            >
-              <h2 className="text-lg font-bold text-on-surface">
-                {subscriber.email}
-              </h2>
-              <p className="numeric mt-2 text-xs text-outline">
-                {new Date(subscriber.createdAt).toLocaleString("en-IN")}
-              </p>
-            </article>
-          ))}
-        </div>
+        <SubscribersTable
+          subscribers={subscribers}
+          broadcastsReady={broadcastsReady}
+        />
       )}
     </div>
   );

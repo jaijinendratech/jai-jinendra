@@ -38,6 +38,10 @@ if (isProd) {
 const nextConfig: NextConfig = {
   // Playwright and some tools use 127.0.0.1 while `next dev` binds as localhost.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // The invoice route reads the logo from disk; make sure it ships with the function.
+  outputFileTracingIncludes: {
+    "/api/orders/[id]/invoice": ["./public/brand/logo-namkeens.png"],
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "@heroui/react", "react-icons"],
     // Proxy buffers request bodies; default 10MB would truncate 10MB image

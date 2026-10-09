@@ -88,9 +88,19 @@ export default async function RootLayout({
   const headerList = await headers();
   const pathname = headerList.get("x-jj-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin");
-  const searchProducts = isAdmin ? [] : await getCachedProductSearchIndex();
-  const specialAttention = isAdmin ? [] : await getSpecialAttentionCategories();
-  const categoryLinks = isAdmin ? [] : await getStorefrontNavLinks();
+  // Signed-in areas (admin panel, customer dashboard) have their own layout;
+  // the storefront navbar/footer only belong on public pages.
+  const isAccount = pathname === "/account" || pathname.startsWith("/account/");
+  const hideStorefrontChrome = isAdmin || isAccount;
+  const searchProducts = hideStorefrontChrome
+    ? []
+    : await getCachedProductSearchIndex();
+  const specialAttention = hideStorefrontChrome
+    ? []
+    : await getSpecialAttentionCategories();
+  const categoryLinks = hideStorefrontChrome
+    ? []
+    : await getStorefrontNavLinks();
 
   const fontClasses = isAdmin
     ? jakarta.variable
@@ -107,7 +117,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <SearchParamToasts />
         </Suspense>
-        {isAdmin ? (
+        {hideStorefrontChrome ? (
           <div className="flex-1">{children}</div>
         ) : (
           <>

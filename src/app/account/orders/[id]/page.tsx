@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { orderDisplayTitle } from "@/lib/orders/display";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -98,6 +99,14 @@ export default async function AccountOrderDetailPage({
           <span aria-hidden>·</span>
           <OrderStatusChip status={order.status} />
         </p>
+        <a
+          href={`/api/orders/${order.id}/invoice`}
+          download
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+        >
+          <Download className="size-3.5" aria-hidden />
+          Download invoice
+        </a>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2">

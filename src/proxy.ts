@@ -135,6 +135,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|images/|brand/|api/webhooks).*)",
+    // api/cart does its own session lookup; skipping it saves two auth round-trips per add.
+    "/((?!_next/static|_next/image|favicon.ico|images/|brand/|api/webhooks|api/cart).*)",
   ],
 };
