@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { RequiredMark } from "@/components/shared/RequiredMark";
+import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 import { loginAdminWithPasswordAction } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/admin-config";
 import { siteConfig } from "@/data/home";
@@ -47,38 +47,11 @@ export default async function AdminLoginPage({
           </p>
         ) : null}
 
-        <form action={loginAdminWithPasswordAction} className="space-y-4">
-          <input type="hidden" name="next" value={next} />
-          <label className="block text-sm font-semibold text-on-surface">
-            Email
-            <RequiredMark />
-            <input
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              defaultValue={ADMIN_EMAIL}
-              className="mt-1.5 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm font-semibold text-on-surface">
-            Password
-            <RequiredMark />
-            <input
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="mt-1.5 w-full rounded-lg border border-outline-variant/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-            />
-          </label>
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white hover:bg-primary-container"
-          >
-            Sign in
-          </button>
-        </form>
+        <AdminLoginForm
+          action={loginAdminWithPasswordAction}
+          next={next}
+          defaultEmail={ADMIN_EMAIL}
+        />
       </div>
     </main>
   );
