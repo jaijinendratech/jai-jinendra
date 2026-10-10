@@ -28,7 +28,7 @@ export function NewsletterSection() {
       }
       setEmail("");
       toast.success("You're on the list", {
-        description: "Your ₹100 welcome offer is on its way.",
+        description: "Watch your inbox for festive drops and recipes.",
       });
     } catch (err) {
       toast.danger(

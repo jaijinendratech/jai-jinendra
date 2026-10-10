@@ -116,11 +116,6 @@ export function ProductDetailView({
 
   const shortDescription = product.description;
   const longCopy = product.longDescription ?? product.description;
-  const keyBullets = [
-    ...(product.ingredients?.slice(0, 3) ?? []),
-    product.shelfLife,
-    product.origin ? `Origin: ${product.origin}` : null,
-  ].filter(Boolean) as string[];
 
   async function addToCart(redirectToCheckout = false) {
     if (!activeVariant) return;
@@ -238,19 +233,12 @@ export function ProductDetailView({
             ) : null}
           </div>
 
-          {/* Mobile: short description + bullets */}
+          {/* Mobile: short description */}
           <div className="mt-3 md:hidden">
             <SafeHtml
               html={shortDescription}
               className="text-sm leading-6 text-on-surface-variant"
             />
-            {keyBullets.length > 0 ? (
-              <ul className="mt-2 space-y-1 text-xs text-on-surface-variant">
-                {keyBullets.map((bullet) => (
-                  <li key={bullet}>• {bullet}</li>
-                ))}
-              </ul>
-            ) : null}
           </div>
 
           {/* Desktop: full long description */}

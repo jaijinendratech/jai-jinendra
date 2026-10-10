@@ -167,6 +167,12 @@ export const subscribeBodySchema = z.object({
 
 export const offerLeadBodySchema = z.object({
   fullName: z.string().trim().min(2, "Enter your name.").max(120),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address.")
+    .max(200)
+    .transform((value) => value.toLowerCase()),
   phone: z
     .string()
     .trim()

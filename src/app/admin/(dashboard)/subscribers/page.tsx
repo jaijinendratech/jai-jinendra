@@ -18,13 +18,13 @@ export default async function AdminSubscribersPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Subscribers"
-        description="Emails collected from the Welcome Offer. Send announcements and offers to everyone who has not unsubscribed."
+        description="Emails collected from the homepage newsletter. Send announcements and offers to everyone who has not unsubscribed."
       />
 
       {!subscribers.length ? (
         <AdminEmpty
           title="No subscribers yet"
-          description="Welcome Offer signups will show here."
+          description="Newsletter signups will show here."
         />
       ) : (
         <SubscribersTable

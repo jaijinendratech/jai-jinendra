@@ -27,7 +27,7 @@ export const siteConfig = {
   city: "Kota, Rajasthan",
   social: {
     facebook: "https://www.facebook.com/jaijinendra.kota",
-    instagram: "https://www.instagram.com/jaijinendra.kota/",
+    instagram: "https://www.instagram.com/jaijinendrasweets?srtk=MnBtdDVoZDIwNWow&utm_source=qr",
   },
   announcement:
     "FREE PAN-INDIA DELIVERY ON ORDERS ABOVE ₹999 • Freshly Handcrafted & Nitrogen Packed • 100% Shuddh Shakahari (Pure Vegetarian)",
@@ -462,13 +462,13 @@ export const achievementPage: AchievementPageContent = {
 };
 
 export const newsletter = {
-  eyebrow: "Welcome Offer",
-  title: "Get ₹100 Off Your First Order.",
-  mobileTitle: "₹100 off your first order",
+  eyebrow: "Stay Connected",
+  title: "Join the Jai Jinendra Family.",
+  mobileTitle: "Join the Jai Jinendra family",
   body: "Subscribe for festive drop announcements, secret halwai recipes, and members-only weekend tasting boxes.",
   mobileBody: "Festive drops, recipes & member tasting boxes.",
-  cta: "Claim Offer",
-  mobileCta: "Claim",
+  cta: "Subscribe",
+  mobileCta: "Subscribe",
   disclaimer: "Pure indulgence only. No spam ever.",
 } as const;
 

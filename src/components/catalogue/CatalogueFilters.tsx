@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import {
   attributeFilterGroups,
   spiceFilterOptions,
@@ -37,6 +38,91 @@ export function CatalogueFilters({
   prices: PriceRangeOption[];
   activeSlug: string;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const activeCount = ["attr", "spice", "price"].filter((key) =>
+    searchParams.get(key),
+  ).length;
+
+  const panel = (
+    <FilterPanel
+      specialty={specialty}
+      products={products}
+      prices={prices}
+      activeSlug={activeSlug}
+    />
+  );
+
+  return (
+    <>
+      <aside className="sticky top-28 hidden space-y-6 rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm lg:col-span-3 lg:block">
+        {panel}
+      </aside>
+
+      {/* Mobile: filter button + bottom sheet (desktop sidebar is hidden below lg) */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full border border-primary-container bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden />
+          Filters
+          {activeCount > 0 ? (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
+              {activeCount}
+            </span>
+          ) : null}
+        </button>
+
+        {mobileOpen ? (
+          <div
+            className="fixed inset-0 z-100 flex items-end bg-black/40"
+            onClick={() => setMobileOpen(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Filters"
+              className="max-h-[85vh] w-full overflow-y-auto overscroll-contain rounded-t-2xl bg-surface-container-lowest p-5 shadow-xl"
+              onClick={(event) => {
+                event.stopPropagation();
+                // Filter options are links; close the sheet once one is chosen.
+                if ((event.target as HTMLElement).closest("a")) {
+                  setMobileOpen(false);
+                }
+              }}
+            >
+              <div className="mb-4 flex justify-end">
+                <button
+                  type="button"
+                  aria-label="Close filters"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-full p-1.5 hover:bg-surface-container-high"
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+              <div className="space-y-6">{panel}</div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+function FilterPanel({
+  specialty: allSpecialty,
+  products,
+  prices,
+  activeSlug,
+}: {
+  specialty: (CatalogueFilterOption & { href: string; group?: string | null })[];
+  products: Product[];
+  prices: PriceRangeOption[];
+  activeSlug: string;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeSub = searchParams.get("sub");
@@ -45,9 +131,16 @@ export function CatalogueFilters({
   const activePrice = searchParams.get("price");
   const attributeGroups = attributeFilterGroups(products);
   const spice = spiceFilterOptions(products);
+  // Only list the open category's own sections (e.g. Namkeen page must not
+  // show Bakery filters). Pages with no single category (festive, all) keep
+  // the full list.
+  const scoped = allSpecialty.filter(
+    (item) => item.id === activeSlug || item.id.startsWith(`${activeSlug}/`),
+  );
+  const specialty = scoped.length > 0 ? scoped : allSpecialty;
 
   return (
-    <aside className="sticky top-28 hidden space-y-6 rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm lg:col-span-3 lg:block">
+    <>
       <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-5 w-5 text-primary" aria-hidden />
@@ -217,6 +310,6 @@ export function CatalogueFilters({
           })}
         </div>
       </div>
-    </aside>
+    </>
   );
 }

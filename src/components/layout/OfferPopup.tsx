@@ -50,6 +50,7 @@ export function OfferPopup() {
   const open = useSyncExternalStore(subscribe, isOpenInSession, getServerSnapshot);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [claimed, setClaimed] = useState(false);
@@ -64,7 +65,7 @@ export function OfferPopup() {
       const response = await fetch("/api/offer-leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, phone }),
+        body: JSON.stringify({ fullName, phone, email }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -122,7 +123,7 @@ export function OfferPopup() {
             {claimed ? (
               <div className="space-y-4">
                 <p className="text-base leading-6 text-on-surface">
-                  Your welcome offer is ready. Use this code at checkout.
+                  Your welcome offer is ready. Use this code at checkout. We have also emailed it to you.
                 </p>
                 <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 text-center">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
@@ -147,7 +148,7 @@ export function OfferPopup() {
             ) : (
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <p className="text-base leading-6 text-on-surface">
-                  Share your details and claim 10% off your first order.
+                  Share your details and claim 10% off your first order. We will email you the coupon code.
                 </p>
                 <label className="block">
                   <span className="text-xs font-bold uppercase tracking-wider text-outline">
@@ -160,6 +161,22 @@ export function OfferPopup() {
                     autoComplete="name"
                     className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                     placeholder="Enter your name"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-outline">
+                    Email
+                    <RequiredMark />
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    inputMode="email"
+                    className="mt-1 w-full rounded-xl border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    placeholder="you@example.com"
                     required
                   />
                 </label>

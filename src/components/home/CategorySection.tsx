@@ -16,7 +16,7 @@ export function CategorySection({ categories }: { categories: HomeCategory[] }) 
       <div className="container-jj">
         <div className="mb-5 flex flex-col justify-between border-b border-outline-variant/30 pb-3 md:mb-10 md:flex-row md:items-end md:pb-4">
           <div>
-            <span className="label-sm font-bold uppercase tracking-widest text-primary">
+            <span className="label-sm font-bold uppercase tracking-widest text-[#EF6113]">
               Artisanal Variety
             </span>
             <h2 className="font-display mt-1 text-xl font-semibold text-on-surface md:text-[32px] md:leading-10">

@@ -776,6 +776,7 @@ export type Database = {
           id: string;
           full_name: string;
           phone: string;
+          email: string | null;
           coupon_code: string;
           source: string;
           created_at: string;
@@ -784,6 +785,7 @@ export type Database = {
           id?: string;
           full_name: string;
           phone: string;
+          email?: string | null;
           coupon_code?: string;
           source?: string;
           created_at?: string;
@@ -792,6 +794,7 @@ export type Database = {
           id?: string;
           full_name?: string;
           phone?: string;
+          email?: string | null;
           coupon_code?: string;
           source?: string;
           created_at?: string;

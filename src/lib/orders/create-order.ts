@@ -9,7 +9,10 @@ import {
   createRazorpayOrder,
   RAZORPAY_UNAVAILABLE_MESSAGE,
 } from "@/lib/payments/razorpay";
-import { sendOrderConfirmationEmail } from "@/lib/email/resend";
+import {
+  sendNewOrderAlertEmail,
+  sendOrderConfirmationEmail,
+} from "@/lib/email/resend";
 import { ensureShiprocketShipment } from "@/lib/orders/shipping";
 import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
@@ -200,6 +203,14 @@ export async function createOrder(params: {
     await confirmOrderInventory(order.id);
     queueShipment(order.id);
     await clearCart();
+    await sendNewOrderAlertEmail({
+      orderNumber: order.order_number,
+      totalPaise: totals.totalPaise,
+      paymentMethod: "cod",
+      customerName: params.address.name,
+      customerPhone: params.address.phone,
+      customerEmail: params.address.email,
+    }).catch(() => undefined);
     if (params.address.email) {
       await sendOrderConfirmationEmail({
         to: params.address.email,
@@ -303,6 +314,15 @@ export async function handleRazorpayPaymentSuccess(params: {
   if (order.user_id) {
     await clearCartForUser(order.user_id);
   }
+
+  await sendNewOrderAlertEmail({
+    orderNumber: order.order_number,
+    totalPaise: order.total_paise,
+    paymentMethod: "razorpay",
+    customerName: (order.address_snapshot as { name?: string } | null)?.name,
+    customerPhone: order.customer_phone,
+    customerEmail: order.customer_email,
+  }).catch(() => undefined);
 
   if (order.customer_email) {
     await sendOrderConfirmationEmail({

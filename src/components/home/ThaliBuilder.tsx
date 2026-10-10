@@ -80,9 +80,8 @@ function CornerFlourish({ className }: { className?: string }) {
 /**
  * Home page "Build Your Thali" widget. The plate is the real brass-thali
  * photo (public/images/thali-plate.png) with 4 slot buttons overlaid on its
- * bowls; items can be added either by browsing the category cards below (go
- * into the first open slot) or by clicking an empty bowl's "+" to search
- * the pool and place an item in that exact slot. Completing every slot
+ * bowls; clicking an empty bowl opens a picker with category tabs (and
+ * search across everything) to place an item in that exact bowl. Completing every slot
  * reveals the admin-configured offer %. Adding to cart uses the same
  * `updateItem` flow as the rest of the site, items go in at their normal
  * price (offer is a visual incentive, not a checkout-enforced discount,
@@ -110,6 +109,7 @@ export function ThaliBuilder({
   const [adding, setAdding] = useState(false);
   const [searchSlot, setSearchSlot] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pickerGroupId, setPickerGroupId] = useState<string | null>(null);
 
   const byId = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
@@ -141,23 +141,6 @@ export function ThaliBuilder({
   const isComplete = selectedIds.length === slotCount && slotCount > 0;
   const remaining = Math.max(0, slotCount - selectedIds.length);
 
-  /** Used by category-card rows: add to (or remove from) the thali, first open slot wins. */
-  function toggleFromList(productId: string) {
-    setSelected((prev) => {
-      const at = prev.indexOf(productId);
-      if (at !== -1) {
-        const next = [...prev];
-        next[at] = null;
-        return next;
-      }
-      const empty = prev.indexOf(null);
-      if (empty === -1) return prev;
-      const next = [...prev];
-      next[empty] = productId;
-      return next;
-    });
-  }
-
   /** Used by the per-slot search: place this product in this exact slot. */
   function assignToSlot(index: number, productId: string) {
     setSelected((prev) => {
@@ -182,10 +165,20 @@ export function ThaliBuilder({
     setSearchQuery("");
   }
 
+  const populatedGroups = useMemo(
+    () => groups.filter((g) => g.items.length > 0),
+    [groups],
+  );
+  const activeGroup =
+    populatedGroups.find((g) => g.group.id === pickerGroupId) ??
+    populatedGroups[0] ??
+    null;
+
   const searchResults = useMemo(() => {
     if (searchSlot === null) return [];
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return products.slice(0, 12);
+    // No query: show the chosen category. With a query: search every product.
+    if (!q) return activeGroup?.items ?? products.slice(0, 12);
     return products
       .filter((p) => {
         const blurb = itemBlurb(p);
@@ -196,7 +189,7 @@ export function ThaliBuilder({
         return haystack.includes(q);
       })
       .slice(0, 12);
-  }, [products, searchSlot, searchQuery]);
+  }, [products, searchSlot, searchQuery, activeGroup]);
 
   async function addThaliToCart() {
     setAdding(true);
@@ -333,7 +326,13 @@ export function ThaliBuilder({
                             <X className="h-4 w-4 text-white" aria-hidden />
                           </span>
                         </>
-                      ) : null}
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/90 text-white shadow-md">
+                            <Plus className="h-4 w-4" aria-hidden />
+                          </span>
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -353,110 +352,9 @@ export function ThaliBuilder({
             </div>
           )}
 
-          {/* Category picker cards, column count/width track how many cards actually
-              have items, so 1-3 cards sit centered instead of left-aligned in a fixed
-              4-col grid with an empty trailing column. */}
-          {(() => {
-            const visibleCount = groups.filter(
-              (g) => g.items.length > 0,
-            ).length;
-            const gridClass =
-              visibleCount <= 1
-                ? "max-w-xs grid-cols-1"
-                : visibleCount === 2
-                  ? "max-w-2xl grid-cols-1 sm:grid-cols-2"
-                  : visibleCount === 3
-                    ? "max-w-4xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                    : "max-w-6xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
-            return (
-              <div className={`mx-auto mt-6 grid w-full gap-3 ${gridClass}`}>
-                {groups.map(({ group, items, selectedCount }) => {
-                  if (items.length === 0) return null;
-                  const Icon = GROUP_ICONS[group.icon] ?? Candy;
-                  const visible = items;
-
-                  return (
-                    <div
-                      key={group.id}
-                      className="rounded-xl border border-outline-variant/30 bg-white p-4"
-                    >
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <Icon className="h-3.5 w-3.5" aria-hidden />
-                          </span>
-                          <span className="font-display text-sm font-bold text-on-surface">
-                            {group.label}
-                          </span>
-                        </span>
-                        <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[11px] font-bold text-on-surface-variant">
-                          {selectedCount}/{items.length}
-                        </span>
-                      </div>
-
-                      <div className="max-h-56 space-y-2 overflow-y-auto overscroll-contain pr-1">
-                        {visible.map((product) => {
-                          const isSelected = selectedIds.includes(product.id);
-                          const disabled =
-                            !isSelected && selectedIds.length >= slotCount;
-                          return (
-                            <button
-                              key={product.id}
-                              type="button"
-                              disabled={disabled}
-                              onClick={() => toggleFromList(product.id)}
-                              className={`flex w-full items-center gap-2.5 rounded-lg border p-1.5 text-left transition ${
-                                isSelected
-                                  ? "border-primary bg-primary/5"
-                                  : disabled
-                                    ? "cursor-not-allowed border-outline-variant/20 opacity-50"
-                                    : "border-transparent hover:border-outline-variant/40 hover:bg-surface-container-lowest"
-                              }`}
-                            >
-                              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md">
-                                <Image
-                                  src={product.image}
-                                  alt=""
-                                  fill
-                                  sizes="36px"
-                                  className="object-cover"
-                                />
-                              </span>
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-xs font-semibold text-on-surface">
-                                  {product.name}
-                                </span>
-                                <span className="block truncate text-[11px] text-on-surface-variant">
-                                  {itemBlurb(product)}
-                                </span>
-                              </span>
-                              <span
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${
-                                  isSelected
-                                    ? "border-primary bg-primary text-white"
-                                    : "border-outline-variant/40 text-on-surface-variant"
-                                }`}
-                              >
-                                {isSelected ? (
-                                  <Check className="h-3.5 w-3.5" aria-hidden />
-                                ) : (
-                                  <Plus className="h-3.5 w-3.5" aria-hidden />
-                                )}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
           <p className="mt-3 text-center text-[11px] italic text-on-surface-variant">
-            Click any delicacy to place it on your royal thali platter. Click a
-            filled bowl on the platter to remove it.
+            Tap an empty bowl to choose a delicacy by category. Tap a filled
+            bowl to remove it.
           </p>
 
           <button
@@ -503,7 +401,7 @@ export function ThaliBuilder({
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search delicacies for Slot ${searchSlot + 1}…`}
+                placeholder={`Search all delicacies for bowl ${searchSlot + 1}…`}
                 className="flex-1 bg-transparent text-sm outline-none"
               />
               <button
@@ -515,6 +413,49 @@ export function ThaliBuilder({
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
+
+            {populatedGroups.length > 0 ? (
+              <div
+                className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                role="tablist"
+                aria-label="Delicacy categories"
+              >
+                {populatedGroups.map(({ group, selectedCount }) => {
+                  const Icon = GROUP_ICONS[group.icon] ?? Candy;
+                  const isActive =
+                    !searchQuery.trim() && activeGroup?.group.id === group.id;
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => {
+                        setPickerGroupId(group.id);
+                        setSearchQuery("");
+                      }}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+                        isActive
+                          ? "border-primary bg-primary text-white"
+                          : "border-outline-variant/40 bg-white text-on-surface hover:border-primary"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden />
+                      {group.label}
+                      {selectedCount > 0 ? (
+                        <span
+                          className={`rounded-full px-1.5 text-[10px] ${
+                            isActive ? "bg-white/25" : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {selectedCount}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
 
             {searchResults.length > 0 ? (
               <ul className="mt-3 max-h-80 divide-y divide-outline-variant/20 overflow-y-auto">

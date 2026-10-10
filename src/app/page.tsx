@@ -250,13 +250,6 @@ export default async function HomePage() {
       </h1>
       <HeroCarousel slides={heroSlides} />
       <TrustStrip items={trustItems} />
-      <ThaliBuilder
-        products={allProducts.map(slimForThali)}
-        groupedIds={thaliGroupedIds}
-        slotCount={thaliBuilderMeta.slotCount}
-        discountPercent={thaliDiscountPercent}
-        categoryGroups={thaliGroups}
-      />
       <CategorySection categories={homeCategories} />
       <NavratriSpecials
         products={navratriPicks}
@@ -267,6 +260,13 @@ export default async function HomePage() {
               ? `/catalogue/${festiveTagSlug(festive.collectionTag)}`
               : festive.buttonHref,
         }}
+      />
+      <ThaliBuilder
+        products={allProducts.map(slimForThali)}
+        groupedIds={thaliGroupedIds}
+        slotCount={thaliBuilderMeta.slotCount}
+        discountPercent={thaliDiscountPercent}
+        categoryGroups={thaliGroups}
       />
       <FeaturedProducts products={featuredProducts} />
       <HeritageSection />

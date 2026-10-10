@@ -69,6 +69,75 @@ export async function sendOrderConfirmationEmail(params: {
   );
 }
 
+/** Delivers the welcome-offer coupon claimed through the homepage popup. */
+export async function sendOfferCouponEmail(params: {
+  to: string;
+  name: string;
+  couponCode: string;
+}) {
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const resend = getResend();
+  const name = escapeHtml(params.name);
+
+  await withRetry(() =>
+    resend.emails.send({
+      from,
+      to: params.to,
+      subject: "Your 10% off coupon from Jai Jinendra",
+      html: `
+      <h1>Namaste ${name}, welcome to Jai Jinendra!</h1>
+      <p>Here is your 10% off coupon for your first order:</p>
+      <p style="font-size:28px;font-weight:bold;letter-spacing:4px;color:#b30f2f">${escapeHtml(params.couponCode)}</p>
+      <p>Enter it at checkout to claim your discount.</p>
+      <p><a href="${getSiteUrl()}/catalogue">Start shopping</a></p>
+    `,
+    }),
+  );
+}
+
+/** Alerts the shop owner that a new order was placed. */
+export async function sendNewOrderAlertEmail(params: {
+  orderNumber: string;
+  totalPaise: number;
+  paymentMethod: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
+}) {
+  const to = getEnv("ORDER_NOTIFY_EMAIL") ?? getEnv("ADMIN_EMAIL");
+  if (!to) return;
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const resend = getResend();
+  const total = (params.totalPaise / 100).toFixed(2);
+  const line = (label: string, value?: string | null) =>
+    value ? `<p>${label}: ${escapeHtml(value)}</p>` : "";
+
+  await withRetry(() =>
+    resend.emails.send({
+      from,
+      to,
+      subject: `New order ${params.orderNumber}, ₹${total} (${params.paymentMethod.toUpperCase()})`,
+      html: `
+      <h1>New order received</h1>
+      <p>Order <strong>${escapeHtml(params.orderNumber)}</strong></p>
+      <p>Total: ₹${total} (${escapeHtml(params.paymentMethod.toUpperCase())})</p>
+      ${line("Customer", params.customerName)}
+      ${line("Phone", params.customerPhone)}
+      ${line("Email", params.customerEmail)}
+      <p><a href="${getSiteUrl()}/admin/orders">Open in admin</a></p>
+    `,
+    }),
+  );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function sendOrderStatusEmail(params: {
   to: string;
   orderNumber: string;
