@@ -71,6 +71,15 @@ function AccordionBlock({
   );
 }
 
+/**
+ * Short description for mobile: keeps the intro copy but drops the trailing
+ * ingredient / storage / origin bullet list that admin copy often appends.
+ */
+function introOnly(html: string): string {
+  const cut = html.search(/<(ul|ol)[\s>]|<p>\s*[•\-*]|(?:<br\s*\/?>|\n)\s*[•\-*]\s/i);
+  return cut > 0 ? html.slice(0, cut).trim() : html;
+}
+
 export function ProductDetailView({
   product,
   related,
@@ -114,7 +123,7 @@ export function ProductDetailView({
   const showShipping = Boolean(product.shippingTitle || product.shippingNote);
   const showFreshness = Boolean(product.shelfLife || product.origin);
 
-  const shortDescription = product.description;
+  const shortDescription = introOnly(product.description);
   const longCopy = product.longDescription ?? product.description;
 
   async function addToCart(redirectToCheckout = false) {
@@ -379,7 +388,7 @@ export function ProductDetailView({
 
           {/* Mobile: details as accordions; desktop: open cards */}
           <div className="mt-6 md:hidden">
-            {longCopy !== shortDescription ? (
+            {product.longDescription && longCopy !== product.description ? (
               <AccordionBlock title="Full Description">
                 <SafeHtml
                   html={longCopy}
