@@ -35,7 +35,7 @@ export function CategorySection({ categories }: { categories: HomeCategory[] }) 
           </div>
           <Link
             href="/catalogue"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary underline-offset-4 hover:underline md:mt-0"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#EF6113] underline-offset-4 hover:underline md:mt-0"
           >
             <span className="md:hidden">Shop Now</span>
             <span className="hidden md:inline">View full catalogue</span>{" "}
