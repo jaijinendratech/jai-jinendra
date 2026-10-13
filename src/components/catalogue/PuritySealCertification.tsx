@@ -11,37 +11,15 @@ export function PuritySealCertification({ items }: { items: CategoryUspBadge[] }
 
   return (
     <section
-      className="mb-4 overflow-hidden rounded-2xl border border-[#caa43d]/30 p-3 md:mb-10 md:p-6"
-      style={{
-        backgroundImage: "linear-gradient(135deg, #fdf8f0 0%, #f3e7cc 100%)",
-      }}
+      className="mb-4 overflow-hidden rounded-2xl p-3 md:mb-10 md:p-6"
     >
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#caa43d]/25 pb-3 md:gap-3 md:pb-4">
-        <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#caa43d]/50 bg-white text-[#b8860b] md:flex">
-          <Sparkles className="h-4 w-4" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-base font-bold text-primary md:text-xl">
-              Purity Seal Certification
-            </h2>
-            <span className="rounded-full border border-[#caa43d]/50 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#b8860b]">
-              Gourmet Standard
-            </span>
-          </div>
-          <p className="mt-0.5 hidden text-xs text-on-surface-variant md:block md:text-sm">
-            Every seal marks a quality promise we keep in our kitchen.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 md:mt-5 md:gap-4 lg:grid-cols-4">
+      <div className="-mx-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 [scrollbar-width:none] md:-mx-6 md:gap-4 md:px-6 [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
           const Icon = item.icon;
           return (
             <div
               key={item.id}
-              className="flex flex-col items-center rounded-xl border border-outline-variant/20 bg-white px-2 py-3 text-center md:px-4 md:py-5"
+              className="flex w-[calc((100%-1rem)/2.5)] shrink-0 snap-start flex-col items-center rounded-xl border border-outline-variant/20 bg-white px-2 py-3 text-center md:w-[calc((100%-2rem)/2.5)] md:px-4 md:py-5 lg:w-auto lg:flex-1 lg:basis-0"
             >
               <div
                 className="relative flex h-14 w-14 shrink-0 md:h-24 md:w-24 items-center justify-center rounded-full border-4"
