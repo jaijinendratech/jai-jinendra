@@ -30,7 +30,7 @@ export function getSiteUrl(): string {
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : "https://jaijinendra.com");
+        : "https://www.jaijinendrasweets.com");
   const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   const local = /localhost|127\.0\.0\.1/.test(withProtocol);
   const https =

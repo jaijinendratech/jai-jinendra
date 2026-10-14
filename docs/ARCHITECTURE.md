@@ -403,7 +403,7 @@ Pincode validation: India Post API or static pincode table v1.
 | Order dispatched | Tracking info (when available) |
 | (Future) Order cancelled | Refund / restock notice |
 
-From address: `EMAIL_FROM` env var (default `orders@jaijinendra.com`).
+From address: `EMAIL_FROM` env var (default `orders@jaijinendrasweets.com`).
 
 ---
 

@@ -40,7 +40,7 @@ export async function sendOrderConfirmationEmail(params: {
   discountPaise?: number;
   prepaidDiscountPaise?: number;
 }) {
-  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendrasweets.com";
   const resend = getResend();
   const total = (params.totalPaise / 100).toFixed(2);
   const coupon =
@@ -75,7 +75,7 @@ export async function sendOfferCouponEmail(params: {
   name: string;
   couponCode: string;
 }) {
-  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendrasweets.com";
   const resend = getResend();
   const name = escapeHtml(params.name);
 
@@ -106,7 +106,7 @@ export async function sendNewOrderAlertEmail(params: {
 }) {
   const to = getEnv("ORDER_NOTIFY_EMAIL") ?? getEnv("ADMIN_EMAIL");
   if (!to) return;
-  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendrasweets.com";
   const resend = getResend();
   const total = (params.totalPaise / 100).toFixed(2);
   const line = (label: string, value?: string | null) =>
@@ -143,7 +143,7 @@ export async function sendOrderStatusEmail(params: {
   orderNumber: string;
   status: string;
 }) {
-  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendrasweets.com";
   const resend = getResend();
 
   await withRetry(() =>
@@ -174,7 +174,7 @@ export async function sendBroadcast(params: {
   ctaUrl?: string | null;
   recipients: BroadcastRecipient[];
 }): Promise<{ sent: number; failed: number; errors: string[] }> {
-  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendra.com";
+  const from = getEnv("EMAIL_FROM") ?? "orders@jaijinendrasweets.com";
   const resend = getResend();
   const body = sanitizeEmailBody(params.bodyHtml);
 

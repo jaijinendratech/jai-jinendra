@@ -273,7 +273,7 @@ export async function createShiprocketShipment(params: {
     billing_pincode: params.address.pincode,
     billing_state: params.address.state,
     billing_country: "India",
-    billing_email: params.address.email || "orders@jaijinendra.com",
+    billing_email: params.address.email || "orders@jaijinendrasweets.com",
     billing_phone: phone,
     shipping_is_billing: true,
     order_items: params.items.map((item) => ({

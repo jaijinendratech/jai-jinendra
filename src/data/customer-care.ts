@@ -82,7 +82,7 @@ export const supportFaqs = [
     id: "corporate",
     question: "Can you help with corporate or wedding gifting?",
     answer:
-      "Absolutely. Visit Gift Hampers or write to our gifting desk via hello@jaijinendra.com for multi-address dispatch, embossed tins, and bulk festive trays.",
+      `Absolutely. Visit Gift Hampers or write to our gifting desk via ${siteConfig.email} for multi-address dispatch, embossed tins, and bulk festive trays.`,
   },
   {
     id: "payment",
@@ -108,7 +108,7 @@ export const termsPrivacyContent = {
   description:
     "Terms of use and privacy practices for shopping with Jai Jinendra Namkeens.",
   intro:
-    "By browsing or purchasing from jaijinendra.com you agree to our Terms & Conditions. The notes below summarise acceptable use. We collect only what we need to fulfil orders and improve your festive gifting experience.",
+    `By browsing or purchasing from ${siteConfig.url.replace(/^https?:\/\//, "")} you agree to our Terms & Conditions. The notes below summarise acceptable use. We collect only what we need to fulfil orders and improve your festive gifting experience.`,
   terms: [
     {
       id: "products",

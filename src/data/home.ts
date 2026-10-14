@@ -19,7 +19,7 @@ export const siteConfig = {
   tagline: "Artisanal Savouries & Royal Sweets",
   description:
     "Authentic Rajasthani namkeens, mithai, and festive hampers, freshly fried, nitrogen-sealed, and delivered pan-India. 100% shuddh vegetarian since 1984, Aerodrome Circle, Kota.",
-  url: "https://jaijinendra.com",
+  url: "https://www.jaijinendrasweets.com",
   phone: "+91 98288 02188",
   email: "jainamfoods.kota@gmail.com",
   fssai: "10020014002931",
