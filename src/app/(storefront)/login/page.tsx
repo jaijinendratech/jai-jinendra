@@ -4,6 +4,7 @@ import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
   title: "Sign in",
+  description: "Sign in to your Jai Jinendra account to check out and view orders.",
   robots: { index: false, follow: false },
 };
 

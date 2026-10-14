@@ -23,10 +23,19 @@ export function getSupabaseAnonKey(): string {
 }
 
 export function getSiteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000")
-  );
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const raw =
+    configured ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://jaijinendra.com");
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  const local = /localhost|127\.0\.0\.1/.test(withProtocol);
+  const https =
+    withProtocol.startsWith("http://") && !local
+      ? `https://${withProtocol.slice("http://".length)}`
+      : withProtocol;
+  return https.replace(/\/$/, "");
 }

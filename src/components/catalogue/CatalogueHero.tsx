@@ -72,7 +72,7 @@ export function CatalogueHero({
         {pills.map((pill) => {
           const Icon = icons[pill.icon];
           const href =
-            pill.id === "all" ? "/catalogue" : `/catalogue/${pill.id === "combos" ? "tea-time" : pill.id}`;
+            pill.id === "all" ? "/catalogue" : `/catalogue/${pill.id === "combos" ? "bakery" : pill.id}`;
           const active =
             activeCategory === pill.id ||
             (pill.id === "combos" && activeCategory === "tea-time") ||

@@ -8,6 +8,7 @@ import { comboBuilderMeta, comboBuilderPoolIds } from "@/data/combo-builder";
 import { getHeroCarouselContent } from "@/lib/admin/queries";
 import { getPublishedProducts } from "@/lib/catalog/queries";
 import { isSupabaseConfigured } from "@/lib/env";
+import { defaultOgImage } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: comboBuilderMeta.metaTitle,
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: comboBuilderMeta.stitchTitle,
     description: comboBuilderMeta.metaDescription,
+    images: [defaultOgImage],
   },
 };
 

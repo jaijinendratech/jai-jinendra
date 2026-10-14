@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { requireCustomer, getProfile } from "@/lib/auth";
 import { AccountNav } from "@/components/account/AccountNav";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AccountLayout({
   children,

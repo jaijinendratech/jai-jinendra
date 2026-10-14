@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Phone, Clock, ExternalLink } from "lucide-react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { siteConfig } from "@/data/home";
 import { outletsPage } from "@/data/promise-pages";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: outletsPage.metaTitle,
@@ -26,8 +28,34 @@ function displayPhone(phone: string) {
 }
 
 export default function OutletsPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": outletsPage.outlets.map((outlet) => ({
+      "@type": "Store",
+      name: `${siteConfig.name}, ${outlet.name}`,
+      telephone: outlet.phone,
+      url: absoluteUrl("/outlets"),
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: outlet.address,
+        addressLocality: "Kota",
+        addressRegion: "Rajasthan",
+        addressCountry: "IN",
+      },
+      parentOrganization: {
+        "@type": "Organization",
+        name: siteConfig.name,
+        url: absoluteUrl("/"),
+      },
+    })),
+  };
+
   return (
     <main className="container-jj py-6 md:py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

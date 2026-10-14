@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
 import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
 import { siteConfig } from "@/data/home";
+import { getSiteUrl } from "@/lib/env";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -23,8 +24,15 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: `${siteConfig.name} | ${siteConfig.tagline}`,
     template: `%s | ${siteConfig.name}`,
@@ -44,18 +52,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: siteConfig.url,
+    url: "/",
     siteName: siteConfig.name,
     title: `${siteConfig.name} | ${siteConfig.tagline}`,
     description: siteConfig.description,
-    images: [
-      {
-        url: siteConfig.brandLogo.src,
-        width: siteConfig.brandLogo.width,
-        height: siteConfig.brandLogo.height,
-        alt: siteConfig.brandLogo.alt,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -66,9 +66,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  alternates: {
-    canonical: "/",
-  },
+  ...(googleVerification
+    ? { verification: { google: googleVerification } }
+    : {}),
   icons: {
     icon: siteConfig.logoMark.src,
     apple: siteConfig.logoMark.src,

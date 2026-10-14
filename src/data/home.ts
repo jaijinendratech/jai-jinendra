@@ -106,7 +106,7 @@ export const categories: Category[] = [
     title: "Namkeens & Farsan",
     mobileTitle: "Namkeens",
     subtitle: "18 Varieties",
-    href: "/catalogue/namkeens",
+    href: "/catalogue/namkeen",
     image: images.cat0,
     imageAlt:
       "Golden crispy Ratlami sev and Rajasthani spicy bhujia overflowing from an earthenware katori",
@@ -494,6 +494,9 @@ export const footerColumns: FooterColumn[] = [
       { label: "About us", href: "/about" },
       { label: "Our Outlets", href: "/outlets" },
       { label: "Contact us", href: "/contact" },
+      { label: "Heritage", href: "/heritage" },
+      { label: "Support", href: "/support" },
+      { label: "Shipping & Returns", href: "/shipping-returns" },
       { label: "Terms & Conditions", href: "/terms" },
       { label: "Refund & Return Policy", href: "/refund-return-policy" },
     ],

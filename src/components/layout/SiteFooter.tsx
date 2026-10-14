@@ -54,9 +54,9 @@ function FooterAccordionColumn({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <h3 className="font-display text-base font-semibold text-on-surface md:text-lg">
+        <p className="font-display text-base font-semibold text-on-surface md:text-lg">
           {title}
-        </h3>
+        </p>
         <ChevronDown
           className={`h-4 w-4 text-on-surface-variant transition md:hidden ${open ? "rotate-180" : ""}`}
           aria-hidden

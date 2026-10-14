@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // import { AchievementMediaSection } from "@/components/home/AchievementMediaSection";
 import { PRODUCT_PLACEHOLDER_IMAGE } from "@/lib/catalog/placeholder";
 import { CategorySection } from "@/components/home/CategorySection";
@@ -36,7 +37,13 @@ import {
   festiveTagSlug,
   parseFestiveSpecial,
 } from "@/lib/catalog/festive";
+import { absoluteUrl } from "@/lib/seo";
+import { getSiteUrl } from "@/lib/env";
 import type { Product } from "@/types/catalog";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 /**
  * ThaliBuilder is a client component, so every prop is serialised into the
@@ -192,29 +199,32 @@ export default async function HomePage() {
       };
     });
 
+  const siteUrl = getSiteUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "Organization",
+        "@type": ["Organization", "Bakery"],
         name: siteConfig.name,
-        url: siteConfig.url,
-        logo: `${siteConfig.url}${siteConfig.logo.src}`,
+        url: siteUrl,
+        logo: absoluteUrl(siteConfig.logo.src),
         foundingDate: String(siteConfig.founded),
         email: siteConfig.email,
         telephone: siteConfig.phone,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Aerodrome Circle",
+          addressLocality: "Kota",
+          addressRegion: "Rajasthan",
+          addressCountry: "IN",
+        },
         sameAs: [siteConfig.social.instagram, siteConfig.social.facebook],
       },
       {
         "@type": "WebSite",
         name: siteConfig.name,
-        url: siteConfig.url,
+        url: siteUrl,
         description: siteConfig.description,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${siteConfig.url}/?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
       },
       {
         "@type": "ItemList",
@@ -222,18 +232,8 @@ export default async function HomePage() {
         itemListElement: featuredProducts.map((product, index) => ({
           "@type": "ListItem",
           position: index + 1,
-          item: {
-            "@type": "Product",
-            name: product.name,
-            description: product.description,
-            image: `${siteConfig.url}${product.image}`,
-            offers: {
-              "@type": "Offer",
-              priceCurrency: "INR",
-              price: product.price,
-              availability: "https://schema.org/InStock",
-            },
-          },
+          url: `${siteUrl}/products/${product.slug}`,
+          name: product.name,
         })),
       },
     ],

@@ -3,6 +3,7 @@ import { ExperienceCategoryView } from "@/components/experience/ExperienceCatego
 import { sweetsPage } from "@/data/experience-pages";
 import { getHeroCarouselContent } from "@/lib/admin/queries";
 import { getProductsByCategory } from "@/lib/catalog/queries";
+import { defaultOgImage } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: sweetsPage.metaTitle,
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: sweetsPage.stitchTitle,
     description: sweetsPage.metaDescription,
+    images: [defaultOgImage],
   },
 };
 

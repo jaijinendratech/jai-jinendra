@@ -3,6 +3,7 @@ import { CataloguePageView } from "@/components/catalogue/CataloguePageView";
 import { catalogueMeta } from "@/data/catalogue";
 import { getCatalogueOverview } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
+import { defaultOgImage } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: `Full Product Catalogue | ${siteConfig.name}`,
     description: catalogueMeta.description,
-    url: `${siteConfig.url}/catalogue`,
+    url: "/catalogue",
+    images: [defaultOgImage],
   },
 };
 

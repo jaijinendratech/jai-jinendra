@@ -65,6 +65,24 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    const catalogueAliases: [string, string][] = [
+      ["mithai", "sweets"],
+      ["namkeens", "namkeen"],
+      ["gifts", "gifting"],
+      ["hampers", "gifting"],
+      ["tea-time", "bakery"],
+      ["tea-time-bites", "bakery"],
+      ["snacks", "bakery"],
+      ["dry-cakes", "bakery"],
+      ["cookies", "bakery"],
+    ];
+    return catalogueAliases.map(([from, to]) => ({
+      source: `/catalogue/${from}`,
+      destination: `/catalogue/${to}`,
+      permanent: true,
+    }));
+  },
   async headers() {
     // Static public assets have stable filenames, so cache for a day and
     // revalidate in the background (default for /public is max-age=0).

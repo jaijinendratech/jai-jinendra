@@ -19,6 +19,7 @@ import {
   dbSlugToCategoryId,
   GAJAK_LISTING_SLUG,
   GAJAK_LISTING_TITLE,
+  preferredCataloguePath,
   resolveCategorySlug,
   STOREFRONT_CATALOGUE_SECTIONS,
 } from "@/lib/catalog/aliases";
@@ -76,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description: `Shop ${title} from ${siteConfig.name}. ${catalogueMeta.description}`,
-    alternates: { canonical: `/catalogue/${raw}` },
+    alternates: { canonical: preferredCataloguePath(resolved) },
   };
 }
 

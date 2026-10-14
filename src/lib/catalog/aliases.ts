@@ -127,6 +127,12 @@ export function dbSlugToCategoryId(dbSlug: string): CategoryId {
   return map[dbSlug] ?? "namkeen";
 }
 
+/** Preferred catalogue URL for a resolved category slug. Aliases canonicalize here. */
+export function preferredCataloguePath(resolvedSlug: string): string {
+  const segment = DB_TO_PREFERRED_URL[resolvedSlug] ?? resolvedSlug;
+  return `/catalogue/${segment}`;
+}
+
 export function categoryHref(dbSlug: string): string {
   const segment = DB_TO_PREFERRED_URL[dbSlug] ?? dbSlug;
   if (segment === "combos") return "/combos";

@@ -6,6 +6,7 @@ import type {
   ExperiencePageConfig,
   ExperienceSlide,
 } from "@/data/experience-pages";
+import { categoryHref } from "@/lib/catalog/aliases";
 import type { Product } from "@/types/catalog";
 
 export function ExperienceCategoryView({
@@ -48,13 +49,12 @@ export function ExperienceCategoryView({
                 <span className="md:hidden">{config.eyebrow}</span>
                 <span className="hidden md:inline">Curated selection</span>
               </p>
-              <h2 className="font-display mt-1 text-xl font-semibold text-on-surface md:text-3xl">
-                <span className="md:hidden">{config.h1}</span>
-                <span className="hidden md:inline">Shop this collection</span>
-              </h2>
+              <h1 className="font-display mt-1 text-xl font-semibold text-on-surface md:text-3xl">
+                {config.h1}
+              </h1>
             </div>
             <Link
-              href={`/catalogue/${config.category === "mithai" ? "mithai" : config.category === "gifts" ? "gifts" : config.category}`}
+              href={categoryHref(config.category)}
               className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
               <span className="md:hidden">Full catalogue</span>

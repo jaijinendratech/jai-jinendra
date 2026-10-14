@@ -177,7 +177,13 @@ export function ComboBuilder({ products }: { products: Product[] }) {
 
   return (
     <main className="container-jj py-8 md:py-10">
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <h1 className="font-display text-3xl font-semibold text-on-surface md:text-4xl">
+        {comboBuilderMeta.heroTitle}
+      </h1>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant md:text-base">
+        {comboBuilderMeta.metaDescription}
+      </p>
+      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left column */}
         <div className="space-y-8 lg:col-span-8">
           {/* Box size selection */}

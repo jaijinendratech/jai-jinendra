@@ -78,7 +78,7 @@ export const kachorisPage: ExperiencePageConfig = {
     "Multilayer desi-ghee dough, slow-roasted moong dal, and Hathras hing. Our khasta kachoris and hot snacks arrive kitchen-fresh, ready for chai, thalis, and festive spreads.",
   category: "kachoris",
   primaryCta: { label: "Shop Hot Snacks", href: "#kachori-grid" },
-  secondaryCta: { label: "Pair with Namkeens", href: "/catalogue/namkeens" },
+  secondaryCta: { label: "Pair with Namkeens", href: "/catalogue/namkeen" },
   highlights: [
     {
       title: "Flaky Khasta Shells",

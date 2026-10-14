@@ -51,6 +51,11 @@ export function CataloguePageView({
           },
         ]}
       />
+      {categoryTitle ? null : (
+        <h1 className="font-display mt-4 text-2xl font-semibold text-on-surface md:text-4xl">
+          All Authentic Namkeens & Delicacies
+        </h1>
+      )}
 
       {uspBadges ? <PuritySealCertification items={uspBadges} /> : null}
 

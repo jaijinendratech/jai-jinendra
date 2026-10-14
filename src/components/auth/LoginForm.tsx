@@ -173,9 +173,9 @@ export function LoginForm({
       </Modal.Backdrop>
       <Card className="w-full max-w-md border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
         <Card.Header className="flex flex-col items-start gap-2 px-8 pt-8">
-          <Card.Title className="font-display text-2xl font-semibold text-on-surface">
+          <h1 className="font-display text-2xl font-semibold text-on-surface">
             {creating ? "Create account" : "Sign in"}
-          </Card.Title>
+          </h1>
           <Card.Description className="text-sm text-on-surface-variant">
             Account required before checkout.
           </Card.Description>

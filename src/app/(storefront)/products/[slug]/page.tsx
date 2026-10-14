@@ -8,6 +8,7 @@ import {
 import { categoryHref, normalizeCategoryRef } from "@/lib/catalog/aliases";
 import { categories, siteConfig } from "@/data/home";
 import { isSupabaseConfigured } from "@/lib/env";
+import { absoluteUrl, plainText, productInStock } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -33,7 +34,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product" };
 
   const title = product.seoTitle ?? product.name;
-  const description = product.seoDescription ?? product.description;
+  const description = plainText(
+    product.seoDescription ?? product.description,
+    160,
+  );
 
   return {
     title,
@@ -42,8 +46,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${title} | ${siteConfig.name}`,
       description,
-      url: `${siteConfig.url}/products/${product.slug}`,
-      images: [{ url: product.image, alt: product.imageAlt ?? product.name }],
+      url: absoluteUrl(`/products/${product.slug}`),
+      images: [
+        {
+          url: absoluteUrl(product.image),
+          alt: product.imageAlt ?? product.name,
+        },
+      ],
     },
   };
 }
@@ -62,20 +71,42 @@ export default async function ProductPage({ params }: Props) {
   const categoryLabel = categoryMeta?.title ?? categoryRef.title ?? "Catalogue";
   const related = await getRelatedProducts(product);
 
+  const pageUrl = absoluteUrl(`/products/${product.slug}`);
+  const sku = product.variants.find((variant) => variant.sku)?.sku;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.longDescription ?? product.description,
-    image: `${siteConfig.url}${product.image}`,
-    brand: { "@type": "Brand", name: siteConfig.name },
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "INR",
-      price: product.price,
-      availability: "https://schema.org/InStock",
-      url: `${siteConfig.url}/products/${product.slug}`,
-    },
+    "@graph": [
+      {
+        "@type": "Product",
+        name: product.name,
+        description: plainText(product.longDescription ?? product.description, 5000),
+        image: [absoluteUrl(product.image)],
+        sku,
+        brand: { "@type": "Brand", name: siteConfig.name },
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "INR",
+          price: product.price,
+          availability: productInStock(product.variants)
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          url: pageUrl,
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: categoryLabel,
+            item: absoluteUrl(href),
+          },
+          { "@type": "ListItem", position: 3, name: product.name, item: pageUrl },
+        ],
+      },
+    ],
   };
 
   return (
