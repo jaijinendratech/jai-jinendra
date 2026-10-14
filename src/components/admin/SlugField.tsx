@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LuPencil, LuLock } from "react-icons/lu";
+import { Pencil, Lock } from "lucide-react";
 import { fieldClassName, labelClassName } from "@/components/admin/ui";
 import { slugify } from "@/lib/admin/slug";
 
@@ -33,11 +33,11 @@ export function SlugField({
         >
           {manual ? (
             <>
-              <LuLock className="h-3 w-3" /> Use auto
+              <Lock className="h-3 w-3" /> Use auto
             </>
           ) : (
             <>
-              <LuPencil className="h-3 w-3" /> Edit
+              <Pencil className="h-3 w-3" /> Edit
             </>
           )}
         </button>

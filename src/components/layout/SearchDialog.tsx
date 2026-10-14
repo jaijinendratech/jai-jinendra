@@ -8,7 +8,26 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatINR } from "@/lib/format";
 import type { SearchProductHit } from "@/lib/catalog/cached";
 
-export function SearchDialog({ products }: { products: SearchProductHit[] }) {
+let searchIndex: Promise<SearchProductHit[]> | null = null;
+
+function loadSearchIndex(): Promise<SearchProductHit[]> {
+  searchIndex ??= fetch("/api/search-index")
+    .then((res) => {
+      if (!res.ok) throw new Error(`Search index ${res.status}`);
+      return res.json() as Promise<SearchProductHit[]>;
+    })
+    .catch((error: unknown) => {
+      searchIndex = null;
+      throw error;
+    });
+  return searchIndex;
+}
+
+function prefetchSearchIndex() {
+  loadSearchIndex().catch(() => {});
+}
+
+export function SearchDialog() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -16,31 +35,45 @@ export function SearchDialog({ products }: { products: SearchProductHit[] }) {
       <button
         type="button"
         aria-label="Search catalog"
+        onPointerEnter={prefetchSearchIndex}
+        onFocus={prefetchSearchIndex}
         onClick={() => setOpen(true)}
         className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-surface-container-high hover:text-primary"
       >
         <Search className="h-5 w-5" />
       </button>
 
-      {open ? <SearchPanel products={products} onClose={() => setOpen(false)} /> : null}
+      {open ? <SearchPanel onClose={() => setOpen(false)} /> : null}
     </>
   );
 }
 
-function SearchPanel({
-  products,
-  onClose,
-}: {
-  products: SearchProductHit[];
-  onClose: () => void;
-}) {
+function SearchPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
+  const [products, setProducts] = useState<SearchProductHit[] | null>(null);
+  const [failed, setFailed] = useState(false);
   const debouncedQuery = useDebouncedValue(query, 250);
-  const searching = query.trim().length > 0 && query !== debouncedQuery;
+  const hasQuery = query.trim().length > 0;
+  const searching =
+    hasQuery && (query !== debouncedQuery || (products === null && !failed));
+
+  useEffect(() => {
+    let active = true;
+    loadSearchIndex()
+      .then((index) => {
+        if (active) setProducts(index);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const catalog = useMemo(
     () =>
-      products.map((product) => ({
+      (products ?? []).map((product) => ({
         product,
         name: product.name.toLowerCase(),
         description: product.description.toLowerCase(),
@@ -124,7 +157,11 @@ function SearchPanel({
               </li>
             ))}
           </ul>
-        ) : deferred.q ? (
+        ) : failed && hasQuery ? (
+          <p className="mt-3 text-sm text-on-surface-variant">
+            Search is unavailable right now. Please try again.
+          </p>
+        ) : deferred.q && products !== null ? (
           <p className="mt-3 text-sm text-on-surface-variant">No products found.</p>
         ) : null}
       </div>

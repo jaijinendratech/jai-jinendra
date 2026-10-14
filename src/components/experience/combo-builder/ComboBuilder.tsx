@@ -319,7 +319,7 @@ export function ComboBuilder({ products }: { products: Product[] }) {
                       src={product.image}
                       alt={product.imageAlt ?? product.name}
                       fill
-                      priority={index < 4}
+                      preload={index < 4}
                       loading={index < 4 ? "eager" : "lazy"}
                       sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -5,14 +5,14 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
-  LuBold,
-  LuItalic,
-  LuHighlighter,
-  LuList,
-  LuListOrdered,
-  LuUndo2,
-  LuRedo2,
-} from "react-icons/lu";
+  Bold,
+  Italic,
+  Highlighter,
+  List,
+  ListOrdered,
+  Undo2,
+  Redo2,
+} from "lucide-react";
 import { labelClassName } from "@/components/admin/ui";
 import { cn } from "@/lib/cn";
 
@@ -83,47 +83,47 @@ export function RichTextEditor({
             active={editor?.isActive("bold")}
             onClick={() => editor?.chain().focus().toggleBold().run()}
           >
-            <LuBold className="h-4 w-4" />
+            <Bold className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Italic"
             active={editor?.isActive("italic")}
             onClick={() => editor?.chain().focus().toggleItalic().run()}
           >
-            <LuItalic className="h-4 w-4" />
+            <Italic className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Highlight"
             active={editor?.isActive("highlight")}
             onClick={() => editor?.chain().focus().toggleHighlight().run()}
           >
-            <LuHighlighter className="h-4 w-4" />
+            <Highlighter className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Bullet list"
             active={editor?.isActive("bulletList")}
             onClick={() => editor?.chain().focus().toggleBulletList().run()}
           >
-            <LuList className="h-4 w-4" />
+            <List className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Numbered list"
             active={editor?.isActive("orderedList")}
             onClick={() => editor?.chain().focus().toggleOrderedList().run()}
           >
-            <LuListOrdered className="h-4 w-4" />
+            <ListOrdered className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Undo"
             onClick={() => editor?.chain().focus().undo().run()}
           >
-            <LuUndo2 className="h-4 w-4" />
+            <Undo2 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             label="Redo"
             onClick={() => editor?.chain().focus().redo().run()}
           >
-            <LuRedo2 className="h-4 w-4" />
+            <Redo2 className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <EditorContent editor={editor} />

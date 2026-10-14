@@ -1081,6 +1081,26 @@ export type Database = {
         Args: Record<string, never>;
         Returns: Json;
       };
+      admin_order_status_counts: {
+        Args: Record<string, never>;
+        Returns: { status: string; order_count: number }[];
+      };
+      admin_top_products: {
+        Args: { p_limit?: number };
+        Returns: { name: string; sold: number; revenue_paise: number }[];
+      };
+      admin_order_daily_series: {
+        Args: { p_since: string };
+        Returns: { day: string; order_count: number; revenue_paise: number }[];
+      };
+      admin_customer_order_stats: {
+        Args: Record<string, never>;
+        Returns: {
+          customer_key: string;
+          order_count: number;
+          spent_paise: number;
+        }[];
+      };
       redeem_coupon: {
         Args: {
           p_coupon_id: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import type { AdminOrderListItem } from "@/lib/admin/queries";
 import {
@@ -9,10 +10,7 @@ import {
 } from "@/lib/admin/actions";
 import { AdminTableShell, StatusBadge } from "@/components/admin/ui";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
-import {
-  AdminTablePagination,
-  useAdminTablePagination,
-} from "@/components/admin/AdminTablePagination";
+import { AdminTablePagination } from "@/components/admin/AdminTablePagination";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
@@ -21,15 +19,34 @@ import {
 } from "@/lib/admin/status";
 import type { OrderStatus, PaymentStatus } from "@/types/database";
 
+/** Rows arrive already filtered and paginated by the server (`?page=`). */
 export function OrdersTable({
   orders,
   supabase,
+  page,
+  pageSize,
+  total,
 }: {
   orders: AdminOrderListItem[];
   supabase: boolean;
+  page: number;
+  pageSize: number;
+  total: number;
 }) {
-  const { pageItems, page, setPage, totalPages, total, from, to } =
-    useAdminTablePagination(orders);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+
+  function setPage(next: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next <= 1) params.delete("page");
+    else params.set("page", String(next));
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
 
   return (
     <>
@@ -46,7 +63,7 @@ export function OrdersTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
-            {pageItems.map((order) => (
+            {orders.map((order) => (
               <tr key={order.dbId} className="hover:bg-surface-container-low/50">
                 <td className="px-4 py-3">
                   <Link

@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
     "/api/orders/[id]/invoice": ["./public/brand/logo-namkeens.png"],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "@heroui/react", "react-icons"],
+    optimizePackageImports: ["lucide-react", "@heroui/react"],
     // Proxy buffers request bodies; default 10MB would truncate 10MB image
     // uploads (+ multipart overhead) to /api/admin/upload.
     proxyClientMaxBodySize: "11mb",

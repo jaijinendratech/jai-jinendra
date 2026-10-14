@@ -1,35 +1,35 @@
 "use client";
 
-import type { IconType } from "react-icons";
+import type { LucideIcon } from "lucide-react";
 import {
-  LuArrowLeft,
-  LuCheck,
-  LuCopy,
-  LuEye,
-  LuEyeOff,
-  LuPencil,
-  LuPlus,
-  LuRefreshCw,
-  LuSave,
-  LuTrash2,
-  LuTruck,
-  LuX,
-} from "react-icons/lu";
+  ArrowLeft,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+  Truck,
+  X,
+} from "lucide-react";
 
 export const adminIconMap = {
-  plus: LuPlus,
-  save: LuSave,
-  x: LuX,
-  check: LuCheck,
-  refresh: LuRefreshCw,
-  "arrow-left": LuArrowLeft,
-  trash: LuTrash2,
-  pencil: LuPencil,
-  copy: LuCopy,
-  eye: LuEye,
-  "eye-off": LuEyeOff,
-  truck: LuTruck,
-} as const satisfies Record<string, IconType>;
+  plus: Plus,
+  save: Save,
+  x: X,
+  check: Check,
+  refresh: RefreshCw,
+  "arrow-left": ArrowLeft,
+  trash: Trash2,
+  pencil: Pencil,
+  copy: Copy,
+  eye: Eye,
+  "eye-off": EyeOff,
+  truck: Truck,
+} as const satisfies Record<string, LucideIcon>;
 
 export type AdminIconName = keyof typeof adminIconMap;
 

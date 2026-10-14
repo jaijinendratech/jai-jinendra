@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { celebrationBanner } from "@/data/home";
@@ -79,9 +80,16 @@ export function CelebrationBanner({
   return (
     <section
       id="hampers"
-      className="relative overflow-hidden border-y border-primary-container bg-cover bg-center py-10 text-white md:py-24"
-      style={{ backgroundImage: `url("${celebrationBanner.backgroundImage}")` }}
+      className="relative overflow-hidden border-y border-primary-container py-10 text-white md:py-24"
     >
+      <Image
+        src={celebrationBanner.backgroundImage}
+        alt=""
+        aria-hidden
+        fill
+        sizes="100vw"
+        className="object-cover object-center"
+      />
       <div className="absolute inset-0 bg-primary/75" />
       <div className="container-jj relative z-10 max-w-3xl text-center md:text-left">
         {hasSpecial ? (

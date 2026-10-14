@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { navLinks, siteConfig } from "@/data/home";
 import { CartBadge } from "@/components/cart/CartBadge";
 import { SearchDialog } from "@/components/layout/SearchDialog";
-import type { SearchProductHit } from "@/lib/catalog/cached";
 import type { SpecialAttentionCategory } from "@/lib/catalog/queries";
 import { resolveCategorySlug } from "@/lib/catalog/aliases";
 
@@ -29,11 +28,9 @@ function isActiveHref(pathname: string, href: string): boolean {
 }
 
 export function SiteHeader({
-  searchProducts = [],
   specialAttention = [],
   categoryLinks = [],
 }: {
-  searchProducts?: SearchProductHit[];
   specialAttention?: SpecialAttentionCategory[];
   categoryLinks?: { label: string; href: string; special?: boolean }[];
 }) {
@@ -98,7 +95,7 @@ export function SiteHeader({
                 pill ? "h-8 md:h-10" : "h-9 md:h-14"
               }`}
               sizes="(max-width: 768px) 5rem, 7rem"
-              priority
+              preload
             />
             <span className="sr-only">{siteConfig.name}</span>
           </Link>
@@ -138,7 +135,7 @@ export function SiteHeader({
           </nav>
 
           <div className="flex items-center gap-1.5 md:gap-3">
-            <SearchDialog products={searchProducts} />
+            <SearchDialog />
             <Link
               href="/account"
               aria-label="Account"

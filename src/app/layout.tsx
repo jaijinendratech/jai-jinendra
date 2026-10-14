@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
-import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { OfferPopupLazy } from "@/components/layout/OfferPopupLazy";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
 import { AppToastProvider } from "@/components/shared/AppToastProvider";
 import { SearchParamToasts } from "@/components/shared/SearchParamToasts";
-import { getCachedProductSearchIndex } from "@/lib/catalog/cached";
-import { getSpecialAttentionCategories, getStorefrontNavLinks } from "@/lib/catalog/queries";
 import { siteConfig } from "@/data/home";
 import "./globals.css";
 
@@ -82,56 +75,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+/**
+ * Storefront chrome (header/footer) lives in `(storefront)/layout.tsx`; admin
+ * and account routes sit outside that group. Keep this layout free of request
+ * APIs (headers/cookies) or every page becomes dynamic and uncacheable.
+ */
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const headerList = await headers();
-  const pathname = headerList.get("x-jj-pathname") ?? "";
-  const isAdmin = pathname.startsWith("/admin");
-  // Signed-in areas (admin panel, customer dashboard) have their own layout;
-  // the storefront navbar/footer only belong on public pages.
-  const isAccount = pathname === "/account" || pathname.startsWith("/account/");
-  const hideStorefrontChrome = isAdmin || isAccount;
-  const searchProducts = hideStorefrontChrome
-    ? []
-    : await getCachedProductSearchIndex();
-  const specialAttention = hideStorefrontChrome
-    ? []
-    : await getSpecialAttentionCategories();
-  const categoryLinks = hideStorefrontChrome
-    ? []
-    : await getStorefrontNavLinks();
-
-  const fontClasses = isAdmin
-    ? jakarta.variable
-    : `${playfair.variable} ${jakarta.variable}`;
-
   return (
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${fontClasses} h-full scroll-smooth`}
+      className={`${playfair.variable} ${jakarta.variable} h-full scroll-smooth`}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-on-surface antialiased">
         <AppToastProvider />
         <Suspense fallback={null}>
           <SearchParamToasts />
         </Suspense>
-        {hideStorefrontChrome ? (
-          <div className="flex-1">{children}</div>
-        ) : (
-          <>
-            <OfferPopupLazy />
-            <AnnouncementBar />
-            <SiteHeader
-              searchProducts={searchProducts}
-              specialAttention={specialAttention}
-              categoryLinks={categoryLinks}
-            />
-            <div className="flex-1">{children}</div>
-            <SiteFooter categoryLinks={categoryLinks} />
-          </>
-        )}
+        {children}
         <Analytics />
       </body>
     </html>

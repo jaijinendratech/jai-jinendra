@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { LuImagePlus, LuTrash2, LuStar, LuGripVertical } from "react-icons/lu";
+import {
+  ImagePlus,
+  Trash2,
+  Star,
+  GripVertical,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   fieldClassName,
@@ -119,7 +124,7 @@ export function MediaUploader({
             uploadFiles(e.dataTransfer.files);
           }}
         >
-          <LuImagePlus className="mx-auto h-8 w-8 text-primary" aria-hidden />
+          <ImagePlus className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mt-2 text-sm font-semibold text-on-surface">
             Drag & drop images here
           </p>
@@ -152,7 +157,7 @@ export function MediaUploader({
               key={`${item.path}-${index}`}
               className="flex items-center gap-2 rounded-lg border border-outline-variant/25 bg-white p-2"
             >
-              <LuGripVertical
+              <GripVertical
                 className="h-4 w-4 shrink-0 text-outline"
                 aria-hidden
               />
@@ -183,7 +188,7 @@ export function MediaUploader({
                   setAll(next);
                 }}
               >
-                <LuStar className="h-4 w-4" />
+                <Star className="h-4 w-4" />
               </button>
               <button
                 type="button"
@@ -191,7 +196,7 @@ export function MediaUploader({
                 aria-label="Remove"
                 onClick={() => setAll(items.filter((_, i) => i !== index))}
               >
-                <LuTrash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </li>
           ))}

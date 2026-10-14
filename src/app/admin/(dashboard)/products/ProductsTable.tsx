@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "@heroui/react";
@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { LuGripVertical } from "react-icons/lu";
+import { GripVertical } from "lucide-react";
 import { formatINR } from "@/lib/format";
 import type { AdminProductListItem } from "@/lib/admin/queries";
 import {
@@ -68,10 +68,12 @@ export function ProductsTable({
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("custom");
   const [modal, setModal] = useState<ProductModalState>(null);
+  const [syncedProducts, setSyncedProducts] = useState(products);
 
-  useEffect(() => {
+  if (syncedProducts !== products) {
+    setSyncedProducts(products);
     setOrdered(products);
-  }, [products]);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -328,7 +330,7 @@ function SortableProductRow({
             {...attributes}
             {...listeners}
           >
-            <LuGripVertical className="h-4 w-4" aria-hidden />
+            <GripVertical className="h-4 w-4" aria-hidden />
           </button>
           <SortPositionInput
             product={product}
@@ -425,10 +427,12 @@ function SortPositionInput({
   onCommit: (id: string, position: number) => void;
 }) {
   const [value, setValue] = useState(String(product.sortOrder));
+  const [syncedSortOrder, setSyncedSortOrder] = useState(product.sortOrder);
 
-  useEffect(() => {
+  if (syncedSortOrder !== product.sortOrder) {
+    setSyncedSortOrder(product.sortOrder);
     setValue(String(product.sortOrder));
-  }, [product.sortOrder]);
+  }
 
   function commit() {
     const next = Number(value);

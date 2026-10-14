@@ -25,7 +25,7 @@ import {
 import { ComboCardActions } from "@/components/admin/ComboCardActions";
 import { MediaUploader } from "@/components/admin/MediaUploader";
 import { AdminModal } from "@/components/admin/AdminModal";
-import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { LazyRichTextEditor } from "@/components/admin/LazyRichTextEditor";
 import {
   AdminStatusSelect,
   FEATURED_OPTIONS,
@@ -90,7 +90,7 @@ function ComboFormFields({
           />
         </label>
         <AdminFieldFull>
-          <RichTextEditor
+          <LazyRichTextEditor
             name="description"
             label="Description"
             defaultValue={combo?.description ?? ""}

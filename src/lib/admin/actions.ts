@@ -36,7 +36,7 @@ import { isNextRedirectError } from "@/lib/admin/is-redirect-error";
 import { sanitizeAdminHtml } from "@/lib/sanitize-html";
 import { isSyntheticPhoneEmail } from "@/lib/customers";
 import { normalizeCouponCode } from "@/lib/coupons";
-import type { CouponType } from "@/types/database";
+import type { CouponType, Database } from "@/types/database";
 
 function revalidateAdmin(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
@@ -88,6 +88,12 @@ async function syncProductAttributes(
   }
 
   const kept = new Set<string>();
+  // Keyed by attribute so a repeated label cannot put the same conflict key
+  // twice in one upsert (Postgres rejects that).
+  const valueRows = new Map<
+    string,
+    Database["public"]["Tables"]["product_attribute_values"]["Insert"]
+  >();
   const detailSchema = await productDetailSchemaReady(admin);
 
   for (const item of parsed.data) {
@@ -151,19 +157,22 @@ async function syncProductAttributes(
       if (flagError) throw new Error(flagError.message);
     }
 
-    const { error: valueError } = await admin.from("product_attribute_values").upsert(
-      {
-        product_id: productId,
-        attribute_id: attributeId,
-        value_boolean: dataType === "boolean" ? Boolean(item.valueBoolean) : null,
-        value_text: dataType === "select" ? item.valueText ?? null : null,
-        value_number: null,
-        value_json: null,
-      },
-      { onConflict: "product_id,attribute_id" },
-    );
-    if (valueError) throw new Error(valueError.message);
+    valueRows.set(attributeId, {
+      product_id: productId,
+      attribute_id: attributeId,
+      value_boolean: dataType === "boolean" ? Boolean(item.valueBoolean) : null,
+      value_text: dataType === "select" ? item.valueText ?? null : null,
+      value_number: null,
+      value_json: null,
+    });
     kept.add(attributeId);
+  }
+
+  if (valueRows.size) {
+    const { error: valueError } = await admin
+      .from("product_attribute_values")
+      .upsert([...valueRows.values()], { onConflict: "product_id,attribute_id" });
+    if (valueError) throw new Error(valueError.message);
   }
 
   const { data: existingValues } = await admin

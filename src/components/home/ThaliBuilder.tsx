@@ -272,7 +272,6 @@ export function ThaliBuilder({
               fill
               sizes="(max-width: 640px) 384px, 448px"
               className="pointer-events-none select-none object-contain"
-              priority
               // Next's image optimizer re-encodes this transparent PNG as an
               // indexed/palette PNG, which some Chromium builds render with a
               // visible checkerboard instead of true transparency. Serving

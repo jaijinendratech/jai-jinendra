@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { Button, Input, toast } from "@heroui/react";
 import { BrandSpinner } from "@/components/shared/BrandSpinner";
@@ -41,10 +42,14 @@ export function NewsletterSection() {
 
   return (
     <section className="relative overflow-hidden border-t border-outline-variant/30 bg-[#FAF2EE] py-10 md:py-16">
-      <div
+      <Image
+        src="/images/footer background.png"
+        alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[url('/images/footer%20background.png')] bg-bottom bg-no-repeat"
-        style={{ backgroundSize: "80% auto" }}
+        width={2048}
+        height={632}
+        sizes="80vw"
+        className="pointer-events-none absolute bottom-0 left-1/2 h-auto w-4/5 max-w-none -translate-x-1/2"
       />
       <div aria-hidden className="pointer-events-none absolute inset-0 " />
 

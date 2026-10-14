@@ -50,7 +50,7 @@ export function HeroCarousel({ slides }: { slides: HeroCarouselSlide[] }) {
               src={slide.src}
               alt={slide.alt}
               fill
-              priority={i === 0}
+              preload={i === 0}
               loading={i === 0 ? "eager" : "lazy"}
               fetchPriority={i === 0 ? "high" : "auto"}
               sizes="100vw"

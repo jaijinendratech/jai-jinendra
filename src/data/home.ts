@@ -36,20 +36,20 @@ export const siteConfig = {
   logo: {
     src: "/brand/logo-namkeens.png",
     alt: "Jai Jinendra Namkeens, Sweets, Namkeens, Bakery",
-    width: 1774,
-    height: 887,
+    width: 1200,
+    height: 600,
   },
   logoMark: {
     src: "/brand/logo-mark.png",
     alt: "Jai Jinendra mark",
-    width: 543,
-    height: 480,
+    width: 256,
+    height: 226,
   },
   brandLogo: {
     src: "/brand/logo.png",
     alt: "Jai Jinendra, Sweets, Namkeens, Bakery",
-    width: 1774,
-    height: 887,
+    width: 1200,
+    height: 600,
   },
 } as const;
 

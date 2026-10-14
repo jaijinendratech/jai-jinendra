@@ -1,4 +1,5 @@
 import { BadgeCheck, Play, Star } from "lucide-react";
+import { InViewVideo } from "@/components/shared/InViewVideo";
 import type { Testimonial, VideoTestimonial } from "@/types/catalog";
 
 function TestimonialCard({ item }: { item: Testimonial }) {
@@ -37,12 +38,10 @@ function VideoTestimonialCard({ item }: { item: VideoTestimonial }) {
   return (
     <article className="mx-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
       {item.videoUrl ? (
-        <video
-          controls
-          preload="metadata"
-          poster={item.posterUrl}
+        <InViewVideo
           src={item.videoUrl}
-          className="aspect-[9/16] w-full bg-black object-contain"
+          poster={item.posterUrl}
+          className="aspect-[9/16] w-full"
         />
       ) : (
         <div className="flex aspect-[9/16] flex-col items-center justify-center gap-2 bg-surface-container-low px-4 text-center">
@@ -94,22 +93,16 @@ export function TestimonialsSection({
         </div>
 
         {videos.length > 0 ? (
-          <>
-            <div className="-mx-1 mb-4 flex gap-3 overflow-x-auto px-1 pb-1 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {videos.map((item) => (
-                <div key={item.id} className="w-[85vw] max-w-80 shrink-0">
-                  <VideoTestimonialCard item={item} />
-                </div>
-              ))}
-            </div>
-            <div className="mb-6 hidden justify-center gap-6 md:mb-10 md:flex">
-              {videos.map((item) => (
-                <div key={item.id} className="min-w-0 flex-1 basis-0 md:max-w-[360px]">
-                  <VideoTestimonialCard item={item} />
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="-mx-1 mb-4 flex gap-3 overflow-x-auto px-1 pb-1 md:mx-0 md:mb-10 md:justify-center md:gap-6 md:overflow-visible md:px-0 md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {videos.map((item) => (
+              <div
+                key={item.id}
+                className="w-[85vw] max-w-80 shrink-0 md:w-auto md:min-w-0 md:max-w-[360px] md:flex-1 md:basis-0 md:shrink"
+              >
+                <VideoTestimonialCard item={item} />
+              </div>
+            ))}
+          </div>
         ) : null}
 
         <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

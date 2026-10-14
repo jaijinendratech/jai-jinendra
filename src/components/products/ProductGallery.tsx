@@ -61,7 +61,8 @@ export function ProductGallery({
               src={current.src}
               alt={current.alt || alt}
               fill
-              priority={activeIndex === 0}
+              preload={activeIndex === 0}
+              fetchPriority={activeIndex === 0 ? "high" : "auto"}
               sizes="(max-width:1024px) 100vw, 50vw"
               className="object-cover motion-safe:animate-gallery-fade"
             />

@@ -18,6 +18,15 @@ function isCustomerGatePath(pathname: string): boolean {
   );
 }
 
+/** Paths whose handling depends on the profile role (one extra DB round trip). */
+function needsRole(pathname: string): boolean {
+  return (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/admin") ||
+    isCustomerGatePath(pathname)
+  );
+}
+
 /**
  * Rebuild NextResponse.next so request headers (e.g. admin flag) are visible
  * to route handlers, while preserving cookies set during session refresh.
@@ -36,7 +45,6 @@ function nextWithRequestHeaders(
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-jj-pathname", pathname);
   // Always overwrite, never trust a client-supplied admin flag.
   requestHeaders.set(ADMIN_REQUEST_HEADER, "0");
 
@@ -70,7 +78,7 @@ export async function proxy(request: NextRequest) {
   );
 
   let role: string | null = null;
-  if (user) {
+  if (user && needsRole(pathname)) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -84,7 +92,6 @@ export async function proxy(request: NextRequest) {
   }
 
   const response = nextWithRequestHeaders(requestHeaders, supabaseResponse);
-  response.headers.set("x-jj-pathname", pathname);
 
   // Admins may browse the catalogue but not customer auth surfaces.
   // Send them back to cart with a clear notice (not a silent /admin dump).

@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Pagination } from "@heroui/react";
+import { ADMIN_TABLE_PAGE_SIZE } from "@/lib/admin/pagination";
 
-export const ADMIN_TABLE_PAGE_SIZE = 10;
+export { ADMIN_TABLE_PAGE_SIZE };
 
 export function useAdminTablePagination<T>(
   items: T[],

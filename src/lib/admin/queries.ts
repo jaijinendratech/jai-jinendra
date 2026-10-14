@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
 import { mockOrders, mockEnquiries, mockMediaAssets } from "@/data/admin-mock";
@@ -33,6 +35,8 @@ import type {
   OrderStatus,
   PaymentStatus,
 } from "@/types/database";
+import { ORDER_STATUSES, PAYMENT_STATUSES } from "@/lib/admin/status";
+import { ADMIN_TABLE_PAGE_SIZE } from "@/lib/admin/pagination";
 
 export type CarouselPageKey =
   | "home"
@@ -389,6 +393,55 @@ function buildSeriesFromOrders(
   return Array.from(map.entries()).map(([date, value]) => ({ date, value }));
 }
 
+type DailyOrderTotal = { day: string; orders: number; revenue: number };
+
+/**
+ * Per-day order count and revenue since `days` ago. Shared by the revenue and
+ * order charts, so React `cache` runs it once per request.
+ */
+const getDailyOrderTotals = cache(
+  async (days: number): Promise<DailyOrderTotal[]> => {
+    const admin = createAdminClient();
+    const since = daysAgo(days - 1).toISOString();
+    const { data, error } = await admin.rpc("admin_order_daily_series", {
+      p_since: since,
+    });
+    if (!error && data) {
+      return data.map((row) => ({
+        day: row.day,
+        orders: Number(row.order_count),
+        revenue: Number(row.revenue_paise) / 100,
+      }));
+    }
+
+    // Fallback until migration 019 is applied (row-capped by PostgREST).
+    const { data: rows } = await admin
+      .from("orders")
+      .select("total_paise, created_at")
+      .gte("created_at", since);
+    return (rows ?? []).map((o) => ({
+      day: dateKey(o.created_at),
+      orders: 1,
+      revenue: o.total_paise / 100,
+    }));
+  },
+);
+
+function buildSeriesFromDaily(
+  daily: DailyOrderTotal[],
+  days: number,
+  mode: "revenue" | "orders",
+): SeriesPoint[] {
+  const totals = new Map<string, number>();
+  for (const d of daily) {
+    totals.set(d.day, (totals.get(d.day) ?? 0) + (mode === "revenue" ? d.revenue : d.orders));
+  }
+  return buildSeriesFromOrders([], days, mode).map((point) => ({
+    date: point.date,
+    value: totals.get(point.date) ?? 0,
+  }));
+}
+
 export async function getRevenueSeries(days = 14): Promise<SeriesPoint[]> {
   if (!isSupabaseConfigured()) {
     return buildSeriesFromOrders(
@@ -397,20 +450,7 @@ export async function getRevenueSeries(days = 14): Promise<SeriesPoint[]> {
       "revenue",
     );
   }
-  const admin = createAdminClient();
-  const since = daysAgo(days - 1).toISOString();
-  const { data } = await admin
-    .from("orders")
-    .select("total_paise, created_at")
-    .gte("created_at", since);
-  return buildSeriesFromOrders(
-    (data ?? []).map((o) => ({
-      placedAt: o.created_at,
-      total: o.total_paise / 100,
-    })),
-    days,
-    "revenue",
-  );
+  return buildSeriesFromDaily(await getDailyOrderTotals(days), days, "revenue");
 }
 
 export async function getOrderSeries(days = 14): Promise<SeriesPoint[]> {
@@ -421,20 +461,7 @@ export async function getOrderSeries(days = 14): Promise<SeriesPoint[]> {
       "orders",
     );
   }
-  const admin = createAdminClient();
-  const since = daysAgo(days - 1).toISOString();
-  const { data } = await admin
-    .from("orders")
-    .select("created_at, total_paise")
-    .gte("created_at", since);
-  return buildSeriesFromOrders(
-    (data ?? []).map((o) => ({
-      placedAt: o.created_at,
-      total: o.total_paise / 100,
-    })),
-    days,
-    "orders",
-  );
+  return buildSeriesFromDaily(await getDailyOrderTotals(days), days, "orders");
 }
 
 export async function getOrderStatusDistribution(): Promise<NamedCount[]> {
@@ -447,6 +474,15 @@ export async function getOrderStatusDistribution(): Promise<NamedCount[]> {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
   }
   const admin = createAdminClient();
+  const { data: counts, error } = await admin.rpc("admin_order_status_counts");
+  if (!error && counts) {
+    return counts.map((row) => ({
+      name: row.status,
+      value: Number(row.order_count),
+    }));
+  }
+
+  // Fallback until migration 019 is applied (row-capped by PostgREST).
   const { data } = await admin.from("orders").select("status");
   const map = new Map<string, number>();
   for (const o of data ?? []) {
@@ -494,6 +530,21 @@ export async function getTopProducts(limit = 5) {
   }
 
   const admin = createAdminClient();
+  const { data: top, error } = await admin.rpc("admin_top_products", {
+    p_limit: limit,
+  });
+  if (!error && top) {
+    return top.map((p, i) => ({
+      id: `top-${i}`,
+      name: p.name,
+      slug: "",
+      sold: Number(p.sold),
+      revenue: Number(p.revenue_paise) / 100,
+      image: null as string | null,
+    }));
+  }
+
+  // Fallback until migration 019 is applied (row-capped by PostgREST).
   const { data } = await admin
     .from("order_items")
     .select("name_snapshot, qty, unit_price_paise, variant_id");
@@ -569,30 +620,107 @@ export async function getLowStockItems(limit = 10) {
     }));
 }
 
-export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
+export type AdminOrderFilters = {
+  q?: string;
+  status?: string;
+  payment?: string;
+  /** 1-based. */
+  page?: number;
+  pageSize?: number;
+};
+
+export type AdminOrderPage = {
+  orders: AdminOrderListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+const ADMIN_ORDER_LIST_COLUMNS =
+  "id, order_number, customer_email, customer_phone, address_snapshot, total_paise, status, payment_status, payment_method, created_at, order_items(qty)";
+
+/** Strip characters that are syntax inside a PostgREST `or=(...)` filter. */
+function orderSearchTerm(q: string | undefined): string {
+  return (q ?? "").replace(/[,()*%\\:"]/g, " ").trim();
+}
+
+/** Filtered + paginated in Postgres, so the list scales past any row cap. */
+export async function getAdminOrders(
+  filters: AdminOrderFilters = {},
+): Promise<AdminOrderPage> {
+  const pageSize = Math.max(1, filters.pageSize ?? ADMIN_TABLE_PAGE_SIZE);
+  const requestedPage = Math.max(1, Math.floor(filters.page ?? 1));
+  const status = ORDER_STATUSES.find((s) => s === filters.status);
+  const payment = PAYMENT_STATUSES.find((s) => s === filters.payment);
+  const term = orderSearchTerm(filters.q);
+
   if (!isSupabaseConfigured()) {
-    return mockOrders.map((o) => ({
-      id: o.id,
-      dbId: o.id,
-      customer: o.customer,
-      email: o.email,
-      phone: o.phone,
-      city: o.city,
-      total: o.total,
-      status: mockStatusToOrder(o.status),
-      paymentStatus: o.status === "pending" ? "pending" : "paid",
-      paymentMethod: "razorpay",
-      placedAt: o.placedAt,
-      itemCount: o.items.reduce((s, i) => s + i.qty, 0),
-    }));
+    const needle = term.toLowerCase();
+    const all = mockOrders
+      .map((o) => ({
+        id: o.id,
+        dbId: o.id,
+        customer: o.customer,
+        email: o.email,
+        phone: o.phone,
+        city: o.city,
+        total: o.total,
+        status: mockStatusToOrder(o.status),
+        paymentStatus: o.status === "pending" ? "pending" : "paid",
+        paymentMethod: "razorpay",
+        placedAt: o.placedAt,
+        itemCount: o.items.reduce((s, i) => s + i.qty, 0),
+      }))
+      .filter(
+        (o) =>
+          (!status || o.status === status) &&
+          (!payment || o.paymentStatus === payment) &&
+          (!needle ||
+            `${o.id} ${o.customer} ${o.email} ${o.phone} ${o.city}`
+              .toLowerCase()
+              .includes(needle)),
+      );
+    const page = Math.min(requestedPage, Math.max(1, Math.ceil(all.length / pageSize)));
+    return {
+      orders: all.slice((page - 1) * pageSize, page * pageSize),
+      total: all.length,
+      page,
+      pageSize,
+    };
   }
 
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("orders")
-    .select("*, order_items(qty)")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const fetchPage = (page: number) => {
+    let query = admin
+      .from("orders")
+      .select(ADMIN_ORDER_LIST_COLUMNS, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    if (status) query = query.eq("status", status);
+    if (payment) query = query.eq("payment_status", payment);
+    if (term) {
+      const like = `*${term}*`;
+      query = query.or(
+        [
+          `order_number.ilike.${like}`,
+          `customer_email.ilike.${like}`,
+          `customer_phone.ilike.${like}`,
+          `address_snapshot->>name.ilike.${like}`,
+          `address_snapshot->>city.ilike.${like}`,
+        ].join(","),
+      );
+    }
+    return query;
+  };
+
+  let page = requestedPage;
+  let { data, count, error } = await fetchPage(page);
+  // A page past the end (e.g. after narrowing a filter) is a range error.
+  if (error && page > 1) {
+    page = 1;
+    ({ data, count, error } = await fetchPage(page));
+  }
+  if (error) throw new Error(error.message);
 
   type Row = {
     id: string;
@@ -608,7 +736,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
     order_items: { qty: number }[] | null;
   };
 
-  return ((data ?? []) as unknown as Row[]).map((o) => ({
+  const orders = ((data ?? []) as unknown as Row[]).map((o) => ({
     id: o.order_number,
     dbId: o.id,
     customer: o.address_snapshot?.name ?? "Customer",
@@ -622,6 +750,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
     placedAt: o.created_at,
     itemCount: (o.order_items ?? []).reduce((s, i) => s + i.qty, 0),
   }));
+  return { orders, total: count ?? orders.length, page, pageSize };
 }
 
 export async function getAdminOrderById(idOrNumber: string) {
@@ -1336,11 +1465,24 @@ function mapOrderListItem(o: {
 
 async function customerOrderStats() {
   const admin = createAdminClient();
+  const counts = new Map<string, { count: number; spent: number }>();
+
+  const { data: stats, error } = await admin.rpc("admin_customer_order_stats");
+  if (!error && stats) {
+    for (const row of stats) {
+      counts.set(row.customer_key, {
+        count: Number(row.order_count),
+        spent: Number(row.spent_paise) / 100,
+      });
+    }
+    return counts;
+  }
+
+  // Fallback until migration 019 is applied (row-capped by PostgREST).
   const { data: orders } = await admin
     .from("orders")
     .select("user_id, total_paise, customer_email");
 
-  const counts = new Map<string, { count: number; spent: number }>();
   for (const o of orders ?? []) {
     const key = o.user_id ?? o.customer_email ?? "";
     if (!key) continue;
@@ -1448,7 +1590,7 @@ export async function getAdminCustomerOrders(
   if (!isSupabaseConfigured()) {
     const customer = mockCustomers().find((c) => c.id === userId);
     const matchEmail = (customer?.email || email).toLowerCase();
-    return (await getAdminOrders()).filter(
+    return (await getAdminOrders({ pageSize: mockOrders.length })).orders.filter(
       (o) => o.email.toLowerCase() === matchEmail,
     );
   }
@@ -1764,6 +1906,7 @@ export async function getAdminMedia() {
   }));
 }
 
+/** Always fresh; admin editors use this so a save is visible immediately. */
 export async function getContentBlock(pageKey: string, sectionKey: string) {
   if (!isSupabaseConfigured()) return null;
   const admin = createAdminClient();
@@ -1776,33 +1919,57 @@ export async function getContentBlock(pageKey: string, sectionKey: string) {
   return data;
 }
 
+/**
+ * Storefront read: cached and invalidated by revalidateTag("content") in
+ * admin actions. Admin screens must use `getContentBlock` instead, since
+ * "max" revalidation serves one stale read after a save.
+ */
+export const getStorefrontContentBlock = unstable_cache(
+  getContentBlock,
+  ["content-block"],
+  { revalidate: 300, tags: ["content"] },
+);
+
+type ContentReadOptions = { cached?: boolean };
+
+function readContentBlock(
+  pageKey: string,
+  sectionKey: string,
+  options?: ContentReadOptions,
+) {
+  return options?.cached
+    ? getStorefrontContentBlock(pageKey, sectionKey)
+    : getContentBlock(pageKey, sectionKey);
+}
+
 export async function getHeroCarouselContent(
   pageKey: CarouselPageKey = "home",
+  options?: ContentReadOptions,
 ) {
-  const block = await getContentBlock(pageKey, "hero_slides");
+  const block = await readContentBlock(pageKey, "hero_slides", options);
   if (block?.content && Array.isArray(block.content) && block.content.length) {
     return block.content as { id: string; src: string; alt: string }[];
   }
   return staticCarouselFallback(pageKey);
 }
 
-export async function getAchievementMediaContent() {
-  const block = await getContentBlock("home", "achievement_media");
+export async function getAchievementMediaContent(options?: ContentReadOptions) {
+  const block = await readContentBlock("home", "achievement_media", options);
   return (
     (block?.content as AchievementMedia | null) ?? achievementMediaFallback
   );
 }
 
-export async function getVideoTestimonials() {
-  const block = await getContentBlock("home", "video_testimonials");
+export async function getVideoTestimonials(options?: ContentReadOptions) {
+  const block = await readContentBlock("home", "video_testimonials", options);
   if (block?.content && Array.isArray(block.content)) {
     return block.content as VideoTestimonial[];
   }
   return videoTestimonialsFallback;
 }
 
-export async function getAchievementPageContent() {
-  const block = await getContentBlock("achievement", "page");
+export async function getAchievementPageContent(options?: ContentReadOptions) {
+  const block = await readContentBlock("achievement", "page", options);
   return (
     (block?.content as AchievementPageContent | null) ??
     achievementPageFallback

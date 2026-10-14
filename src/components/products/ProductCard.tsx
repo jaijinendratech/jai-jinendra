@@ -104,8 +104,9 @@ export function ProductCard({
             src={product.image || PRODUCT_PLACEHOLDER_IMAGE}
             alt={product.imageAlt ?? product.name}
             fill
-            priority={priority}
+            preload={priority}
             loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             sizes="(max-width:640px) 50vw, (max-width:1024px) 50vw, 25vw"
             className="object-cover object-center transition-transform duration-300 hover:scale-105"
           />

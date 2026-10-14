@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { LuTrash2, LuVideo } from "react-icons/lu";
+import { Trash2, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { createClient } from "@/lib/supabase/client";
 import { MediaUploader, type MediaItem } from "@/components/admin/MediaUploader";
@@ -155,7 +155,7 @@ export function VideoUploader({
             void uploadFile(e.dataTransfer.files[0]);
           }}
         >
-          <LuVideo className="mx-auto h-8 w-8 text-primary" aria-hidden />
+          <Video className="mx-auto h-8 w-8 text-primary" aria-hidden />
           <p className="mt-2 text-sm font-semibold text-on-surface">
             Drag & drop a video here
           </p>
@@ -223,7 +223,7 @@ export function VideoUploader({
               )
             }
           >
-            <LuTrash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       ) : null}

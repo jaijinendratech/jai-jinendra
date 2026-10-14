@@ -16,7 +16,7 @@ import {
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminIconButton } from "@/components/admin/AdminIconButton";
-import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { LazyRichTextEditor } from "@/components/admin/LazyRichTextEditor";
 import { SearchField } from "@/components/admin/SearchField";
 import {
   AdminTablePagination,
@@ -224,7 +224,7 @@ export function SubscribersTable({
               className={fieldClassName()}
             />
           </label>
-          <RichTextEditor
+          <LazyRichTextEditor
             name="bodyHtml"
             label="Message"
             placeholder="Write your announcement or offer…"

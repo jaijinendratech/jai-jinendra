@@ -5,26 +5,26 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  LuLayoutDashboard,
-  LuPackage,
-  LuFolderTree,
-  LuBoxes,
-  LuWarehouse,
-  LuShoppingBag,
-  LuUsers,
-  LuMail,
-  LuTicket,
-  LuFileText,
-  LuImages,
-  LuTrophy,
-  LuVideo,
-  LuImage,
-  LuMessageSquare,
-  LuStore,
-  LuSettings,
-  LuLogOut,
-} from "react-icons/lu";
-import type { IconType } from "react-icons";
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  Boxes,
+  Warehouse,
+  ShoppingBag,
+  Users,
+  Mail,
+  Ticket,
+  FileText,
+  Images,
+  Trophy,
+  Video,
+  ImageIcon,
+  MessageSquare,
+  Store,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { logoutAdminAction } from "@/lib/auth";
 import { adminNav } from "@/data/admin-mock";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
@@ -38,25 +38,25 @@ const groupLabels = {
   ops: "Operations",
 } as const;
 
-const navIcons: Record<string, IconType> = {
-  "/admin": LuLayoutDashboard,
-  "/admin/products": LuPackage,
-  "/admin/categories": LuFolderTree,
-  "/admin/combos": LuBoxes,
-  "/admin/inventory": LuWarehouse,
-  "/admin/orders": LuShoppingBag,
-  "/admin/customers": LuUsers,
-  "/admin/subscribers": LuMail,
-  "/admin/leads": LuUsers,
-  "/admin/coupons": LuTicket,
-  "/admin/content/home": LuFileText,
-  "/admin/content/carousels": LuImages,
-  "/admin/content/achievements": LuTrophy,
-  "/admin/content/testimonials": LuVideo,
-  "/admin/media": LuImage,
-  "/admin/enquiries": LuMessageSquare,
-  "/admin/outlets": LuStore,
-  "/admin/settings": LuSettings,
+const navIcons: Record<string, LucideIcon> = {
+  "/admin": LayoutDashboard,
+  "/admin/products": Package,
+  "/admin/categories": FolderTree,
+  "/admin/combos": Boxes,
+  "/admin/inventory": Warehouse,
+  "/admin/orders": ShoppingBag,
+  "/admin/customers": Users,
+  "/admin/subscribers": Mail,
+  "/admin/leads": Users,
+  "/admin/coupons": Ticket,
+  "/admin/content/home": FileText,
+  "/admin/content/carousels": Images,
+  "/admin/content/achievements": Trophy,
+  "/admin/content/testimonials": Video,
+  "/admin/media": ImageIcon,
+  "/admin/enquiries": MessageSquare,
+  "/admin/outlets": Store,
+  "/admin/settings": Settings,
 };
 
 /** High-traffic admin routes, warm the RSC/client chunks early. */
@@ -107,7 +107,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               width={siteConfig.logo.width}
               height={siteConfig.logo.height}
               className="h-14 w-auto max-w-full shrink-0 object-contain object-left"
-              priority
+              preload
             />
           </Link>
         </div>
@@ -128,7 +128,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       ? pathname === "/admin"
                       : pathname === item.href ||
                         pathname.startsWith(`${item.href}/`);
-                  const Icon = navIcons[item.href] ?? LuPackage;
+                  const Icon = navIcons[item.href] ?? Package;
                   return (
                     <li key={item.href}>
                       <Link
@@ -159,7 +159,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             onClick={() => setSignOutOpen(true)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2.5 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
           >
-            <LuLogOut className="h-4 w-4" aria-hidden />
+            <LogOut className="h-4 w-4" aria-hidden />
             Sign out
           </button>
         </div>

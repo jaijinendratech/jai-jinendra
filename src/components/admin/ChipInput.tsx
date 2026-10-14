@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
-import { LuX } from "react-icons/lu";
+import { X } from "lucide-react";
 import { fieldClassName, labelClassName } from "@/components/admin/ui";
 
 export function ChipInput({
@@ -81,7 +81,7 @@ export function ChipInput({
                 onChange?.(next);
               }}
             >
-              <LuX className="h-3 w-3" />
+              <X className="h-3 w-3" />
             </button>
           </span>
         ))}

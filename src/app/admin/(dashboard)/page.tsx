@@ -57,7 +57,7 @@ export default async function AdminDashboardPage({
     getCategoryDistribution(),
     getTopProducts(5),
     getLowStockItems(6),
-    getAdminOrders(),
+    getAdminOrders({ pageSize: 5 }).then((result) => result.orders),
     getAdminEnquiries(),
   ]);
 

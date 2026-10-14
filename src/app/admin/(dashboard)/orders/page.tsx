@@ -12,20 +12,21 @@ export const metadata: Metadata = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; payment?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    payment?: string;
+    page?: string;
+  }>;
 }) {
   const params = await searchParams;
-  const all = await getAdminOrders();
-  const { supabase } = getIntegrationStatus();
-
-  const q = (params.q ?? "").toLowerCase();
-  const orders = all.filter((o) => {
-    if (params.status && params.status !== "all" && o.status !== params.status) return false;
-    if (params.payment && params.payment !== "all" && o.paymentStatus !== params.payment)
-      return false;
-    if (!q) return true;
-    return `${o.id} ${o.customer} ${o.email} ${o.city}`.toLowerCase().includes(q);
+  const { orders, total, page, pageSize } = await getAdminOrders({
+    q: params.q,
+    status: params.status,
+    payment: params.payment,
+    page: Number(params.page) || 1,
   });
+  const { supabase } = getIntegrationStatus();
 
   return (
     <div className="space-y-6">
@@ -40,7 +41,13 @@ export default async function AdminOrdersPage({
         payment={params.payment ?? "all"}
       />
 
-      <OrdersTable orders={orders} supabase={supabase} />
+      <OrdersTable
+        orders={orders}
+        supabase={supabase}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+      />
     </div>
   );
 }

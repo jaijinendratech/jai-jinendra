@@ -3,7 +3,7 @@
 import { useId, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button, Dropdown, Label } from "@heroui/react";
-import { LuEllipsisVertical } from "react-icons/lu";
+import { EllipsisVertical } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import type { AdminIconName } from "@/components/admin/admin-icons";
@@ -135,7 +135,7 @@ export function AdminActionsMenu({
           size="sm"
           className="min-w-8 text-on-surface-variant"
         >
-          <LuEllipsisVertical className="h-4 w-4" />
+          <EllipsisVertical className="h-4 w-4" />
         </Button>
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu
