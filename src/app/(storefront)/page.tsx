@@ -33,10 +33,7 @@ import {
 import { siteConfig, testimonials, trustItems } from "@/data/home";
 import { thaliBuilderMeta, thaliCategoryGroups } from "@/data/thali-builder";
 import { productTagLabels } from "@/lib/catalog/tags";
-import {
-  festiveTagSlug,
-  parseFestiveSpecial,
-} from "@/lib/catalog/festive";
+import { festiveTagSlug, parseFestiveSpecial } from "@/lib/catalog/festive";
 import { absoluteUrl } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/env";
 import type { Product } from "@/types/catalog";
@@ -62,7 +59,12 @@ function slimForThali(product: Product): Product {
     imageAlt: product.imageAlt,
     thaliImage: product.thaliImage,
     variants: firstVariant
-      ? [{ id: firstVariant.id, sku: firstVariant.sku } as Product["variants"][number]]
+      ? [
+          {
+            id: firstVariant.id,
+            sku: firstVariant.sku,
+          } as Product["variants"][number],
+        ]
       : [],
   } as Product;
 }
@@ -114,7 +116,9 @@ export default async function HomePage() {
   const festive = parseFestiveSpecial(festiveBlock?.content);
   const festiveTagLower = (festive.collectionTag || "navratri").toLowerCase();
   const navratriProducts = allProducts.filter((product) =>
-    productTagLabels(product).some((tag) => tag.toLowerCase() === festiveTagLower),
+    productTagLabels(product).some(
+      (tag) => tag.toLowerCase() === festiveTagLower,
+    ),
   );
   const pickedFestive = festive.productIds
     .map((id) => allProducts.find((product) => product.id === id))
@@ -125,12 +129,12 @@ export default async function HomePage() {
       : navratriProducts.length > 0
         ? navratriProducts
         : allProducts.filter(
-          (product) =>
-            product.seasonal ||
-            productTagLabels(product).some(
-              (tag) => tag.toLowerCase() === "seasonal",
-            ),
-        );
+            (product) =>
+              product.seasonal ||
+              productTagLabels(product).some(
+                (tag) => tag.toLowerCase() === "seasonal",
+              ),
+          );
 
   const thaliDiscountPercent =
     (thaliOfferBlock?.content as { discountPercent?: number } | null)
@@ -153,8 +157,9 @@ export default async function HomePage() {
   const thaliPickedIds = new Set<string>();
   thaliCategoryGroups.forEach((group, i) => {
     if (!gajakLive && group.id === "gajak") return;
-    const picked = (thaliByGroup[i] ?? [])
-      .filter((p) => !thaliPickedIds.has(p.id));
+    const picked = (thaliByGroup[i] ?? []).filter(
+      (p) => !thaliPickedIds.has(p.id),
+    );
     thaliGroupedIds[group.id] = picked.map((p) => p.id);
     for (const p of picked) {
       thaliPickedIds.add(p.id);
@@ -246,7 +251,8 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <h1 className="sr-only">
-        {siteConfig.name}, Authentic Rajasthani namkeens, mithai, and festive hampers
+        {siteConfig.name}, Authentic Rajasthani namkeens, mithai, and festive
+        hampers
       </h1>
       <HeroCarousel slides={heroSlides} />
       <TrustStrip items={trustItems} />

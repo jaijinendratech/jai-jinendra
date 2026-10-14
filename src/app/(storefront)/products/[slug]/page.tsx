@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetailView } from "@/components/products/ProductDetailView";
-import {
-  getProductBySlug,
-  getRelatedProducts,
-} from "@/lib/catalog/queries";
+import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/queries";
 import { categoryHref, normalizeCategoryRef } from "@/lib/catalog/aliases";
 import { categories, siteConfig } from "@/data/home";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -79,7 +76,10 @@ export default async function ProductPage({ params }: Props) {
       {
         "@type": "Product",
         name: product.name,
-        description: plainText(product.longDescription ?? product.description, 5000),
+        description: plainText(
+          product.longDescription ?? product.description,
+          5000,
+        ),
         image: [absoluteUrl(product.image)],
         sku,
         brand: { "@type": "Brand", name: siteConfig.name },
@@ -96,14 +96,24 @@ export default async function ProductPage({ params }: Props) {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: absoluteUrl("/"),
+          },
           {
             "@type": "ListItem",
             position: 2,
             name: categoryLabel,
             item: absoluteUrl(href),
           },
-          { "@type": "ListItem", position: 3, name: product.name, item: pageUrl },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: product.name,
+            item: pageUrl,
+          },
         ],
       },
     ],

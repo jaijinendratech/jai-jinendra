@@ -27,11 +27,13 @@ export const siteConfig = {
   city: "Kota, Rajasthan",
   social: {
     facebook: "https://www.facebook.com/jaijinendra.kota",
-    instagram: "https://www.instagram.com/jaijinendrasweets?srtk=MnBtdDVoZDIwNWow&utm_source=qr",
+    instagram:
+      "https://www.instagram.com/jaijinendrasweets?srtk=MnBtdDVoZDIwNWow&utm_source=qr",
   },
   announcement:
     "FREE PAN-INDIA DELIVERY ON ORDERS ABOVE ₹999 • Freshly Handcrafted & Nitrogen Packed • 100% Shuddh Shakahari (Pure Vegetarian)",
-  announcementMobile: "Free delivery above ₹999 · Fresh & nitrogen-packed · 100% Pure Veg",
+  announcementMobile:
+    "Free delivery above ₹999 · Fresh & nitrogen-packed · 100% Pure Veg",
   announcementColor: "#EF6113",
   logo: {
     src: "/brand/logo-namkeens.png",
@@ -118,7 +120,8 @@ export const categories: Category[] = [
     subtitle: "8 Fresh Batches",
     href: "/kachoris",
     image: images.cat1,
-    imageAlt: "Flaky golden Jodhpur dal kachori with coriander and tamarind chutneys",
+    imageAlt:
+      "Flaky golden Jodhpur dal kachori with coriander and tamarind chutneys",
   },
   {
     id: "mithai",
@@ -136,7 +139,8 @@ export const categories: Category[] = [
     subtitle: "12 Curations",
     href: "/hampers",
     image: images.cat3,
-    imageAlt: "Crimson and gold festive gift hamper with brass jars and silk ribbon",
+    imageAlt:
+      "Crimson and gold festive gift hamper with brass jars and silk ribbon",
   },
   {
     id: "tea-time",
@@ -145,7 +149,8 @@ export const categories: Category[] = [
     subtitle: "9 Daily Staples",
     href: "/combos",
     image: images.cat4,
-    imageAlt: "Butter khari and mathri beside a steaming kulhad of cutting chai",
+    imageAlt:
+      "Butter khari and mathri beside a steaming kulhad of cutting chai",
   },
   {
     id: "dry-fruits",
@@ -154,7 +159,8 @@ export const categories: Category[] = [
     subtitle: "10 Blends",
     href: "/catalogue/dry-fruits",
     image: images.cat5,
-    imageAlt: "Roasted cashews, almonds, and pistachios in an elegant brass tray",
+    imageAlt:
+      "Roasted cashews, almonds, and pistachios in an elegant brass tray",
   },
 ];
 
@@ -259,8 +265,16 @@ export const heritage = {
   image: images.heritage,
   imageAlt: "Artisanal halwai roasting whole Indian spices in a brass kadhai",
   stats: [
-    { value: "40+", label: "Years Generational Halwai Heritage", mobileLabel: "Years of heritage" },
-    { value: "1M+", label: "Homes Pan-India Dispatches Served", mobileLabel: "Homes served" },
+    {
+      value: "40+",
+      label: "Years Generational Halwai Heritage",
+      mobileLabel: "Years of heritage",
+    },
+    {
+      value: "1M+",
+      label: "Homes Pan-India Dispatches Served",
+      mobileLabel: "Homes served",
+    },
   ],
 } as const;
 
@@ -277,7 +291,8 @@ export const signatures: SignatureCollection[] = [
     netWeight: "1.2 kg",
     href: "/products/royal-rajasthan-heritage-box",
     image: images.sig0,
-    imageAlt: "Royal Rajasthan Heritage gift box with bhujia, mathri, and ghevar",
+    imageAlt:
+      "Royal Rajasthan Heritage gift box with bhujia, mathri, and ghevar",
   },
   {
     id: "aristocrat-mithai",
@@ -317,8 +332,16 @@ export const celebrationBanner = {
   mobileBody:
     "Festive hampers & corporate gifts, custom seals, delivered pan-India.",
   backgroundImage: images.banner,
-  primaryCta: { label: "Explore Gift Hampers", href: "/hampers", mobileLabel: "Shop Hampers" },
-  secondaryCta: { label: "Corporate Enquiries", href: "/corporate", mobileLabel: "Corporate" },
+  primaryCta: {
+    label: "Explore Gift Hampers",
+    href: "/hampers",
+    mobileLabel: "Shop Hampers",
+  },
+  secondaryCta: {
+    label: "Corporate Enquiries",
+    href: "/corporate",
+    mobileLabel: "Corporate",
+  },
 } as const;
 
 export const purityPillars: PurityPillar[] = [
@@ -474,7 +497,8 @@ export const newsletter = {
 
 export const footerBrand = {
   body: "Authentic generational craftsmanship from Rajasthan, bringing pure desi ghee sweets, hand-pounded spices, and nitrogen-sealed namkeens directly to discerning homes across India.",
-  mobileBody: "Rajasthani namkeens & mithai, pure ghee, nitrogen-sealed, pan-India.",
+  mobileBody:
+    "Rajasthani namkeens & mithai, pure ghee, nitrogen-sealed, pan-India.",
 } as const;
 
 export const footerColumns: FooterColumn[] = [

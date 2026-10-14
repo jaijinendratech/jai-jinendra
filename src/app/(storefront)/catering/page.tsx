@@ -15,10 +15,7 @@ export default function CateringPage() {
   return (
     <main className="container-jj py-6 md:py-10">
       <Breadcrumbs
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Catering" },
-        ]}
+        items={[{ label: "Home", href: "/" }, { label: "Catering" }]}
       />
 
       <section className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
@@ -58,8 +55,12 @@ export default function CateringPage() {
             key={item.title}
             className="rounded-xl border border-outline-variant/25 bg-surface-container-low p-5"
           >
-            <h2 className="font-display text-lg font-semibold text-on-surface">{item.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-on-surface-variant">{item.body}</p>
+            <h2 className="font-display text-lg font-semibold text-on-surface">
+              {item.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+              {item.body}
+            </p>
           </article>
         ))}
       </section>

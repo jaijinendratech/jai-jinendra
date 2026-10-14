@@ -5,7 +5,10 @@ import type { Testimonial, VideoTestimonial } from "@/types/catalog";
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
     <blockquote className="flex h-full flex-col rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 md:p-6">
-      <div className="mb-3 flex gap-1 md:mb-4" aria-label={`${item.rating} out of 5 stars`}>
+      <div
+        className="mb-3 flex gap-1 md:mb-4"
+        aria-label={`${item.rating} out of 5 stars`}
+      >
         {Array.from({ length: item.rating }).map((_, i) => (
           <Star
             key={i}
@@ -23,7 +26,9 @@ function TestimonialCard({ item }: { item: Testimonial }) {
           <cite className="not-italic text-sm font-semibold text-on-surface md:text-base">
             {item.name}
           </cite>
-          <p className="text-[11px] text-on-surface-variant md:text-xs">{item.location}</p>
+          <p className="text-[11px] text-on-surface-variant md:text-xs">
+            {item.location}
+          </p>
         </div>
         <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-secondary md:text-[11px]">
           <BadgeCheck className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden />
@@ -36,15 +41,15 @@ function TestimonialCard({ item }: { item: Testimonial }) {
 
 function VideoTestimonialCard({ item }: { item: VideoTestimonial }) {
   return (
-    <article className="mx-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
+    <article className="mx-auto flex h-full w-full max-w-90 flex-col overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
       {item.videoUrl ? (
         <InViewVideo
           src={item.videoUrl}
           poster={item.posterUrl}
-          className="aspect-[9/16] w-full"
+          className="aspect-9/16 w-full"
         />
       ) : (
-        <div className="flex aspect-[9/16] flex-col items-center justify-center gap-2 bg-surface-container-low px-4 text-center">
+        <div className="flex aspect-9/16 flex-col items-center justify-center gap-2 bg-surface-container-low px-4 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Play className="h-5 w-5 fill-current" aria-hidden />
           </span>
@@ -97,7 +102,7 @@ export function TestimonialsSection({
             {videos.map((item) => (
               <div
                 key={item.id}
-                className="w-[85vw] max-w-80 shrink-0 md:w-auto md:min-w-0 md:max-w-[360px] md:flex-1 md:basis-0 md:shrink"
+                className="w-[85vw] max-w-80 shrink-0 md:w-auto md:min-w-0 md:max-w-90 md:flex-1 md:basis-0 md:shrink"
               >
                 <VideoTestimonialCard item={item} />
               </div>
