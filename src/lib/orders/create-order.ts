@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCartSummary, clearCart, clearCartForUser } from "@/lib/cart/cart-service";
 import { calculateOrderTotals } from "@/lib/shipping";
+import { getShippingRule } from "@/lib/shipping-rule.server";
 import {
   redeemCouponForOrder,
   validateCouponCode,
@@ -102,6 +103,7 @@ export async function createOrder(params: {
 
   const totals = calculateOrderTotals(cart.subtotalPaise, discountPaise, {
     prepaid: params.paymentMethod === "razorpay",
+    shippingRule: await getShippingRule(),
   });
 
   // 1. Online payments: get the gateway order first. If keys are missing or

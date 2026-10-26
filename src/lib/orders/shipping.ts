@@ -25,6 +25,7 @@ type OrderShipRow = {
   subtotal_paise: number;
   discount_paise: number;
   prepaid_discount_paise: number;
+  shipping_paise: number;
   customer_phone: string | null;
   customer_email: string | null;
   shipment_id: string | null;
@@ -122,6 +123,7 @@ export async function ensureShiprocketShipment(
       subtotalRupees: row.subtotal_paise / 100,
       couponDiscountRupees: (row.discount_paise ?? 0) / 100,
       prepaidDiscountRupees: (row.prepaid_discount_paise ?? 0) / 100,
+      shippingChargesRupees: (row.shipping_paise ?? 0) / 100,
       address: {
         name: addr.name || "Customer",
         phone: row.customer_phone || addr.phone || "",

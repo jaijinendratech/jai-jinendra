@@ -217,6 +217,7 @@ type AssignAwbResponse = {
       awb_code?: string;
       courier_name?: string;
       courier_company_id?: number;
+      awb_assign_error?: string;
     };
   };
   awb_assign_error?: string;
@@ -237,6 +238,8 @@ export async function createShiprocketShipment(params: {
   couponDiscountRupees?: number;
   /** Prepaid (Razorpay) discount in rupees. */
   prepaidDiscountRupees?: number;
+  /** Shipping charged to the customer, so the COD amount matches the order total. */
+  shippingChargesRupees?: number;
   address: ShiprocketAddress;
   items: ShiprocketOrderItem[];
   /** Optional package defaults (cm / kg). */
@@ -284,6 +287,7 @@ export async function createShiprocketShipment(params: {
     })),
     payment_method: params.paymentMethod === "cod" ? "COD" : "Prepaid",
     sub_total: Math.max(1, Math.round(params.subtotalRupees)),
+    shipping_charges: Math.max(0, Math.round(params.shippingChargesRupees ?? 0)),
     ...(totalDiscount > 0 ? { total_discount: totalDiscount } : {}),
     length: params.lengthCm ?? 20,
     breadth: params.breadthCm ?? 15,
@@ -359,7 +363,8 @@ export async function assignAwb(
   const awbCode = assigned.response?.data?.awb_code ?? null;
   if (!awbCode) {
     throw new Error(
-      assigned.awb_assign_error ||
+      assigned.response?.data?.awb_assign_error ||
+        assigned.awb_assign_error ||
         assigned.message ||
         "Shiprocket could not assign a courier. Check wallet balance and serviceability in the Shiprocket panel.",
     );

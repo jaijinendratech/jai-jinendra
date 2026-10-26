@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { CART_SESSION_COOKIE } from "@/lib/cart/constants";
 import { isSupabaseConfigured } from "@/lib/env";
 import { calculateOrderTotals } from "@/lib/shipping";
+import { DEFAULT_SHIPPING_RULE, type ShippingRule } from "@/lib/shipping-rule";
+import { getShippingRule } from "@/lib/shipping-rule.server";
 
 export type CartLine = {
   id: string;
@@ -27,6 +29,8 @@ export type CartSummary = {
   discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
+  /** Current admin-set shipping rule, so the client can recalculate optimistically. */
+  shippingRule: ShippingRule;
   warnings: string[];
 };
 
@@ -218,7 +222,8 @@ async function loadCartSummary(
   });
 
   const subtotalPaise = items.reduce((s, i) => s + i.lineTotalPaise, 0);
-  const totals = calculateOrderTotals(subtotalPaise);
+  const shippingRule = await getShippingRule();
+  const totals = calculateOrderTotals(subtotalPaise, 0, { shippingRule });
 
   return {
     items,
@@ -227,6 +232,7 @@ async function loadCartSummary(
     discountPaise: totals.discountPaise,
     shippingPaise: totals.shippingPaise,
     totalPaise: totals.totalPaise,
+    shippingRule,
     warnings,
   };
 }
@@ -239,6 +245,7 @@ function emptyCart(): CartSummary {
     discountPaise: 0,
     shippingPaise: 0,
     totalPaise: 0,
+    shippingRule: DEFAULT_SHIPPING_RULE,
     warnings: [],
   };
 }

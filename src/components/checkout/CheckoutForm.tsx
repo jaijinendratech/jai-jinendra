@@ -168,9 +168,9 @@ export function CheckoutForm({
       calculateOrderTotals(
         cart.subtotalPaise,
         appliedCoupon?.discountPaise ?? 0,
-        { prepaid: paymentMethod === "razorpay" },
+        { prepaid: paymentMethod === "razorpay", shippingRule: cart.shippingRule },
       ),
-    [cart.subtotalPaise, appliedCoupon?.discountPaise, paymentMethod],
+    [cart.subtotalPaise, cart.shippingRule, appliedCoupon?.discountPaise, paymentMethod],
   );
 
   async function applyCoupon() {

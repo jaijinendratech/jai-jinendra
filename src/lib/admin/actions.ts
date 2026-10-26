@@ -1,6 +1,7 @@
 "use server";
 
 import { FESTIVE_SPECIAL_MAX_PRODUCTS } from "@/lib/catalog/festive";
+import { SHIPPING_MAX_PAISE } from "@/lib/shipping-rule";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -2149,4 +2150,42 @@ export async function deleteMediaAssetAction(formData: FormData) {
   const admin = createAdminClient();
   await admin.from("media_assets").delete().eq("id", id);
   revalidateAdmin("/admin/media");
+}
+
+/** Customer-facing shipping charge: flat fee below a free-shipping threshold (rupees in, paise stored). */
+export async function saveShippingSettingsAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to save shipping settings.");
+  }
+
+  const rupees = (name: string, label: string) => {
+    const raw = String(formData.get(name) ?? "").trim();
+    const n = Number(raw);
+    if (raw === "" || !Number.isFinite(n) || n < 0) {
+      throw new Error(`${label} must be a number, 0 or more.`);
+    }
+    const paise = Math.round(n * 100);
+    if (paise > SHIPPING_MAX_PAISE) {
+      throw new Error(`${label} can be at most ₹${SHIPPING_MAX_PAISE / 100}.`);
+    }
+    return paise;
+  };
+
+  const flatPaise = rupees("flatRupees", "Shipping charge");
+  const freeAbovePaise = rupees("freeAboveRupees", "Free shipping threshold");
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("content_blocks").upsert(
+    {
+      page_key: "store",
+      section_key: "shipping",
+      content: { flatPaise, freeAbovePaise },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "page_key,section_key" },
+  );
+  if (error) throw new Error("Could not save shipping settings.");
+
+  revalidateAdmin("/admin/settings", "/cart", "/checkout");
 }

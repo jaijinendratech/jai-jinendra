@@ -8,6 +8,8 @@ import {
 import { requireUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { formatINR } from "@/lib/format";
+import { getShippingRule } from "@/lib/shipping-rule.server";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -16,6 +18,7 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const user = await requireUser("/login?next=/checkout");
+  const shippingRule = await getShippingRule();
   let savedAddresses: SavedAddress[] = [];
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -43,7 +46,7 @@ export default async function CheckoutPage() {
           Checkout
         </h1>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Pan-India delivery · Free shipping on orders above ₹999
+          Pan-India delivery · Free shipping on orders above {formatINR(shippingRule.freeAbovePaise / 100)}
         </p>
         <div className="mt-8">
           <CheckoutForm

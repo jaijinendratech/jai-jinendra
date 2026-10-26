@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/data/home";
+import { getShippingRule } from "@/lib/shipping-rule.server";
+import { ShippingSettingsForm } from "./ShippingSettingsForm";
 import {
   AdminCard,
   AdminPageHeader,
@@ -12,7 +14,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const shippingRule = await getShippingRule();
   // const integrations = getIntegrationStatus();
 
   return (
@@ -98,17 +101,8 @@ export default function AdminSettingsPage() {
         </p>
       </AdminCard>
 
-      <AdminCard title="Shipping">
-        <p className="text-sm text-on-surface-variant">
-          Flat rate ₹79 / free ≥ ₹999 lives in code. Shiprocket: set
-          SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD, and SHIPROCKET_PICKUP_LOCATION,
-          then use <strong>Create Shiprocket shipment</strong> on an order detail
-          page. Tracking webhooks:{" "}
-          <code className="text-xs">POST /api/webhooks/shipping</code> with{" "}
-          <code className="text-xs">x-api-key</code> = SHIPPING_WEBHOOK_SECRET
-          (URL must use your live domain and must not contain “shiprocket” / “sr”).
-          Manual courier/AWB fields remain as fallback.
-        </p>
+      <AdminCard title="Shipping charges">
+        <ShippingSettingsForm rule={shippingRule} />
       </AdminCard>
     </div>
   );

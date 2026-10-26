@@ -4,6 +4,7 @@ import { getCustomerSessionUser } from "@/lib/auth";
 import { getCartSummary } from "@/lib/cart/cart-service";
 import { validateCouponCode } from "@/lib/coupons";
 import { calculateOrderTotals } from "@/lib/shipping";
+import { getShippingRule } from "@/lib/shipping-rule.server";
 import {
   applyCouponBodySchema,
   zodErrorMessage,
@@ -36,7 +37,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const totals = calculateOrderTotals(subtotalPaise, result.discountPaise);
+    const totals = calculateOrderTotals(subtotalPaise, result.discountPaise, {
+      shippingRule: await getShippingRule(),
+    });
 
     return NextResponse.json({
       code: result.coupon.code,

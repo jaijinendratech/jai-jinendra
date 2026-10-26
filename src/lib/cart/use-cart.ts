@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { CartLine, CartSummary } from "@/lib/cart/cart-service";
 import { calculateOrderTotals } from "@/lib/shipping";
+import { DEFAULT_SHIPPING_RULE } from "@/lib/shipping-rule";
 
 const empty: CartSummary = {
   items: [],
@@ -11,6 +12,7 @@ const empty: CartSummary = {
   discountPaise: 0,
   shippingPaise: 0,
   totalPaise: 0,
+  shippingRule: DEFAULT_SHIPPING_RULE,
   warnings: [],
 };
 
@@ -70,7 +72,9 @@ export type OptimisticLine = Pick<
 
 function recalc(items: CartLine[]): CartSummary {
   const subtotalPaise = items.reduce((sum, i) => sum + i.lineTotalPaise, 0);
-  const totals = calculateOrderTotals(subtotalPaise);
+  const totals = calculateOrderTotals(subtotalPaise, 0, {
+    shippingRule: cartSnapshot.shippingRule,
+  });
   return {
     ...cartSnapshot,
     items,

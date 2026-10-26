@@ -188,7 +188,7 @@ export function CartView({ isAdmin = false, notice }: CartViewProps) {
               <span className="hidden md:inline">Proceed to Checkout</span>
             </Link>
             <p className="mt-3 text-center text-[11px] text-on-surface-variant">
-              Free pan-India delivery on orders above ₹999
+              Free pan-India delivery on orders above {formatINR(cart.shippingRule.freeAbovePaise / 100)}
             </p>
           </>
         )}
