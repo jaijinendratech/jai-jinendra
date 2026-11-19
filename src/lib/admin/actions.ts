@@ -8,6 +8,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
+import { refundRazorpayPayment } from "@/lib/payments/razorpay";
 import { slugify } from "@/lib/admin/slug";
 import { tagFlags } from "@/lib/catalog/tags";
 import { productDetailSchemaReady } from "@/lib/db/product-detail-schema";
@@ -368,16 +369,84 @@ export async function updateOrderStatusAction(formData: FormData) {
   }
 
   const admin = createAdminClient();
+  if (statusParsed.data === "cancelled") {
+    // Cancelling refunds prepaid orders and returns reserved stock.
+    await refundPrepaidOrder(admin, orderId);
+    const { error } = await admin.rpc("admin_cancel_order", {
+      p_order_id: orderId,
+    });
+    if (error) throw new Error(error.message);
+  } else {
+    await admin
+      .from("orders")
+      .update({ status: statusParsed.data })
+      .eq("id", orderId);
+  }
+  revalidateOrderViews(orderId);
+}
+
+/**
+ * Refunds a paid Razorpay order through Razorpay before it is cancelled or
+ * deleted. Throws on failure so the caller leaves the order untouched.
+ * COD and unpaid orders have nothing to refund.
+ */
+async function refundPrepaidOrder(
+  admin: ReturnType<typeof createAdminClient>,
+  orderId: string,
+) {
+  const { data: order, error } = await admin
+    .from("orders")
+    .select("order_number, payment_method, payment_status, razorpay_payment_id")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!order) throw new Error("Order not found.");
+  if (order.payment_method !== "razorpay" || order.payment_status !== "paid") {
+    return;
+  }
+  if (!order.razorpay_payment_id) {
+    throw new Error(
+      "This order is marked paid but has no Razorpay payment id, so it cannot be refunded automatically.",
+    );
+  }
+
+  await refundRazorpayPayment({
+    paymentId: order.razorpay_payment_id,
+    orderNumber: order.order_number,
+  });
+  // Record the refund before the cancel/delete so a retry never refunds twice.
   await admin
     .from("orders")
-    .update({ status: statusParsed.data })
+    .update({ payment_status: "refunded" })
     .eq("id", orderId);
+}
+
+function revalidateOrderViews(orderId: string) {
   revalidateAdmin(
     "/admin/orders",
     `/admin/orders/${orderId}`,
     "/admin",
     "/admin/customers",
+    "/admin/products",
   );
+}
+
+/** Deleting never refunds; cancel the order first (status) if it needs a refund. */
+export async function deleteOrderAction(formData: FormData) {
+  await requireAdmin();
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is required to delete orders.");
+  }
+
+  const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) throw new Error("Missing order id.");
+
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("admin_delete_order", {
+    p_order_id: orderId,
+  });
+  if (error) throw new Error(error.message);
+  revalidateOrderViews(orderId);
 }
 
 export async function updateOrderPaymentStatusAction(formData: FormData) {

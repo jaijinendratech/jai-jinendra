@@ -417,12 +417,12 @@ const getDailyOrderTotals = cache(
     // Fallback until migration 019 is applied (row-capped by PostgREST).
     const { data: rows } = await admin
       .from("orders")
-      .select("total_paise, created_at")
+      .select("total_paise, created_at, status")
       .gte("created_at", since);
     return (rows ?? []).map((o) => ({
       day: dateKey(o.created_at),
       orders: 1,
-      revenue: o.total_paise / 100,
+      revenue: o.status === "cancelled" ? 0 : o.total_paise / 100,
     }));
   },
 );
@@ -1481,14 +1481,14 @@ async function customerOrderStats() {
   // Fallback until migration 019 is applied (row-capped by PostgREST).
   const { data: orders } = await admin
     .from("orders")
-    .select("user_id, total_paise, customer_email");
+    .select("user_id, total_paise, customer_email, status");
 
   for (const o of orders ?? []) {
     const key = o.user_id ?? o.customer_email ?? "";
     if (!key) continue;
     const cur = counts.get(key) ?? { count: 0, spent: 0 };
     cur.count += 1;
-    cur.spent += o.total_paise / 100;
+    if (o.status !== "cancelled") cur.spent += o.total_paise / 100;
     counts.set(key, cur);
   }
   return counts;

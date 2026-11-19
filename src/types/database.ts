@@ -1077,6 +1077,14 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["orders"]["Row"];
       };
+      admin_cancel_order: {
+        Args: { p_order_id: string };
+        Returns: undefined;
+      };
+      admin_delete_order: {
+        Args: { p_order_id: string };
+        Returns: undefined;
+      };
       admin_dashboard_kpis: {
         Args: Record<string, never>;
         Returns: Json;

@@ -9,6 +9,7 @@ import {
   updateOrderStatusAction,
 } from "@/lib/admin/actions";
 import { AdminTableShell, StatusBadge } from "@/components/admin/ui";
+import { OrderRowActions } from "@/components/admin/OrderRowActions";
 import { AdminStatusSelect } from "@/components/admin/AdminStatusSelect";
 import { AdminTablePagination } from "@/components/admin/AdminTablePagination";
 import {
@@ -60,6 +61,9 @@ export function OrdersTable({
               <th className="px-4 py-3 font-semibold">Payment</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Total</th>
+              <th className="w-12 px-4 py-3 text-right font-semibold">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15">
@@ -126,7 +130,22 @@ export function OrdersTable({
                     />
                   )}
                 </td>
-                <td className="px-4 py-3 price font-semibold">{formatINR(order.total)}</td>
+                <td
+                  className={`px-4 py-3 price font-semibold ${
+                    order.status === "cancelled"
+                      ? "text-on-surface-variant line-through"
+                      : ""
+                  }`}
+                >
+                  {formatINR(order.total)}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <OrderRowActions
+                    orderId={order.id}
+                    dbId={order.dbId}
+                    enabled={supabase}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

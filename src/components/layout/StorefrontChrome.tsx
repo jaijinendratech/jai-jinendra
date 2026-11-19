@@ -1,5 +1,4 @@
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { OfferPopupLazy } from "@/components/layout/OfferPopupLazy";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import {
@@ -24,7 +23,6 @@ export async function StorefrontChrome({
 
   return (
     <>
-      <OfferPopupLazy />
       <AnnouncementBar />
       <SiteHeader
         specialAttention={specialAttention}

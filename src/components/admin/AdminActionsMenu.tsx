@@ -9,6 +9,7 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { AdminIcon } from "@/components/admin/admin-icons";
 import {
+  deleteOrderAction,
   deleteCategoryAction,
   deleteComboAction,
   deleteCouponAction,
@@ -33,6 +34,7 @@ export const adminFormActions = {
   deleteMedia: deleteMediaAssetAction,
   deleteVariant: deleteVariantAction,
   deleteProductImage: deleteProductImageAction,
+  deleteOrder: deleteOrderAction,
 } as const;
 
 export type AdminFormActionKey = keyof typeof adminFormActions;
@@ -65,6 +67,8 @@ export type AdminMenuFormItem = {
   actionKey: AdminFormActionKey;
   fields: Record<string, string>;
   confirmMessage?: string;
+  /** Body text of the confirm dialog (defaults to "This action cannot be undone."). */
+  confirmDescription?: string;
   danger?: boolean;
 };
 
@@ -227,7 +231,9 @@ export function AdminActionsMenu({
           if (!open) setPendingConfirm(null);
         }}
         title={pendingConfirm?.confirmMessage ?? "Confirm"}
-        message="This action cannot be undone."
+        message={
+          pendingConfirm?.confirmDescription ?? "This action cannot be undone."
+        }
         confirmLabel={pendingConfirm?.label ?? "Confirm"}
         danger={pendingConfirm?.danger ?? true}
         onConfirm={() => {

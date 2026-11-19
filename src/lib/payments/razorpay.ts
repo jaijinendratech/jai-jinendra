@@ -79,6 +79,59 @@ export async function createRazorpayOrder(params: {
   }
 }
 
+function razorpayErrorDescription(err: unknown): string {
+  if (
+    err &&
+    typeof err === "object" &&
+    "error" in err &&
+    err.error &&
+    typeof err.error === "object" &&
+    "description" in err.error
+  ) {
+    return String((err.error as { description?: string }).description ?? "");
+  }
+  return err instanceof Error ? err.message : "";
+}
+
+/**
+ * Fully refunds a captured payment to the customer's original method.
+ * Safe to retry: a payment that is already fully refunded is a no-op.
+ * Throws with Razorpay's description when the refund cannot be issued.
+ */
+export async function refundRazorpayPayment(params: {
+  paymentId: string;
+  orderNumber: string;
+}): Promise<{ refundId: string | null; alreadyRefunded: boolean }> {
+  const client = getRazorpayClient();
+  try {
+    const payment = await client.payments.fetch(params.paymentId);
+    if (payment.status === "refunded") {
+      return { refundId: null, alreadyRefunded: true };
+    }
+    if (payment.status !== "captured") {
+      throw new Error(
+        `Payment is "${payment.status}", not captured, so it cannot be refunded.`,
+      );
+    }
+    // Only the unrefunded remainder, so a partly refunded payment still completes.
+    const remaining =
+      Number(payment.amount) - Number(payment.amount_refunded ?? 0);
+    if (remaining <= 0) return { refundId: null, alreadyRefunded: true };
+
+    const refund = await client.payments.refund(params.paymentId, {
+      amount: remaining,
+      speed: "normal",
+      notes: { order_number: params.orderNumber, reason: "order_cancelled_by_admin" },
+    });
+    return { refundId: refund.id, alreadyRefunded: false };
+  } catch (err) {
+    const description = razorpayErrorDescription(err).trim();
+    throw new Error(
+      `Razorpay refund failed: ${description || "unknown error"}`,
+    );
+  }
+}
+
 function timingSafeEqualHex(expected: string, received: string): boolean {
   try {
     const a = Buffer.from(expected, "utf8");
